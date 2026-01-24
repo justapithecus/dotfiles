@@ -130,6 +130,11 @@ ln -sf "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
   "$KONSOLE_DIR/HighContrastDark.colorscheme"
 
 # ----------------------------
+# Git Config defaults
+# ----------------------------
+git config --global push.autoSetupRemote true
+
+# ----------------------------
 # Final message
 # ----------------------------
 echo
