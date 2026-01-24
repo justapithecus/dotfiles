@@ -38,7 +38,8 @@ install_packages() {
     zypper)
       sudo zypper refresh 
       sudo zypper install -y \
-        zsh starship fzf bat eza ripgrep zoxide git-core
+        zsh starship fzf bat eza ripgrep zoxide git-core \
+	gammastep
       ;;
   esac
 }
@@ -50,6 +51,19 @@ install_packages
 # ----------------------------
 echo "▶ Creating config directories"
 mkdir -p ~/.config/{zsh,nvim,helix,konsole}
+
+# ----------------------------
+# Gammastep
+# ----------------------------
+echo "▶ Installing Gammastep hooks"
+
+mkdir -p "$HOME/.config/gammastep/hooks"
+
+ln -sf "$DOTFILES_DIR/gammastep/config.ini" "$HOME/.config/gammastep/config.ini"
+
+ln -sf "$DOTFILES_DIR/gammastep/hooks/99-evening-ramp.sh" "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
+
+chmod +x "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
 
 # ----------------------------
 # Configure ZDOTDIR (early)
