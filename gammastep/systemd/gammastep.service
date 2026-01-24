@@ -1,0 +1,11 @@
+[Unit]
+Description=gammastep (user)
+
+[Service]
+ExecStart=/usr/bin/gammastep -c %h/.config/gammastep/config.ini
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+

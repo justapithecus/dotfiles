@@ -15,6 +15,7 @@ while true; do
 done 2>/dev/null &
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_DIR
 
 echo "▶ Dotfiles bootstrap starting..."
 
@@ -38,8 +39,7 @@ install_packages() {
     zypper)
       sudo zypper refresh 
       sudo zypper install -y \
-        zsh starship fzf bat eza ripgrep zoxide git-core \
-        gammastep geoclue2
+        zsh starship fzf bat eza ripgrep zoxide git-core
       ;;
   esac
 }
@@ -55,17 +55,7 @@ mkdir -p ~/.config/{zsh,nvim,helix,konsole}
 # ----------------------------
 # Gammastep
 # ----------------------------
-echo "▶ Installing Gammastep hooks"
-
-mkdir -p "$HOME/.config/gammastep/hooks"
-
-ln -sf "$DOTFILES_DIR/gammastep/config.ini" "$HOME/.config/gammastep/config.ini"
-
-ln -sf "$DOTFILES_DIR/gammastep/hooks/99-evening-ramp.sh" "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
-
-chmod +x "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
-
-sudo bash "$DOTFILES_DIR/gammastep/setup-geoclue.sh"
+bash "$DOTFILES_DIR/gammastep/install.sh"
 
 # ----------------------------
 # Configure ZDOTDIR (early)
