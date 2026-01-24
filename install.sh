@@ -39,7 +39,7 @@ install_packages() {
       sudo zypper refresh 
       sudo zypper install -y \
         zsh starship fzf bat eza ripgrep zoxide git-core \
-        gammastep
+        gammastep geoclue2
       ;;
   esac
 }
@@ -64,6 +64,8 @@ ln -sf "$DOTFILES_DIR/gammastep/config.ini" "$HOME/.config/gammastep/config.ini"
 ln -sf "$DOTFILES_DIR/gammastep/hooks/99-evening-ramp.sh" "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
 
 chmod +x "$HOME/.config/gammastep/hooks/99-evening-ramp.sh"
+
+sudo bash "$DOTFILES_DIR/gammastep/setup-geoclue.sh"
 
 # ----------------------------
 # Configure ZDOTDIR (early)

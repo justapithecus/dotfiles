@@ -14,7 +14,7 @@ fi
 NEW="${3:-}"
 
 # At sunset, gammastep enters "transition" and then "night".
-# We want: immediate 3000K at sunset, then ramp down to 1000K by ~3 hours.
+# We want: immediate 3500K at sunset, then ramp down to 1000K by ~3 hours.
 if [[ "$NEW" != "transition" && "$NEW" != "night" ]]; then
   exit 0
 fi
@@ -27,12 +27,12 @@ fi
 trap 'rm -f "$LOCK"' EXIT
 : > "$LOCK"
 
-# Ensure immediate drop to 3000K (matches your requirement)
-gammastep -O 3000 >/dev/null 2>&1 || true  # :contentReference[oaicite:6]{index=6}
+# Ensure immediate drop to 3500K (matches your requirement)
+gammastep -O 3500 >/dev/null 2>&1 || true  # :contentReference[oaicite:6]{index=6}
 
-# Ramp: 3000 -> 1000 over 180 minutes, step every 2 minutes.
+# Ramp: 3500 -> 1000 over 180 minutes, step every 2 minutes.
 (
-  START=3000
+  START=3500
   END=1000
   DURATION_MIN=180
   STEP_MIN=2
