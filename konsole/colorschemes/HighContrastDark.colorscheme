@@ -1,0 +1,44 @@
+[General]
+Description=High Contrast Dark
+Opacity=1
+
+[Background]
+Color=0,0,0
+
+[Foreground]
+Color=230,230,230
+
+[Color0]   # black
+Color=0,0,0
+[Color1]   # red
+Color=255,85,85
+[Color2]   # green
+Color=80,250,123
+[Color3]   # yellow
+Color=241,250,140
+[Color4]   # blue
+Color=139,233,253
+[Color5]   # magenta
+Color=255,121,198
+[Color6]   # cyan
+Color=139,233,253
+[Color7]   # white
+Color=230,230,230
+
+[Color8]   # bright black (comments)
+Color=120,120,120
+[Color9]   # bright red
+Color=255,110,110
+[Color10]  # bright green
+Color=100,255,160
+[Color11]  # bright yellow
+Color=255,255,160
+[Color12]  # bright blue
+Color=160,220,255
+[Color13]  # bright magenta
+Color=255,160,220
+[Color14]  # bright cyan
+Color=160,255,255
+[Color15]  # bright white
+Color=255,255,255
+
