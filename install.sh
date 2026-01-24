@@ -39,7 +39,7 @@ install_packages() {
       sudo zypper refresh 
       sudo zypper install -y \
         zsh starship fzf bat eza ripgrep zoxide git-core \
-	gammastep
+        gammastep
       ;;
   esac
 }
@@ -136,12 +136,15 @@ KONSOLE_DIR="$HOME/.local/share/konsole"
 mkdir -p "$KONSOLE_DIR"
 
 # Profile (repo nested → flat install)
-ln -sf "$DOTFILES_DIR/konsole/profiles/Dev.profile" \
-  "$KONSOLE_DIR/Dev.profile"
+ln -sf "$DOTFILES_DIR/konsole/profiles/Dev.profile" "$KONSOLE_DIR/Dev.profile"
 
 # Color scheme (repo nested → flat install)
-ln -sf "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
-  "$KONSOLE_DIR/HighContrastDark.colorscheme"
+ln -sf "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" "$KONSOLE_DIR/HighContrastDark.colorscheme"
+
+# ----------------------------
+# Git Config defaults
+# ----------------------------
+git config --global push.autoSetupRemote true
 
 # ----------------------------
 # Final message
