@@ -93,7 +93,8 @@ alias gl='git pull'                          # pull (repo-configured)
 alias gpl='git pull'                         # explicit pull
 alias gpr='git pull --rebase'                # rebase onto upstream
 alias gprs='git pull --rebase --autostash'   # rebase with dirty tree
-alias gup='git fetch --all --prune && git rebase'  # full linear sync
+# full linear sync
+alias gup='git fetch --all --prune && git rebase'
 alias grabort='git rebase --abort'           # abort rebase
 
 
