@@ -7,7 +7,6 @@ set -euo pipefail
 echo "▶ Requesting sudo access"
 sudo -v
 
-# Keep sudo alive until script exits
 while true; do
   sudo -n true
   sleep 60
@@ -36,7 +35,7 @@ echo "▶ Using package manager: $PM"
 install_packages() {
   case "$PM" in
     zypper)
-      sudo zypper refresh 
+      sudo zypper refresh
       sudo zypper install -y \
         zsh starship fzf bat eza ripgrep zoxide git-core
       ;;
@@ -49,36 +48,12 @@ install_packages
 # Create config dirs
 # ----------------------------
 echo "▶ Creating config directories"
-mkdir -p ~/.config/{zsh,nvim,helix,konsole}
-
-# ----------------------------
-# Configure ZDOTDIR (early)
-# ----------------------------
-ZSHENV="$HOME/.zshenv"
-ZDOT_LINE='export ZDOTDIR="$HOME/.config/zsh"'
-
-echo "▶ Ensuring ZDOTDIR is set via ~/.zshenv"
-
-if [[ ! -f "$ZSHENV" ]]; then
-  echo "$ZDOT_LINE" > "$ZSHENV"
-elif ! grep -Fxq "$ZDOT_LINE" "$ZSHENV"; then
-  echo "$ZDOT_LINE" >> "$ZSHENV"
-fi
+mkdir -p ~/.config/{zsh,nvim,helix,konsole,starship}
 
 # ----------------------------
 # Zsh (ZDOTDIR-based layout)
 # ----------------------------
-ZSH_DIR="$HOME/.config/zsh"
-mkdir -p "$ZSH_DIR"
-
-echo "▶ Configuring Zsh"
-
-ln -sf "$DOTFILES_DIR/shell/zsh/.zshrc" "$ZSH_DIR/.zshrc"
-ln -sf "$DOTFILES_DIR/shell/zsh/.zshrc_custom" "$ZSH_DIR/.zshrc_custom"
-ln -sf "$DOTFILES_DIR/shell/zsh/env.zsh" "$ZSH_DIR/env.zsh"
-ln -sf "$DOTFILES_DIR/shell/zsh/aliases.zsh" "$ZSH_DIR/aliases.zsh"
-ln -sf "$DOTFILES_DIR/shell/zsh/completions.zsh" "$ZSH_DIR/completions.zsh"
-ln -sf "$DOTFILES_DIR/shell/starship.toml" "$HOME/.config/starship.toml"
+bash "$DOTFILES_DIR/shell/install.sh"
 
 # ----------------------------
 # Set default shell
@@ -86,18 +61,6 @@ ln -sf "$DOTFILES_DIR/shell/starship.toml" "$HOME/.config/starship.toml"
 if [[ "$SHELL" != *zsh ]]; then
   echo "▶ Setting zsh as default shell"
   chsh -s "$(command -v zsh)"
-fi
-
-ZSHRC="$HOME/.zshrc"
-CUSTOM_LINE='[[ -f ~/.zshrc_custom ]] && source ~/.zshrc_custom'
-
-if [[ ! -f "$ZSHRC" ]]; then
-  echo "▶ Creating ~/.zshrc"
-  echo "$CUSTOM_LINE" > "$ZSHRC"
-elif ! grep -Fxq "$CUSTOM_LINE" "$ZSHRC"; then
-  echo "▶ Injecting ~/.zshrc_custom into ~/.zshrc"
-  echo "" >> "$ZSHRC"
-  echo "$CUSTOM_LINE" >> "$ZSHRC"
 fi
 
 # ----------------------------
@@ -121,12 +84,10 @@ echo "▶ Installing Konsole Profile"
 KONSOLE_DIR="$HOME/.local/share/konsole"
 mkdir -p "$KONSOLE_DIR"
 
-# Profile (repo nested → flat install)
-ln -sf "$DOTFILES_DIR/konsole/profiles/Dev.profile" \
+cp -f "$DOTFILES_DIR/konsole/profiles/Dev.profile" \
   "$KONSOLE_DIR/Dev.profile"
 
-# Color scheme (repo nested → flat install)
-ln -sf "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
+cp -f "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
   "$KONSOLE_DIR/HighContrastDark.colorscheme"
 
 # ----------------------------
@@ -140,4 +101,3 @@ git config --global push.autoSetupRemote true
 echo
 echo "✔ Bootstrap complete"
 echo "→ Restart your terminal or log out/in"
-
