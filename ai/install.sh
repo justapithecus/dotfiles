@@ -1,26 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd "$script_dir/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if [[ -d "$repo_root/dotfiles" ]] && [[ -d "$repo_root/dotfiles/ai" ]]; then
-  DOTFILES_DIR="$repo_root/dotfiles"
+if [[ -d "$REPO_ROOT/dotfiles/ai" ]]; then
+  DOTFILES_DIR="$REPO_ROOT/dotfiles"
 else
-  DOTFILES_DIR="$repo_root"
+  DOTFILES_DIR="$REPO_ROOT"
 fi
 
-AI_BIN="$HOME/.config/ai/bin"
-mkdir -p "$AI_BIN"
+AI_SRC="$DOTFILES_DIR/ai"
+AI_DST="$HOME/.config/ai"
+
+mkdir -p "$AI_DST"
+mkdir -p "$AI_DST/roles"
 
 copy() { rm -f "$2"; cp -f "$1" "$2"; }
 
-for cmd in ai-chat ai-plan ai-review ai-implement; do
-  src="$DOTFILES_DIR/scripts/$cmd"
-  dst="$AI_BIN/$cmd"
+# Install AI entrypoint scripts
+for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh; do
+  SRC="$AI_SRC/$cmd"
+  DST="$AI_DST/$cmd"
 
-  if [[ -f "$src" ]]; then
-    copy "$src" "$dst"
+  if [[ -f "$SRC" ]]; then
+    copy "$SRC" "$DST"
+    chmod +x "$DST"
+  fi
+done
+
+# Install role definitions
+for role in architect planner reviewer implementer; do
+  SRC="$AI_SRC/roles/$role.md"
+  DST="$AI_DST/roles/$role.md"
+
+  if [[ -f "$SRC" ]]; then
+    copy "$SRC" "$DST"
   fi
 done
 
