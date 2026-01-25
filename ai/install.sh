@@ -14,6 +14,7 @@ AI_SRC="$DOTFILES_DIR/ai"
 AI_DST="$HOME/.config/ai"
 
 mkdir -p "$AI_DST"
+mkdir -p "$AI_DST/context"
 mkdir -p "$AI_DST/roles"
 
 copy() { rm -f "$2"; cp -f "$1" "$2"; }
@@ -27,6 +28,12 @@ for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh; do
     copy "$SRC" "$DST"
     chmod +x "$DST"
   fi
+done
+
+# Install ALL context files
+for f in "$AI_SRC/context/"*.md; do
+  [ -f "$f" ] || continue
+  copy "$f" "$AI_DST/context/$(basename "$f")"
 done
 
 # Install role definitions

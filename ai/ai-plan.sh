@@ -17,6 +17,12 @@ PROMPT="$(
   echo "You are NOT allowed to modify, rewrite, or summarize existing files."
   echo "You must describe changes abstractly as tasks or intentions."
   echo
+
+  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+    cat "$f"
+    echo
+  done
+
   cat "$ROLE_FILE"
 )"
 
