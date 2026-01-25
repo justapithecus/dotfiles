@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=HighContrastDark
-Font=JetBrains Mono,16,-1,5,50,0,0,0,0,0
+Font=DMMono Nerd Font,16,-1,5,50,0,0,0,0,0
 
 [General]
 Name=Dev

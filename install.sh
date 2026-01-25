@@ -78,18 +78,16 @@ echo "▶ Ensuring workspace directory exists"
 mkdir -p "$HOME/workspace"
 
 # ----------------------------
+# Fonts
+# ----------------------------
+echo "▶ Installing Fonts"
+bash "$DOTFILES_DIR/fonts/install.sh"
+
+# ----------------------------
 # Konsole (KDE Terminal)
 # ----------------------------
 echo "▶ Installing Konsole Profile"
-
-KONSOLE_DIR="$HOME/.local/share/konsole"
-mkdir -p "$KONSOLE_DIR"
-
-cp -f "$DOTFILES_DIR/konsole/profiles/Dev.profile" \
-  "$KONSOLE_DIR/Dev.profile"
-
-cp -f "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
-  "$KONSOLE_DIR/HighContrastDark.colorscheme"
+bash "$DOTFILES_DIR/konsole/install.sh"
 
 # ----------------------------
 # Git Config defaults
