@@ -188,3 +188,11 @@ gdiscard → git checkout -- .
 EOF
 }
 
+# ==========================================================
+# ai: tooling
+# ==========================================================
+alias aic="$HOME/.config/ai/ai-chat.sh"
+alias aip="$HOME/.config/ai/ai-plan.sh"
+alias air="$HOME/.config/ai/ai-review.sh"
+alias aii="$HOME/.config/ai/ai-implement.sh"
+

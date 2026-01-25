@@ -103,6 +103,12 @@ echo "▶ Installing Neovim (LazyVim)"
 bash "$DOTFILES_DIR/nvim/install.sh" --backup --native --yes
 
 # ----------------------------
+# AI Tooling 
+# ----------------------------
+echo "▶ Installing AI Tooling"
+bash "$DOTFILES_DIR/ai/install.sh"
+
+# ----------------------------
 # Final message
 # ----------------------------
 echo
