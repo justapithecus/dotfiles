@@ -53,8 +53,7 @@ mkdir -p ~/.config/{zsh,nvim,helix,konsole,starship}
 # ----------------------------
 # Zsh (ZDOTDIR-based layout)
 # ----------------------------
-bash "$DOTFILES_DIR/shell/zsh/install.sh"
-cp -f "$DOTFILES_DIR/shell/starship.toml" "$HOME/.config/starship.toml"
+bash "$DOTFILES_DIR/shell/install.sh"
 
 # ----------------------------
 # Set default shell
