@@ -97,6 +97,12 @@ cp -f "$DOTFILES_DIR/konsole/colorschemes/HighContrastDark.colorscheme" \
 git config --global push.autoSetupRemote true
 
 # ----------------------------
+# Neovim (LazyVim)
+# ----------------------------
+echo "▶ Installing Neovim (LazyVim)"
+bash "$DOTFILES_DIR/nvim/install.sh" --backup --native --yes
+
+# ----------------------------
 # Final message
 # ----------------------------
 echo
