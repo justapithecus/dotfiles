@@ -1,4 +1,4 @@
-GLOBAL CHANGE APPLICATION RULE (MANDATORY)
+# GLOBAL CHANGE APPLICATION RULE (MANDATORY)
 
 You must NEVER output a complete file or a rewritten section of a file.
 
@@ -14,4 +14,34 @@ You are NOT allowed to:
 
 The human applies all changes manually using git.
 If a change cannot be expressed safely as a diff, you must stop and say so.
+
+## Git commit requirements (implementers)
+
+When proposing or completing implementation work:
+
+- Always provide a suggested git commit message.
+- Use **Conventional Commits** format.
+
+Required format:
+
+feat(domain): :emoji: short imperative title
+
+Optional body:
+- Explain *why* the change was made
+- Mention constraints or trade-offs
+- Reference relevant files or modules
+
+Rules:
+- Use the imperative mood (“add”, not “added”)
+- Keep the title ≤ 72 characters
+- Domain must be specific (e.g. ai, nvim, shell, build, docs)
+- Emoji must semantically match the change
+
+Examples:
+
+feat(ai): 🤖 add diff-only implementer guardrails
+
+fix(nvim): 🐛 prevent copilot keymap override in insert mode
+
+docs(ai): 📝 document ai install and role structure
 
