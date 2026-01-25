@@ -17,10 +17,10 @@ alias mv='mv -i'                             # confirm overwrite
 # ==========================================================
 # general: ls / filesystem
 # ==========================================================
-alias ls='eza --icons'                       # modern ls
+alias ls='eza --icons --color=auto'          # modern ls
 alias ll='eza -lah --icons --color=auto'     # long, all, human
-alias la='eza -a --icons'                    # all files
-alias tree='eza --tree --icons'              # directory tree
+alias la='eza -a --icons --color=auto'       # all files
+alias tree='eza --tree --icons --color=auto' # directory tree
 
 
 # ==========================================================
