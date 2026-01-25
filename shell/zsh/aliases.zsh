@@ -1,6 +1,7 @@
 # ==========================================================
 # general: shell
 # ==========================================================
+alias vi='$EDITOR'                           # use nvim
 alias .z='source $ZDOTDIR/.zshrc'            # reload your shell config
 alias .ze='$EDITOR $ZDOTDIR/.zshrc_custom'   # edit your shell config
 # edit + reload
