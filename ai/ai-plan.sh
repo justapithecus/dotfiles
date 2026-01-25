@@ -7,6 +7,7 @@ command -v codex >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/planner.md"
 
 PROMPT="$(
@@ -17,6 +18,12 @@ PROMPT="$(
   echo "You are NOT allowed to modify, rewrite, or summarize existing files."
   echo "You must describe changes abstractly as tasks or intentions."
   echo
+
+  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+    cat "$f"
+    echo
+  done
+
   cat "$ROLE_FILE"
 )"
 

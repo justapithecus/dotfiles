@@ -8,6 +8,7 @@ command -v codex >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CTX_DIR="$AI_DIR/context"
 ROLES_DIR="$AI_DIR/roles"
 
 ROLE="architect"
@@ -36,6 +37,12 @@ PROMPT="$(
   echo "Follow the role definition exactly."
   echo "Do not write code unless explicitly asked."
   echo
+
+  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+    cat "$f"
+    echo
+  done
+
   cat "$ROLE_FILE"
 
   if [[ -n "$REPO_ROOT" && -f "$REPO_ROOT/AGENTS.md" ]]; then
