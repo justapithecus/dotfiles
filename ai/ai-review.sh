@@ -7,6 +7,7 @@ command -v codex >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/reviewer.md"
 
 PROMPT="$(

@@ -8,6 +8,7 @@ command -v codex >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CTX_DIR="$AI_DIR/context"
 ROLES_DIR="$AI_DIR/roles"
 
 ROLE="architect"
