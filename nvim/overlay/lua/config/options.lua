@@ -1,3 +1,6 @@
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
 vim.opt.clipboard = "unnamedplus"
 
 vim.g.loaded_python3_provider = 0

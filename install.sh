@@ -37,7 +37,8 @@ install_packages() {
     zypper)
       sudo zypper refresh
       sudo zypper install -y \
-        zsh starship fzf bat eza ripgrep zoxide git-core
+        zsh starship fzf bat eza ripgrep zoxide git-core \
+        nodejs
       ;;
   esac
 }
