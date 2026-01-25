@@ -3,6 +3,7 @@
 source "$ZDOTDIR/env.zsh"
 source "$ZDOTDIR/aliases.zsh"
 source "$ZDOTDIR/completions.zsh"
+source "$ZDOTDIR/compdefs.zsh"
 source "$ZDOTDIR/keybindings.zsh"
 source "$ZDOTDIR/word-jump.zsh"
 
