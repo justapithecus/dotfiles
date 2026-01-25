@@ -1,24 +1,29 @@
 # AI tooling
 
-This directory contains lightweight scripts and role prompts for the OpenAI Codex CLI, focused on starting role‑specific interactive sessions.
+This directory contains lightweight scripts and role prompts for AI-assisted development using OpenAI Codex CLI and Claude Code.
 
 ## Contents
 
-- `ai-chat.sh`: Starts an interactive Codex session with a selected role prompt.
+- `ai-chat.sh`: Starts an interactive Codex session with a selected role.
+- `ai-plan.sh`: Starts Codex in read-only planner mode.
+- `ai-review.sh`: Starts Codex in read-only reviewer mode.
+- `ai-implement.sh`: Starts Claude Code with the implementer role.
 - `install.sh`: Installs scripts and role prompts into `~/.config/ai`.
-- `deps.sh`: Installs the Codex CLI (via npm) if it is not already present.
+- `deps.sh`: Installs Codex CLI and Claude Code if not already present.
 - `roles/`: Role prompt files used by `ai-chat.sh`.
-- `context/`: Shared context snippets (not currently used by the scripts here).
+- `context/`: Shared context snippets included in prompts.
 
 ## Requirements
 
-- `codex` binary (OpenAI Codex CLI).
-- `npm` if you want `deps.sh` to install Codex for you.
+- `codex` (OpenAI Codex CLI) for chat/plan/review scripts.
+- `claude` (Claude Code) for the implement script.
+- `npm` if you want `deps.sh` to install Codex.
+- `curl` if you want `deps.sh` to install Claude Code.
 
 ## Install
 
 ```sh
-./ai/deps.sh
+./ai/deps.sh      # installs codex and claude
 ./ai/install.sh
 ```
 
@@ -26,8 +31,15 @@ This copies scripts and role prompts into `~/.config/ai` and makes the scripts e
 
 ## Usage
 
+Interactive chat with a role (default: architect):
 ```sh
 ~/.config/ai/ai-chat.sh [role]
+```
+Specialized entrypoints:
+```sh
+~/.config/ai/ai-plan.sh      # read-only task planning
+~/.config/ai/ai-review.sh    # read-only code review
+~/.config/ai/ai-implement.sh # Claude Code implementation session
 ```
 
 - Default role is `architect` if none is provided.
@@ -47,8 +59,8 @@ Role prompts live in `roles/` and define behavior such as:
 
 `ai-chat.sh` builds a prompt that includes:
 
-1. A fixed preamble (interaction rules).
+1. Context files from `~/.config/ai/context` (global rules and conventions).
 2. The selected role prompt from `~/.config/ai/roles`.
 3. Repository `AGENTS.md` content if it exists at the current repo root.
 
-This keeps role behavior consistent while letting repository‑specific guidance shape responses.
+This layered approach keeps role behavior consistent while letting repository‑specific guidance shape responses.

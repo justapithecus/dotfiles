@@ -5,11 +5,12 @@ Linux userland and development environment configurations
 ## Directory overview
 
 - [ai](ai/) — AI tooling scripts plus context and role definitions.
-- [git](git/) — Placeholder directory for git-related configuration (currently empty).
-- [helix](helix/) — Placeholder directory for Helix editor configuration (currently empty).
+- [fonts](fonts/) — Nerd Font installation scripts.
+- [git](git/) — Placeholder for git-related configuration.
+- [helix](helix/) — Placeholder for Helix editor configuration.
 - [konsole](konsole/) — Konsole profiles and color schemes.
 - [nvim](nvim/) — Neovim config bundle (install script, overlay, package list).
-- [scripts](scripts/) — Placeholder directory for standalone scripts (currently empty).
+- [scripts](scripts/) — Placeholder for standalone scripts.
 - [shell](shell/) — Shell setup (install script, starship, zsh configs).
 
 ## Conventions and principles
