@@ -32,6 +32,7 @@ copy "$DOTFILES_DIR/shell/zsh/word-jump.zsh"   "$ZDOTDIR_PATH/word-jump.zsh"
 copy "$DOTFILES_DIR/shell/zsh/env.zsh"         "$ZDOTDIR_PATH/env.zsh"
 copy "$DOTFILES_DIR/shell/zsh/aliases.zsh"     "$ZDOTDIR_PATH/aliases.zsh"
 copy "$DOTFILES_DIR/shell/zsh/completions.zsh" "$ZDOTDIR_PATH/completions.zsh"
+copy "$DOTFILES_DIR/shell/zsh/compdefs.zsh"    "$ZDOTDIR_PATH/compdefs.zsh"
 copy "$DOTFILES_DIR/shell/zsh/.zshrc"          "$ZDOTDIR_PATH/.zshrc_custom"
 
 copy "$DOTFILES_DIR/shell/starship.toml"       "$HOME/.config/starship.toml"
