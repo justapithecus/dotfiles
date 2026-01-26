@@ -19,6 +19,14 @@ This repo favors copy-based installs (no symlinks) and idempotent scripts that c
 
 These conventions are reflected in `install.sh` at the repo root and the corresponding `install.sh` files inside each subtree.
 
+## Publication notes
+
+This repo is intended to be public, but it contains installer scripts that run privileged and networked actions. In particular:
+- `install.sh` adds an external repo and installs packages with sudo.
+- `ai/deps.sh` uses a `curl | sh` installer for Claude Code.
+
+If you run these scripts, read them first and only execute on a machine you control.
+
 ## Top-level files
 
 - [AGENTS.md](AGENTS.md) — Repository-specific instructions for automated agents.
