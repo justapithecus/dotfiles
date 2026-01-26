@@ -16,13 +16,5 @@ return {
     -- Dismiss suggestion
     vim.keymap.set("i", "<C-K>", "<Plug>(copilot-dismiss)")
 
-    -- Restrict filetypes
-    vim.g.copilot_filetypes = {
-      markdown = false,
-      gitcommit = false,
-      yaml = false,
-      json = false,
-    }
   end,
 }
-
