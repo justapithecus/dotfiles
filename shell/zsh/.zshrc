@@ -10,5 +10,6 @@ source "$ZDOTDIR/word-jump.zsh"
 # prompt + tools
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
+eval "$(mise activate zsh --shims)"
 
 

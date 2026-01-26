@@ -35,9 +35,10 @@ echo "▶ Using package manager: $PM"
 install_packages() {
   case "$PM" in
     zypper)
+      sudo wget https://mise.jdx.dev/rpm/mise.repo -O /etc/zypp/repos.d/mise.repo
       sudo zypper refresh
       sudo zypper install -y \
-        zsh starship fzf bat eza ripgrep zoxide git-core \
+        zsh starship fzf bat eza ripgrep zoxide git-core mise \
         nodejs
       ;;
   esac
