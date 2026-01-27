@@ -35,7 +35,8 @@ Rules:
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
-- Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit with an emoji that matches the change
+- Emoji must semantically match the change
+- Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit
 - If the branch name or change summary is unknown, ask before proposing the message
 - If the user explicitly asks to create a commit, you may request escalated permissions to run `git commit` (including signing) without extra confirmation
 
