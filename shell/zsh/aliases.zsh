@@ -27,6 +27,8 @@ alias tree='eza --tree --icons --color=auto' # directory tree
 # ==========================================================
 # general: viewing / search
 # ==========================================================
+alias h='history'                            # shell history
+alias hh='history 100'                       # last 100 commands
 alias cat='bat'                              # syntax-highlighted cat
 alias grep='rg'                              # fast recursive grep
 alias less='less -R'                         # raw color support
