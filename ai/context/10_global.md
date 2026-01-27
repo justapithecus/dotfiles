@@ -35,7 +35,8 @@ Rules:
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
-- Emoji must semantically match the change
+- Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit with an emoji that matches the change
+- If the branch name or change summary is unknown, ask before proposing the message
 
 Examples:
 
@@ -44,4 +45,3 @@ feat(ai): 🤖 add diff-only implementer guardrails
 fix(nvim): 🐛 prevent copilot keymap override in insert mode
 
 docs(ai): 📝 document ai install and role structure
-
