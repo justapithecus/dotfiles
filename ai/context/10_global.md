@@ -37,6 +37,7 @@ Rules:
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
 - Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit with an emoji that matches the change
 - If the branch name or change summary is unknown, ask before proposing the message
+- If the user explicitly asks to create a commit, you may request escalated permissions to run `git commit` (including signing) without extra confirmation
 
 Examples:
 
