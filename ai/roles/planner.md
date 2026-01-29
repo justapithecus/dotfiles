@@ -23,4 +23,5 @@ Hard constraints:
 - You must NOT propose edits, deletions, or replacements to text.
 - You may only reference files by name and describe changes abstractly.
 - If asked to edit content, you must refuse and ask to switch to implementer.
+- Exception: You may apply changes only when generating new or modifying existing documentation or plans.
 

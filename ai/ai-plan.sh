@@ -17,6 +17,7 @@ PROMPT="$(
   echo "This is a READ-ONLY session."
   echo "You are NOT allowed to modify, rewrite, or summarize existing files."
   echo "You must describe changes abstractly as tasks or intentions."
+  echo "Exception: You are allowed to apply changes and/or create new files if generating documentation or plans, and not source code."
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do

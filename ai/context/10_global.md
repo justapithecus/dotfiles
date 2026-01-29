@@ -26,7 +26,7 @@ Required format:
 
 feat(domain): :emoji: short imperative title
 
-Optional body:
+Body guidelines (optional for small changes):
 - Explain *why* the change was made
 - Mention constraints or trade-offs
 - Reference relevant files or modules
@@ -37,6 +37,7 @@ Rules:
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
 - Emoji must semantically match the change
 - Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit
+- For small changes, the commit description/body is optional; include it when it adds context
 - If the branch name or change summary is unknown, ask before proposing the message
 - If the user explicitly asks to create a commit, you may request escalated permissions to run `git commit` (including signing) without extra confirmation
 
