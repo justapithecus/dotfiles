@@ -1,21 +1,38 @@
-# main interactive entrypoint
+# ------------------------------------------------------------------------------
+# Zsh entrypoint
+# ------------------------------------------------------------------------------
 
-# disable aliases in interactive shell
-# this prevents issues with commands in AI agent sandboxes
+# ------------------------------------------------------------------------------
+# Automation / agent safety
+# Disable alias expansion in non-interactive shells (CI, Codex, Claude, etc.)
+# Aliases may still be defined later, but will never expand.
+# ------------------------------------------------------------------------------
 if [[ ! -o interactive ]]; then
   setopt NO_ALIAS
 fi
 
+# ------------------------------------------------------------------------------
+# Core environment (safe for all shells)
+# ------------------------------------------------------------------------------
 source "$ZDOTDIR/env.zsh"
-source "$ZDOTDIR/aliases.zsh"
-source "$ZDOTDIR/completions.zsh"
-source "$ZDOTDIR/compdefs.zsh"
-source "$ZDOTDIR/keybindings.zsh"
-source "$ZDOTDIR/word-jump.zsh"
 
-# prompt + tools
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
-eval "$(mise activate zsh --shims)"
+# ------------------------------------------------------------------------------
+# Interactive-only ergonomics
+# ------------------------------------------------------------------------------
+if [[ -o interactive ]]; then
+  source "$ZDOTDIR/aliases.zsh"
+  source "$ZDOTDIR/completions.zsh"
+  source "$ZDOTDIR/compdefs.zsh"
+  source "$ZDOTDIR/keybindings.zsh"
+  source "$ZDOTDIR/word-jump.zsh"
+fi
 
+# ------------------------------------------------------------------------------
+# Prompt & tool initialization (interactive only)
+# ------------------------------------------------------------------------------
+if [[ -o interactive ]]; then
+  eval "$(starship init zsh)"
+  eval "$(zoxide init zsh)"
+  eval "$(mise activate zsh --shims)"
+fi
 
