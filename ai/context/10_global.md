@@ -30,6 +30,7 @@ Body guidelines (optional for small changes):
 - Explain *why* the change was made
 - Mention constraints or trade-offs
 - Reference relevant files or modules
+- Use bullet point format for readability
 
 Rules:
 - Use the imperative mood (“add”, not “added”)
