@@ -25,8 +25,8 @@ if [[ ! -f "$ROLE_FILE" ]]; then
   exit 1
 fi
 
-# Detect repo root (optional)
-REPO_ROOT=""
+# Detect repo root (fallback to current dir)
+REPO_ROOT="$PWD"
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
@@ -37,6 +37,8 @@ PROMPT="$(
   echo "Follow the role definition exactly."
   echo "Do not write code unless explicitly asked."
   echo
+  echo "Repository root: $REPO_ROOT"
+  echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
     cat "$f"
@@ -45,13 +47,18 @@ PROMPT="$(
 
   cat "$ROLE_FILE"
 
-  if [[ -n "$REPO_ROOT" && -f "$REPO_ROOT/AGENTS.md" ]]; then
+  if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
     echo
     echo "Repository context:"
     cat "$REPO_ROOT/AGENTS.md"
+  fi
+
+  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
+    echo
+    echo "Repository architecture index:"
+    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
   fi
 )"
 
 # Start interactive Codex session
 codex "$PROMPT"
-

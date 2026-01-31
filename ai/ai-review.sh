@@ -10,13 +10,20 @@ AI_DIR="$HOME/.config/ai"
 CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/reviewer.md"
 
+# Detect repo root (fallback to current dir)
+REPO_ROOT="$PWD"
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+fi
+
 PROMPT="$(
-  echo "You are operating in REVIEWER mode."
+  echo "You are an AI assistant engaged in an interactive technical conversation."
+  echo "Follow the role definition exactly."
   echo
-  echo "GLOBAL RULE:"
-  echo "You must NOT write or modify code."
-  echo "You must NOT propose diffs or patches."
-  echo "Explain issues, risks, and inconsistencies only."
+  echo "Repository root: $REPO_ROOT"
+  echo
+
+  echo "You are operating in REVIEWER mode."
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
@@ -25,7 +32,18 @@ PROMPT="$(
   done
 
   cat "$ROLE_FILE"
+
+  if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
+    echo
+    echo "Repository context:"
+    cat "$REPO_ROOT/AGENTS.md"
+  fi
+
+  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
+    echo
+    echo "Repository architecture index:"
+    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
+  fi
 )"
 
 codex "$PROMPT"
-

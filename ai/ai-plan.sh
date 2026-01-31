@@ -10,14 +10,20 @@ AI_DIR="$HOME/.config/ai"
 CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/planner.md"
 
+# Detect repo root (fallback to current dir)
+REPO_ROOT="$PWD"
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+fi
+
 PROMPT="$(
-  echo "You are operating in PLANNER mode."
+  echo "You are an AI assistant engaged in an interactive technical conversation."
+  echo "Follow the role definition exactly."
   echo
-  echo "GLOBAL RULE:"
-  echo "This is a READ-ONLY session."
-  echo "You are NOT allowed to modify, rewrite, or summarize existing files."
-  echo "You must describe changes abstractly as tasks or intentions."
-  echo "Exception: You are allowed to apply changes and/or create new files if generating documentation or plans, and not source code."
+  echo "Repository root: $REPO_ROOT"
+  echo
+
+  echo "You are operating in PLANNER mode."
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
@@ -26,7 +32,18 @@ PROMPT="$(
   done
 
   cat "$ROLE_FILE"
+
+  if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
+    echo
+    echo "Repository context:"
+    cat "$REPO_ROOT/AGENTS.md"
+  fi
+
+  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
+    echo
+    echo "Repository architecture index:"
+    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
+  fi
 )"
 
 codex "$PROMPT"
-
