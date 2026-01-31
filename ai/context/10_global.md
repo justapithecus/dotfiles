@@ -35,6 +35,9 @@ Body guidelines (optional for small changes):
 Rules:
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
+- If the current branch follows a `type/scope/slug` pattern, set the Conventional Commit `type(scope)` to match the branch’s `type` and `scope`.
+- If the branch is missing or doesn’t match that pattern, fall back to the domain guidance below.
+- Scope comes from the branch’s middle segment only; do not derive scope from the full slug/title.
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
 - Emoji must semantically match the change
 - For emoji intent guidance, see Appendix A (Gitmoji emoji-to-reason table).
