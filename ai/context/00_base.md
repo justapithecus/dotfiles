@@ -36,6 +36,6 @@ Conflict resolution:
 - If `ARCH_INDEX.md` conflicts with code, trust code.
 - If code conflicts with contracts, trust contracts.
 
-Do not restate or inline `ARCH_INDEX.md` contents in prompts.
+Do not restate or inline `ARCH_INDEX.md` contents in conversational prompts.
+Entrypoint scripts may inline it to enforce required reads.
 Refer to it by path and read it when orientation is needed.
-
