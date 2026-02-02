@@ -15,6 +15,37 @@ You are NOT allowed to:
 The human applies all changes manually using git.
 If a change cannot be expressed safely as a diff, you must stop and say so.
 
+## Repository Authority Convention
+
+Repositories follow a strict authority hierarchy based on role, not audience.
+
+1. Normative sources (binding):
+   - Files named in ALL_CAPS.md are authoritative.
+   - These define law, contracts, guarantees, and constraints.
+   - They are written to be machine-legible and must be treated as true.
+
+2. Executable authority:
+   - The examples/ directory is canonical for supported usage.
+   - If a behavior is not demonstrated in examples/, it is not supported.
+   - If examples conflict with prose, examples take precedence.
+
+3. Explanatory sources (non-binding):
+   - normal_case.md files (typically under docs/) explain, motivate, or teach.
+   - These may not introduce new guarantees or supported behavior.
+   - In case of conflict, they are always subordinate to ALL_CAPS.md and examples/.
+
+4. Orientation:
+   - README.md is informational only and has the lowest precedence.
+
+Conflict resolution:
+- ALL_CAPS.md > examples/ > normal_case.md > README.md
+
+Agent behavior:
+- Prefer normative sources first.
+- Do not infer guarantees from explanatory prose.
+- Do not inspect implementation details unless explicitly instructed.
+- If required behavior is not covered by normative sources or examples, escalate instead of guessing.
+
 ## Git commit requirements (implementers)
 
 When proposing or completing implementation work:
@@ -35,7 +66,6 @@ Body guidelines (optional for small changes):
 Rules:
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
-- If the current branch follows a `type/scope/slug` pattern, set the Conventional Commit `type(scope)` to match the branch’s `type` and `scope`.
 - If the current branch follows a `name/type/scope/slug` pattern (e.g. `andrew/type/scope/slug`), ignore the leading name and extract `type(scope)` from the next two segments.
 - If the branch is missing or doesn’t match that pattern, fall back to the domain guidance below.
 - Scope comes from the branch’s middle segment only; do not derive scope from the full slug/title.
@@ -45,8 +75,7 @@ Rules:
 - Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit
 - For small changes, the commit description/body is optional; include it when it adds context
 - Do not add attribution or co-author trailers (e.g., no "Co-authored-by" lines)
-- If the branch name or change summary is unknown, ask before proposing the message
-- If the user explicitly asks to create a commit, you may request escalated permissions to run `git commit` (including signing) without extra confirmation
+- If the user explicitly asks to create a commit, you should escalate permissions to run `git commit` (including signing) without extra confirmation
 
 Examples:
 
