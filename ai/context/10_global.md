@@ -36,6 +36,7 @@ Rules:
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
 - If the current branch follows a `type/scope/slug` pattern, set the Conventional Commit `type(scope)` to match the branch’s `type` and `scope`.
+- If the current branch follows a `name/type/scope/slug` pattern (e.g. `andrew/type/scope/slug`), ignore the leading name and extract `type(scope)` from the next two segments.
 - If the branch is missing or doesn’t match that pattern, fall back to the domain guidance below.
 - Scope comes from the branch’s middle segment only; do not derive scope from the full slug/title.
 - Domain must be specific (e.g. ai, nvim, shell, build, docs)
@@ -43,6 +44,7 @@ Rules:
 - For emoji intent guidance, see Appendix A (Gitmoji emoji-to-reason table).
 - Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit
 - For small changes, the commit description/body is optional; include it when it adds context
+- Do not add attribution or co-author trailers (e.g., no "Co-authored-by" lines)
 - If the branch name or change summary is unknown, ask before proposing the message
 - If the user explicitly asks to create a commit, you may request escalated permissions to run `git commit` (including signing) without extra confirmation
 
