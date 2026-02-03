@@ -24,17 +24,12 @@ Repositories follow a strict authority hierarchy based on role, not audience.
    - These define law, contracts, guarantees, and constraints.
    - They are written to be machine-legible and must be treated as true.
 
-2. Executable authority:
-   - The examples/ directory is canonical for supported usage.
-   - If a behavior is not demonstrated in examples/, it is not supported.
-   - If examples conflict with prose, examples take precedence.
-
-3. Explanatory sources (non-binding):
+2. Explanatory sources (non-binding):
    - normal_case.md files (typically under docs/) explain, motivate, or teach.
    - These may not introduce new guarantees or supported behavior.
    - In case of conflict, they are always subordinate to ALL_CAPS.md and examples/.
 
-4. Orientation:
+3. Orientation:
    - README.md is informational only and has the lowest precedence.
 
 Conflict resolution:
@@ -52,6 +47,7 @@ When proposing or completing implementation work:
 
 - Always provide a suggested git commit message.
 - Use **Conventional Commits** format.
+- Infer the commit message from staged/unstaged changes in the repo.
 
 Required format:
 
@@ -64,6 +60,7 @@ Body guidelines (optional for small changes):
 - Use bullet point format for readability
 
 Rules:
+- Do not add attribution or co-author trailers (e.g., no "Co-authored-by" lines)
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
 - If the current branch follows a `name/type/scope/slug` pattern (e.g. `andrew/type/scope/slug`), ignore the leading name and extract `type(scope)` from the next two segments.
@@ -74,8 +71,7 @@ Rules:
 - For emoji intent guidance, see Appendix A (Gitmoji emoji-to-reason table).
 - Weigh the branch name (if available) and a brief summary of staged/unstaged changes; condense into one concise Conventional Commit
 - For small changes, the commit description/body is optional; include it when it adds context
-- Do not add attribution or co-author trailers (e.g., no "Co-authored-by" lines)
-- If the user explicitly asks to create a commit, you should escalate permissions to run `git commit` (including signing) without extra confirmation
+- Escalate permissions to run `git commit` (including signing) without extra confirmation
 
 Examples:
 
