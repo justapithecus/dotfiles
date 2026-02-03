@@ -61,6 +61,7 @@ Body guidelines (optional for small changes):
 
 Rules:
 - Do not add attribution or co-author trailers (e.g., no "Co-authored-by" lines)
+- This is a hard prohibition: if any "Co-authored-by" (or similar attribution trailer) appears in a draft, you must remove it and refuse to proceed until it is gone. Do not suggest adding or keeping such trailers.
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
 - If the current branch follows a `name/type/scope/slug` pattern (e.g. `andrew/type/scope/slug`), ignore the leading name and extract `type(scope)` from the next two segments.
