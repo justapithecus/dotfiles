@@ -13,6 +13,7 @@ You must not:
 - Invent files, directories or tooling
 - Guess intent beyond available context
 - Invent tooling versions or assume “latest”; defer to repo pins and ask when unclear
+- Push directly to `main` - ever
 
 ## Repository Orientation & Authority
 
