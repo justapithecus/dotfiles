@@ -16,8 +16,10 @@ mkdir -p "$HOME/.config"
 
 ZSHENV="$HOME/.zshenv"
 PROFILE="$HOME/.profile"
+ZDOT_ZSHENV="$ZDOTDIR_PATH/.zshenv"
 ZDOT_LINE='export ZDOTDIR="$HOME/.config/zsh"'
-ZSHENV_CUSTOM_LINE='[[ -f "$HOME/.config/zsh/.zshenv_custom" ]] && source "$HOME/.config/zsh/.zshenv_custom"'
+ZDOT_ZSHENV_LINE='[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"'
+ZDOT_ZSHENV_CUSTOM_LINE='[[ -f "$HOME/.config/zsh/.zshenv_custom" ]] && source "$HOME/.config/zsh/.zshenv_custom"'
 PROFILE_ENV_LINE='[ -f "$HOME/.config/zsh/.zshenv_custom" ] && . "$HOME/.config/zsh/.zshenv_custom"'
 
 if [[ ! -f "$ZSHENV" ]]; then
@@ -26,8 +28,14 @@ elif ! grep -Fxq "$ZDOT_LINE" "$ZSHENV"; then
   printf '\n%s\n' "$ZDOT_LINE" >> "$ZSHENV"
 fi
 
-if ! grep -Fxq "$ZSHENV_CUSTOM_LINE" "$ZSHENV"; then
-  printf '\n%s\n' "$ZSHENV_CUSTOM_LINE" >> "$ZSHENV"
+if ! grep -Fxq "$ZDOT_ZSHENV_LINE" "$ZSHENV"; then
+  printf '\n%s\n' "$ZDOT_ZSHENV_LINE" >> "$ZSHENV"
+fi
+
+if [[ ! -f "$ZDOT_ZSHENV" ]]; then
+  printf '%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" > "$ZDOT_ZSHENV"
+elif ! grep -Fxq "$ZDOT_ZSHENV_CUSTOM_LINE" "$ZDOT_ZSHENV"; then
+  printf '\n%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" >> "$ZDOT_ZSHENV"
 fi
 
 if [[ ! -f "$PROFILE" ]]; then
