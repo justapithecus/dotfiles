@@ -36,3 +36,7 @@ if [[ -o interactive ]]; then
   eval "$(mise activate zsh --shims)"
 fi
 
+# ------------------------------------------------------------------------------
+# Local machine overrides (untracked secrets, host-specific settings)
+# ------------------------------------------------------------------------------
+[[ -f "$ZDOTDIR/.zshrc_custom" ]] && source "$ZDOTDIR/.zshrc_custom"
