@@ -1,34 +1,110 @@
-# dotfiles
+# Dotfiles
 
-Linux userland and development environment configurations
+This repository contains my personal dotfiles: shell, editor, terminal, and
+supporting scripts used on my development machines.
 
-## Directory overview
+It also contains an `ai/` directory, which houses prompts and tooling I use to
+work with AI assistants.
 
-- [ai](ai/) — AI tooling scripts plus context and role definitions.
-- [fonts](fonts/) — Nerd Font installation scripts.
-- [git](git/) — Placeholder for git-related configuration.
-- [helix](helix/) — Placeholder for Helix editor configuration.
-- [konsole](konsole/) — Konsole profiles and color schemes.
-- [nvim](nvim/) — Neovim config bundle (install script, overlay, package list).
-- [scripts](scripts/) — Placeholder for standalone scripts.
-- [shell](shell/) — Shell setup (install script, starship, zsh configs).
+---
 
-## Conventions and principles
+## Repository Layout
 
-This repo favors copy-based installs (no symlinks) and idempotent scripts that can be run repeatedly without manual cleanup. The intent is a one-shot bootstrap flow at the root, with each subdirectory owning its own install script for local concerns. In practice this means installers create needed directories and overwrite target files rather than link them.
+```
+dotfiles/
+├── ai/          # AI prompts, roles, and agent tooling
+├── shell/       # Shell configuration and environment setup
+├── editor/      # Editor configuration (Neovim, Helix, etc.)
+├── terminal/    # Terminal emulator configuration
+├── scripts/     # Miscellaneous human-facing scripts
+├── fonts/       # Font assets
+└── ...
+```
 
-These conventions are reflected in `install.sh` at the repo root and the corresponding `install.sh` files inside each subtree.
+Each top-level directory has a distinct responsibility. The intent is to keep
+these responsibilities separate so that changes in one area do not cascade
+unnecessarily into others.
 
-## Publication notes
+---
 
-This repo is intended to be public, but it contains installer scripts that run privileged and networked actions. In particular:
-- `install.sh` adds an external repo and installs packages with sudo.
-- `ai/deps.sh` uses a `curl | sh` installer for Claude Code.
+## `shell/`
 
-If you run these scripts, read them first and only execute on a machine you control.
+Shell initialization and environment wiring.
 
-## Top-level files
+Typical contents:
+- shell init files
+- aliases and functions
+- environment variables
+- toolchain setup
 
-- [AGENTS.md](AGENTS.md) — Repository-specific instructions for automated agents.
-- [install.sh](install.sh) — Root installer entrypoint for dotfiles setup.
-- [README.md](README.md) — This overview.
+This directory defines how commands execute and how the environment behaves.
+
+---
+
+## `editor/`
+
+Editor configuration.
+
+Typical contents:
+- Neovim or Helix configuration
+- editor-specific keybindings
+- editor plugins and settings
+
+This directory is editor-specific and intentionally isolated from shell logic.
+
+---
+
+## `terminal/`
+
+Terminal emulator configuration.
+
+Typical contents:
+- Konsole profiles
+- terminal appearance and behavior settings
+
+This directory affects how terminals look and behave, not what they execute.
+
+---
+
+## `scripts/`
+
+Human-facing scripts and helpers.
+
+Typical contents:
+- ad-hoc workflow helpers
+- system utilities
+- personal glue scripts
+
+Scripts here are meant to be run directly by a human. Scripts that primarily
+exist to support AI workflows live under `ai/` instead.
+
+---
+
+## `fonts/`
+
+Font assets used by the terminal and editor configurations.
+
+---
+
+## `ai/`
+
+AI-related prompts, roles, context, and tooling.
+
+This directory exists to support how I work with AI assistants. It contains:
+- prompt fragments
+- role definitions
+- persistent context files
+- small tools used alongside agents
+
+The internal structure of `ai/` is documented for agents in
+[`ARCH_INDEX.md`](./ARCH_INDEX.md).
+
+---
+
+## Notes
+
+- This repository is personal and opinionated.
+- It is not intended to be a reusable dotfiles template.
+- Structure matters more than polish.
+- Intent is to facilitate AI to continuously bootstrap and augment itself further.
+
