@@ -15,8 +15,10 @@ mkdir -p "$ZDOTDIR_PATH"
 mkdir -p "$HOME/.config"
 
 ZSHENV="$HOME/.zshenv"
+PROFILE="$HOME/.profile"
 ZDOT_LINE='export ZDOTDIR="$HOME/.config/zsh"'
 ZSHENV_CUSTOM_LINE='[[ -f "$HOME/.config/zsh/.zshenv_custom" ]] && source "$HOME/.config/zsh/.zshenv_custom"'
+PROFILE_ENV_LINE='[ -f "$HOME/.config/zsh/.zshenv_custom" ] && . "$HOME/.config/zsh/.zshenv_custom"'
 
 if [[ ! -f "$ZSHENV" ]]; then
   printf '%s\n' "$ZDOT_LINE" > "$ZSHENV"
@@ -26,6 +28,12 @@ fi
 
 if ! grep -Fxq "$ZSHENV_CUSTOM_LINE" "$ZSHENV"; then
   printf '\n%s\n' "$ZSHENV_CUSTOM_LINE" >> "$ZSHENV"
+fi
+
+if [[ ! -f "$PROFILE" ]]; then
+  printf '%s\n' "$PROFILE_ENV_LINE" > "$PROFILE"
+elif ! grep -Fxq "$PROFILE_ENV_LINE" "$PROFILE"; then
+  printf '\n%s\n' "$PROFILE_ENV_LINE" >> "$PROFILE"
 fi
 
 touch "$ZDOTDIR_PATH/.zprofile" "$ZDOTDIR_PATH/.zlogin" "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
