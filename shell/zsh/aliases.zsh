@@ -2,7 +2,7 @@
 # general: shell
 # ==========================================================
 alias vi='$EDITOR'                           # use nvim
-alias .z='source $ZDOTDIR/.zshrc'            # reload your shell config
+alias .z='source $ZDOTDIR/.zshenv && source $ZDOTDIR/.zshrc' # reload env + config
 alias .ze='$EDITOR $ZDOTDIR/.zshrc_custom'   # edit your shell config
 # edit + reload
 alias .zer='$EDITOR "$ZDOTDIR/.zshrc_custom" && source "$ZDOTDIR/.zshrc"'
@@ -197,4 +197,3 @@ alias aic="$HOME/.config/ai/ai-chat.sh"
 alias aip="$HOME/.config/ai/ai-plan.sh"
 alias air="$HOME/.config/ai/ai-review.sh"
 alias aii="$HOME/.config/ai/ai-implement.sh"
-
