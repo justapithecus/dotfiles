@@ -18,7 +18,8 @@ ZSHENV="$HOME/.zshenv"
 ZDOT_ZSHENV="$ZDOTDIR_PATH/.zshenv"
 ZDOT_LINE='export ZDOTDIR="$HOME/.config/zsh"'
 ZDOT_ZSHENV_LINE='[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"'
-ZDOT_ZSHENV_CUSTOM_LINE='[[ -f "$HOME/.config/zsh/.zshenv_custom" ]] && source "$HOME/.config/zsh/.zshenv_custom"'
+ZDOT_ENV_LINE='[[ -f "$ZDOTDIR/env.zsh" ]] && source "$ZDOTDIR/env.zsh"'
+ZDOT_ZSHENV_CUSTOM_LINE='[[ -f "$ZDOTDIR/.zshenv_custom" ]] && source "$ZDOTDIR/.zshenv_custom"'
 
 if [[ ! -f "$ZSHENV" ]]; then
   printf '%s\n' "$ZDOT_LINE" > "$ZSHENV"
@@ -31,13 +32,17 @@ if ! grep -Fxq "$ZDOT_ZSHENV_LINE" "$ZSHENV"; then
 fi
 
 if [[ ! -f "$ZDOT_ZSHENV" ]]; then
-  printf '%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" > "$ZDOT_ZSHENV"
-elif ! grep -Fxq "$ZDOT_ZSHENV_CUSTOM_LINE" "$ZDOT_ZSHENV"; then
-  printf '\n%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" >> "$ZDOT_ZSHENV"
+  printf '%s\n%s\n' "$ZDOT_ENV_LINE" "$ZDOT_ZSHENV_CUSTOM_LINE" > "$ZDOT_ZSHENV"
+else
+  if ! grep -Fxq "$ZDOT_ENV_LINE" "$ZDOT_ZSHENV"; then
+    printf '\n%s\n' "$ZDOT_ENV_LINE" >> "$ZDOT_ZSHENV"
+  fi
+  if ! grep -Fxq "$ZDOT_ZSHENV_CUSTOM_LINE" "$ZDOT_ZSHENV"; then
+    printf '\n%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" >> "$ZDOT_ZSHENV"
+  fi
 fi
 
-
-touch "$ZDOTDIR_PATH/.zprofile" "$ZDOTDIR_PATH/.zlogin" "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
+touch "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
 chmod 600 "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
 
 if [[ ! -s "$ZDOTDIR_PATH/.zshrc_custom" ]]; then
@@ -50,12 +55,16 @@ fi
 
 copy() { rm -f "$2"; cp -f "$1" "$2"; }
 
-copy "$DOTFILES_DIR/shell/zsh/keybindings.zsh" "$ZDOTDIR_PATH/keybindings.zsh"
-copy "$DOTFILES_DIR/shell/zsh/word-jump.zsh"   "$ZDOTDIR_PATH/word-jump.zsh"
-copy "$DOTFILES_DIR/shell/zsh/env.zsh"         "$ZDOTDIR_PATH/env.zsh"
-copy "$DOTFILES_DIR/shell/zsh/aliases.zsh"     "$ZDOTDIR_PATH/aliases.zsh"
-copy "$DOTFILES_DIR/shell/zsh/completions.zsh" "$ZDOTDIR_PATH/completions.zsh"
-copy "$DOTFILES_DIR/shell/zsh/compdefs.zsh"    "$ZDOTDIR_PATH/compdefs.zsh"
-copy "$DOTFILES_DIR/shell/zsh/.zshrc"          "$ZDOTDIR_PATH/.zshrc"
+for filename in \
+  keybindings.zsh \
+  word-jump.zsh \
+  env.zsh \
+  aliases.zsh \
+  completions.zsh \
+  compdefs.zsh \
+  .zshrc
+do
+  copy "$DOTFILES_DIR/shell/zsh/$filename" "$ZDOTDIR_PATH/$filename"
+done
 
 copy "$DOTFILES_DIR/shell/starship.toml"       "$HOME/.config/starship.toml"
