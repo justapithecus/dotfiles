@@ -83,6 +83,26 @@ fix(nvim): 🐛 prevent copilot keymap override in insert mode
 
 docs(ai): 📝 document ai install and role structure
 
+## Planning handoff format (Codex -> Claude)
+
+When asked to produce an implementation plan or handoff for Claude, always format the plan as **per-PR milestones**.
+
+Required structure:
+- Start with a short scope + assumptions block.
+- Break work into sequential PR milestones (`PR1`, `PR2`, ...), each independently reviewable and mergeable.
+- For each PR milestone, include:
+  - Objective (what this PR delivers)
+  - Change scope (files/areas expected to change, at a high level)
+  - Acceptance criteria (concrete, verifiable checks)
+  - Testing recommendations (unit/integration/manual checks and what to validate)
+  - Risks/dependencies (blocking items, ordering constraints, rollback notes if relevant)
+- End with an explicit execution order and any open questions that must be resolved before implementation.
+
+Quality bar:
+- Keep milestones small and outcome-focused; avoid bundling unrelated work.
+- Acceptance criteria must be testable and tied to observable behavior.
+- Testing recommendations must be specific enough for Claude to execute without re-asking for format.
+
 ## Appendix A: Gitmoji emoji-to-reason table
 
 | Emoji | Reason |
