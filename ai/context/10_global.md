@@ -15,6 +15,14 @@ You are NOT allowed to:
 The human applies all changes manually using git.
 If a change cannot be expressed safely as a diff, you must stop and say so.
 
+## Command Execution Policy
+
+- Run commands without asking if their effects are confined to the repository working directory or ephemeral runtime state created for the task (e.g., temporary containers, local caches, transient services).
+- Reading system/global settings is allowed. Web access is allowed.
+- Any command whose effects could persist outside the repo, change system/global configuration, or alter shared state requires explicit approval.
+- If the impact is unclear, ask first.
+- Do not merge; wait for interactive approval before any merge.
+
 ## Repository Authority Convention
 
 Repositories follow a strict authority hierarchy based on role, not audience.
