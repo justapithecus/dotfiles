@@ -21,26 +21,8 @@ ZDOT_ZSHENV_LINE='[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"'
 ZDOT_ENV_LINE='[[ -f "$ZDOTDIR/env.zsh" ]] && source "$ZDOTDIR/env.zsh"'
 ZDOT_ZSHENV_CUSTOM_LINE='[[ -f "$ZDOTDIR/.zshenv_custom" ]] && source "$ZDOTDIR/.zshenv_custom"'
 
-if [[ ! -f "$ZSHENV" ]]; then
-  printf '%s\n' "$ZDOT_LINE" > "$ZSHENV"
-elif ! grep -Fxq "$ZDOT_LINE" "$ZSHENV"; then
-  printf '\n%s\n' "$ZDOT_LINE" >> "$ZSHENV"
-fi
-
-if ! grep -Fxq "$ZDOT_ZSHENV_LINE" "$ZSHENV"; then
-  printf '\n%s\n' "$ZDOT_ZSHENV_LINE" >> "$ZSHENV"
-fi
-
-if [[ ! -f "$ZDOT_ZSHENV" ]]; then
-  printf '%s\n%s\n' "$ZDOT_ENV_LINE" "$ZDOT_ZSHENV_CUSTOM_LINE" > "$ZDOT_ZSHENV"
-else
-  if ! grep -Fxq "$ZDOT_ENV_LINE" "$ZDOT_ZSHENV"; then
-    printf '\n%s\n' "$ZDOT_ENV_LINE" >> "$ZDOT_ZSHENV"
-  fi
-  if ! grep -Fxq "$ZDOT_ZSHENV_CUSTOM_LINE" "$ZDOT_ZSHENV"; then
-    printf '\n%s\n' "$ZDOT_ZSHENV_CUSTOM_LINE" >> "$ZDOT_ZSHENV"
-  fi
-fi
+printf '%s\n%s\n' "$ZDOT_LINE" "$ZDOT_ZSHENV_LINE" > "$ZSHENV"
+printf '%s\n%s\n' "$ZDOT_ENV_LINE" "$ZDOT_ZSHENV_CUSTOM_LINE" > "$ZDOT_ZSHENV"
 
 touch "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
 chmod 600 "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
