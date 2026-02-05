@@ -29,6 +29,15 @@ if ! grep -Fxq "$ZSHENV_CUSTOM_LINE" "$ZSHENV"; then
 fi
 
 touch "$ZDOTDIR_PATH/.zprofile" "$ZDOTDIR_PATH/.zlogin" "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
+chmod 600 "$ZDOTDIR_PATH/.zshrc_custom" "$ZDOTDIR_PATH/.zshenv_custom"
+
+if [[ ! -s "$ZDOTDIR_PATH/.zshrc_custom" ]]; then
+  printf '# Local interactive-only overrides (aliases, prompt tweaks, etc.)\n' > "$ZDOTDIR_PATH/.zshrc_custom"
+fi
+
+if [[ ! -s "$ZDOTDIR_PATH/.zshenv_custom" ]]; then
+  printf '# Local env exports for all zsh modes (tokens, host-specific vars)\n' > "$ZDOTDIR_PATH/.zshenv_custom"
+fi
 
 copy() { rm -f "$2"; cp -f "$1" "$2"; }
 
