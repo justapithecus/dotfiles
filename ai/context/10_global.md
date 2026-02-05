@@ -17,13 +17,11 @@ If a change cannot be expressed safely as a diff, you must stop and say so.
 
 ## Command Execution Policy
 
-- Run commands without asking if they are read-only or only change files inside the repository working directory.
-- Never ask before running commands whose effects are confined to the repo working directory or ephemeral runtime state (includes build/test/lint/tooling runs that only touch workspace files, local caches, or temporary containers).
-- Running tests and tools that create temporary runtime state (e.g., containers, ephemeral services, caches) is allowed.
-- Reading system/global settings is allowed. Web searches are allowed.
-- Any command that changes system state, global configuration, or anything outside the repository (including global installs or global version changes) requires explicit approval.
+- Run commands without asking if their effects are confined to the repository working directory or ephemeral runtime state created for the task (e.g., temporary containers, local caches, transient services).
+- Reading system/global settings is allowed. Web access is allowed.
+- Any command whose effects could persist outside the repo, change system/global configuration, or alter shared state requires explicit approval.
 - If the impact is unclear, ask first.
-- Do not merge PRs; wait for interactive approval.
+- Do not merge; wait for interactive approval before any merge.
 
 ## Repository Authority Convention
 
