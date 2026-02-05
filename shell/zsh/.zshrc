@@ -8,7 +8,7 @@
 # Aliases may still be defined later, but will never expand.
 # ------------------------------------------------------------------------------
 if [[ ! -o interactive ]]; then
-  setopt NO_ALIAS
+  setopt NO_ALIASES
 fi
 
 # ------------------------------------------------------------------------------
