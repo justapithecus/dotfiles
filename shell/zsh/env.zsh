@@ -7,8 +7,10 @@ setopt autocd
 setopt correct
 setopt extendedglob
 
-# gastown — durable artifact system (see tools/gastown/)
-export GASTOWN_HOME="$HOME/workspace/gastown"
+# go binaries — gastown (gt) and other go-installed tools
+if [ -d "$HOME/go/bin" ]; then
+  export PATH="$HOME/go/bin:$PATH"
+fi
 
 # npm user-local global binaries (for tools like codex reviewer)
 if [ -d "$HOME/.npm-global/bin" ]; then

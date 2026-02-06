@@ -1,26 +1,27 @@
 # gastown
 
-Durable artifact system for curated AI work products.
+[Gas Town](https://github.com/steveyegge/gastown) (`gt`) is a multi-agent workspace manager for Claude Code with persistent work tracking.
 
-Artifacts live at `$GASTOWN_HOME` (default: `~/workspace/gastown`).
+## Install
 
-## Structure
+```sh
+bash tools/gastown/install.sh
+```
 
-- `towns/` — named artifact collections
-- `conversations/` — conversation-level exports
-- `fragments/` — reusable pieces and partials
-- `scratch/` — temporary working space
+This sets up Go 1.25.6 via mise (global) and installs the `gt` binary via `go install`.
+
+After install, create a workspace:
+
+```sh
+gt install ~/gt --git
+```
+
+## Shell integration
+
+`env.sh` adds `~/go/bin` to PATH so `gt` is available in all shells.
+This is sourced automatically via `shell/zsh/env.zsh`.
 
 ## How it differs from ai/tools/
 
 `ai/tools/` contains agent-built tools that operate during live sessions.
-gastown manages curated artifacts and does not observe or intercept live agent interaction.
-
-## Setup
-
-```sh
-source tools/gastown/env.sh   # defines GASTOWN_HOME
-bash tools/gastown/install.sh  # creates the directory structure
-```
-
-Installation is explicit. Nothing runs automatically on shell startup.
+gastown manages multi-agent orchestration and does not live under the AI substrate.
