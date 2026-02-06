@@ -2,7 +2,18 @@
 set -euo pipefail
 
 # ==========================================================
-# Codex CLI
+# Claude Code (primary — chat, plan, implement)
+# ==========================================================
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "Installing Claude Code…"
+  curl -fsSL https://claude.ai/install.sh | sh
+else
+  echo "Claude Code already installed"
+fi
+
+# ==========================================================
+# Codex CLI (optional — reviewer only)
 # ==========================================================
 
 if ! command -v codex >/dev/null 2>&1; then
@@ -15,16 +26,5 @@ if ! command -v codex >/dev/null 2>&1; then
   fi
 else
   echo "Codex CLI already installed"
-fi
-
-# ==========================================================
-# Claude Code
-# ==========================================================
-
-if ! command -v claude >/dev/null 2>&1; then
-  echo "Installing Claude Code…"
-  curl -fsSL https://claude.ai/install.sh | sh
-else
-  echo "Claude Code already installed"
 fi
 

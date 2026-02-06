@@ -1,29 +1,29 @@
 # AI tooling
 
-This directory contains lightweight scripts and role prompts for AI-assisted development using OpenAI Codex CLI and Claude Code.
+This directory contains lightweight scripts and role prompts for AI-assisted development using Claude Code (with Codex CLI retained for the reviewer).
 
 ## Contents
 
-- `ai-chat.sh`: Starts an interactive Codex session with a selected role.
-- `ai-plan.sh`: Starts Codex in read-only planner mode.
+- `ai-chat.sh`: Starts an interactive Claude session with a selected role.
+- `ai-plan.sh`: Starts Claude in read-only planner mode.
 - `ai-review.sh`: Starts Codex in read-only reviewer mode.
 - `ai-implement.sh`: Starts Claude Code with the implementer role.
 - `install.sh`: Installs scripts and role prompts into `~/.config/ai`.
-- `deps.sh`: Installs Codex CLI and Claude Code if not already present.
+- `deps.sh`: Installs Claude Code and Codex CLI if not already present.
 - `roles/`: Role prompt files used by `ai-chat.sh`.
 - `context/`: Shared context snippets included in prompts.
 
 ## Requirements
 
-- `codex` (OpenAI Codex CLI) for chat/plan/review scripts.
-- `claude` (Claude Code) for the implement script.
-- `npm` if you want `deps.sh` to install Codex.
+- `claude` (Claude Code) for chat, plan, and implement scripts.
+- `codex` (OpenAI Codex CLI) for the review script.
 - `curl` if you want `deps.sh` to install Claude Code.
+- `npm` if you want `deps.sh` to install Codex.
 
 ## Install
 
 ```sh
-./ai/deps.sh      # installs codex and claude
+./ai/deps.sh      # installs claude and codex
 ./ai/install.sh
 ```
 

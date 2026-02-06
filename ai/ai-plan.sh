@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-command -v codex >/dev/null 2>&1 || {
-  echo "codex not found. Run ./ai/deps.sh"
+command -v claude >/dev/null 2>&1 || {
+  echo "claude not found. Run ./ai/deps.sh"
   exit 1
 }
 
@@ -16,7 +16,7 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
 
-PROMPT="$(
+SYSTEM_PROMPT="$(
   echo "You are an AI assistant engaged in an interactive technical conversation."
   echo "Follow the role definition exactly."
   echo
@@ -46,4 +46,4 @@ PROMPT="$(
   fi
 )"
 
-codex "$PROMPT"
+exec claude --system-prompt "$SYSTEM_PROMPT" "$@"
