@@ -96,12 +96,11 @@ Font assets used by terminal or editor configurations.
 Standalone tooling that lives outside the AI substrate.
 
 Contents:
-- `gastown/` — durable artifact system for curated AI work products
+- `gastown/` — installer and env wiring for [Gas Town](https://github.com/steveyegge/gastown) multi-agent workspace manager
 
 Rules:
-- No live agent coupling
-- No background automation
 - Installation is explicit and user-controlled
+- Each tool manages its own install script and env integration
 
 ---
 
