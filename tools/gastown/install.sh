@@ -21,6 +21,18 @@ mise use -g go@"$GO_VERSION"
 # Ensure go is on PATH for this session
 eval "$(mise activate bash --shims)"
 
+# --- beads (bd) via official installer ---
+
+if command -v bd >/dev/null 2>&1; then
+  echo "  exists  $(bd version 2>/dev/null || echo 'bd')"
+else
+  echo "▶ Installing beads (bd)"
+  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+fi
+
+# Ensure ~/.local/bin is on PATH for this session (beads installs there)
+export PATH="$HOME/.local/bin:$PATH"
+
 # --- gastown (gt) via go install ---
 
 echo "▶ Installing gastown (gt)"
