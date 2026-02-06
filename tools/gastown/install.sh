@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# gastown installer
-# Creates the gastown directory structure under ~/workspace.
+# gastown (gt) installer
+# Ensures Go is available via mise, then installs the gt binary.
 # Idempotent — safe to run multiple times.
 
-GASTOWN_HOME="${GASTOWN_HOME:-$HOME/workspace/gastown}"
+GO_VERSION="1.25.6"
 
-dirs=(
-  "$GASTOWN_HOME"
-  "$GASTOWN_HOME/towns"
-  "$GASTOWN_HOME/conversations"
-  "$GASTOWN_HOME/fragments"
-  "$GASTOWN_HOME/scratch"
-)
+# --- Go via mise (global) ---
 
-for dir in "${dirs[@]}"; do
-  if [[ -d "$dir" ]]; then
-    echo "  exists  $dir"
-  else
-    mkdir -p "$dir"
-    echo "  created $dir"
-  fi
-done
+if ! command -v mise >/dev/null 2>&1; then
+  echo "✖ mise is required but not found"
+  exit 1
+fi
+
+if ! mise ls --installed go 2>/dev/null | grep -q "$GO_VERSION"; then
+  echo "▶ Installing Go $GO_VERSION via mise"
+  mise use -g go@"$GO_VERSION"
+else
+  echo "  exists  go@$GO_VERSION (mise global)"
+fi
+
+# Ensure go is on PATH for this session
+eval "$(mise activate bash --shims)"
+
+# --- gastown (gt) via go install ---
+
+echo "▶ Installing gastown (gt)"
+go install github.com/steveyegge/gastown/cmd/gt@latest
+
+if command -v gt >/dev/null 2>&1; then
+  echo "  installed  $(gt --version 2>/dev/null || echo 'gt')"
+else
+  echo "  installed  gt to $(go env GOPATH)/bin/gt"
+  echo "  note: ensure $(go env GOPATH)/bin is on your PATH"
+fi
 
 echo
-echo "gastown is ready at $GASTOWN_HOME"
+echo "gastown is ready. Run 'gt install ~/gt --git' to create a workspace."
