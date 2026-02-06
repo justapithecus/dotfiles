@@ -31,6 +31,7 @@ All GitHub releases must follow a single, consistent format.
 
 **Body template:**
 
+- **Quick tagline**
 - `## Summary` — 1–2 sentences
 - `## Highlights` — 3–6 bullets
 - `## Breaking Changes` — only if applicable
