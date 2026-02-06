@@ -23,6 +23,27 @@ If a change cannot be expressed safely as a diff, you must stop and say so.
 - If the impact is unclear, ask first.
 - Do not merge; wait for interactive approval before any merge.
 
+## GitHub release format standard
+
+All GitHub releases must follow a single, consistent format.
+
+**Title:** `vX.Y.Z` (no extra tagline in title)
+
+**Body template:**
+
+- `## Summary` — 1–2 sentences
+- `## Highlights` — 3–6 bullets
+- `## Breaking Changes` — only if applicable
+- `## Upgrade Notes` — only if applicable
+- `## Known Limitations` — only if applicable
+- `## References` — only if applicable
+- `**Full Changelog**: https://github.com/justapithecus/lode/compare/PREV...vX.Y.Z`
+
+**Rules:**
+- Do not repeat the version in the body header.
+- Do not include auto-generated “What’s Changed” lists.
+- Keep the body concise and user-facing.
+
 ## Repository Authority Convention
 
 Repositories follow a strict authority hierarchy based on role, not audience.
