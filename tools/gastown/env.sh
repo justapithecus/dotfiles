@@ -1,10 +1,13 @@
 # gastown environment
-# Ensures the gt binary (installed via go install) is on PATH.
+# Ensures gt (~/go/bin) and bd (~/.local/bin) are on PATH.
 # No side effects beyond PATH. Safe to source multiple times.
 
-if [ -d "$HOME/go/bin" ]; then
-  case ":$PATH:" in
-    *":$HOME/go/bin:"*) ;;
-    *) export PATH="$HOME/go/bin:$PATH" ;;
-  esac
-fi
+for _gt_dir in "$HOME/go/bin" "$HOME/.local/bin"; do
+  if [ -d "$_gt_dir" ]; then
+    case ":$PATH:" in
+      *":$_gt_dir:"*) ;;
+      *) export PATH="$_gt_dir:$PATH" ;;
+    esac
+  fi
+done
+unset _gt_dir
