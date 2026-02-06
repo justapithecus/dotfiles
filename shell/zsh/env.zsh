@@ -7,7 +7,7 @@ setopt autocd
 setopt correct
 setopt extendedglob
 
-# npm user-local global binaries (for tools like codex)
+# npm user-local global binaries (for tools like codex reviewer)
 if [ -d "$HOME/.npm-global/bin" ]; then
   export PATH="$HOME/.npm-global/bin:$PATH"
 fi

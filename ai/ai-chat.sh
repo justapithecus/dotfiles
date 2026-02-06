@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Preflight
-command -v codex >/dev/null 2>&1 || {
-  echo "codex not found. Run ./ai/deps.sh"
+command -v claude >/dev/null 2>&1 || {
+  echo "claude not found. Run ./ai/deps.sh"
   exit 1
 }
 
@@ -31,8 +31,8 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
 
-# Build initial prompt
-PROMPT="$(
+# Build system prompt
+SYSTEM_PROMPT="$(
   echo "You are an AI assistant engaged in an interactive technical conversation."
   echo "Follow the role definition exactly."
   echo "Do not write code unless explicitly asked."
@@ -60,5 +60,5 @@ PROMPT="$(
   fi
 )"
 
-# Start interactive Codex session
-codex "$PROMPT"
+# Start interactive Claude session
+exec claude --system-prompt "$SYSTEM_PROMPT" "$@"
