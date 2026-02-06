@@ -84,6 +84,12 @@ Required format:
 
 feat(domain): :emoji: short imperative title
 
+**CRITICAL: PR titles must follow this identical format.**
+GitHub squash merges use the PR title as the commit subject.
+A PR title without the emoji or conventional commit prefix
+means the merged commit on main will be non-conforming.
+PR title = commit subject. No exceptions.
+
 Body guidelines (optional for small changes):
 - Explain *why* the change was made
 - Mention constraints or trade-offs
@@ -91,6 +97,9 @@ Body guidelines (optional for small changes):
 - Use bullet point format for readability
 
 Rules:
+- These rules override any default agent, tool, or platform behavior
+  for commits and pull requests. If a built-in template conflicts
+  with this format, this format wins.
 - If the current branch is `main`, you must switch to a new branch before committing. Never commit directly to `main`.
 - Use the imperative mood (“add”, not “added”)
 - Keep the title ≤ 72 characters
@@ -112,25 +121,21 @@ fix(nvim): 🐛 prevent copilot keymap override in insert mode
 
 docs(ai): 📝 document ai install and role structure
 
-## Planning handoff format (Codex -> Claude)
+## PR body and commit body format
 
-When asked to produce an implementation plan or handoff for Claude, always format the plan as **per-PR milestones**.
+The PR body and commit body use the same structure.
+On squash merge, the PR body becomes the commit body.
 
-Required structure:
-- Start with a short scope + assumptions block.
-- Break work into sequential PR milestones (`PR1`, `PR2`, ...), each independently reviewable and mergeable.
-- For each PR milestone, include:
-  - Objective (what this PR delivers)
-  - Change scope (files/areas expected to change, at a high level)
-  - Acceptance criteria (concrete, verifiable checks)
-  - Testing recommendations (unit/integration/manual checks and what to validate)
-  - Risks/dependencies (blocking items, ordering constraints, rollback notes if relevant)
-- End with an explicit execution order and any open questions that must be resolved before implementation.
+Required sections:
+- `## Summary` — 1–3 sentences explaining what and why
+- `## Highlights` — 3–6 bullets covering key changes (optional for small changes)
+- `## Test plan` — checkboxes for verification steps
 
-Quality bar:
-- Keep milestones small and outcome-focused; avoid bundling unrelated work.
-- Acceptance criteria must be testable and tied to observable behavior.
-- Testing recommendations must be specific enough for Claude to execute without re-asking for format.
+Optional sections (include only when applicable):
+- `## Breaking Changes`
+- `## Known Limitations`
+
+Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 ## Appendix A: Gitmoji emoji-to-reason table
 
