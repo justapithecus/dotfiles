@@ -39,7 +39,7 @@ install_packages() {
       sudo zypper refresh
       sudo zypper install -y \
         zsh starship fzf bat eza ripgrep zoxide git-core mise \
-        nodejs
+        nodejs tmux
       ;;
   esac
 }
