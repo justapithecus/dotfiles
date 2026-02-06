@@ -14,12 +14,9 @@ if ! command -v mise >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! mise ls --installed go 2>/dev/null | grep -q "$GO_VERSION"; then
-  echo "▶ Installing Go $GO_VERSION via mise"
-  mise use -g go@"$GO_VERSION"
-else
-  echo "  exists  go@$GO_VERSION (mise global)"
-fi
+# mise use -g is idempotent — installs if missing, sets global either way
+echo "▶ Ensuring Go $GO_VERSION is set globally via mise"
+mise use -g go@"$GO_VERSION"
 
 # Ensure go is on PATH for this session
 eval "$(mise activate bash --shims)"
