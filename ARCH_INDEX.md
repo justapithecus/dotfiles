@@ -91,6 +91,20 @@ Font assets used by terminal or editor configurations.
 
 ---
 
+## tools/
+
+Standalone tooling that lives outside the AI substrate.
+
+Contents:
+- `gastown/` — durable artifact system for curated AI work products
+
+Rules:
+- No live agent coupling
+- No background automation
+- Installation is explicit and user-controlled
+
+---
+
 ## Architectural Notes
 
 - This repository is a **personal computing substrate**, not a product
