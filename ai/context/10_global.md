@@ -31,7 +31,7 @@ All GitHub releases must follow a single, consistent format.
 
 **Body template:**
 
-- **Quick tagline**
+- **Tagline** — a bold, title-like phrase on its own line with no label and no trailing period
 - `## Summary` — 1–2 sentences
 - `## Highlights` — 3–6 bullets
 - `## Breaking Changes` — only if applicable
@@ -44,6 +44,7 @@ All GitHub releases must follow a single, consistent format.
 - Do not repeat the version in the body header.
 - Do not include auto-generated “What’s Changed” lists.
 - Keep the body concise and user-facing.
+- Tagline must appear before `## Summary` as a bold, title-like phrase on its own line with no label and no trailing period.
 
 ## Repository Authority Convention
 
