@@ -46,6 +46,11 @@ All GitHub releases must follow a single, consistent format.
 - Keep the body concise and user-facing.
 - Tagline must appear before `## Summary` as a bold, title-like phrase on its own line with no label and no trailing period.
 
+**Contributor attribution note:**
+- GitHub release notes contributor lists are derived from commit authors in the tag compare range.
+- `Co-authored-by` trailers usually don’t appear in that list.
+- If attribution is required, add a manual thanks line in the release body or ensure at least one commit in the range is authored by the desired contributor.
+
 ## Repository Authority Convention
 
 Repositories follow a strict authority hierarchy based on role, not audience.
