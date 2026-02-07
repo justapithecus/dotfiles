@@ -23,6 +23,17 @@ If a change cannot be expressed safely as a diff, you must stop and say so.
 - If the impact is unclear, ask first.
 - Do not merge; wait for interactive approval before any merge.
 
+## Mise (tool version manager) policy
+
+When using mise to install or configure tool versions:
+
+- Never install globally (`mise use -g`). Always scope to the current project.
+- Use `mise use <tool>@<version>` (without `-g`) so versions are written to the repo's `mise.toml`.
+- Always use `mise.toml` (not `.mise.toml`). Important configuration must be visible, not hidden as a dotfile.
+- If a `mise.toml` already exists, respect its contents; only add or update the specific tool requested.
+- If a task genuinely requires a global install (e.g., bootstrapping outside any repo), ask for explicit approval first.
+- Treat `mise.toml` as a version-pinning source with the same authority as `.tool-versions` or `.nvmrc`.
+
 ## GitHub release format standard
 
 All GitHub releases must follow a single, consistent format.
