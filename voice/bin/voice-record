@@ -27,6 +27,22 @@ ensure_state_dir() {
   mkdir -p "$(dirname "$VOICE_TRANSCRIPT")"
 }
 
+copy_to_clipboard() {
+  local text="$1"
+  if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] && command -v wl-copy >/dev/null 2>&1; then
+    printf '%s' "$text" | wl-copy
+  elif command -v xclip >/dev/null 2>&1; then
+    printf '%s' "$text" | xclip -selection clipboard
+  fi
+}
+
+notify() {
+  local msg="$1"
+  if command -v kdialog >/dev/null 2>&1; then
+    kdialog --passivepopup "$msg" 3 &>/dev/null &
+  fi
+}
+
 # ── Start recording ────────────────────────────────────────────────
 start_recording() {
   command -v arecord >/dev/null 2>&1 || die "✖ arecord not found (install alsa-utils)"
@@ -49,6 +65,7 @@ start_recording() {
 
   printf '%d' $! > "$VOICE_PID_FILE"
   printf 'Recording started (PID %d)\n' $! >&2
+  notify "🎙️ Recording started"
 }
 
 # ── Stop recording + transcribe ────────────────────────────────────
@@ -94,10 +111,14 @@ stop_recording() {
   printf '%s' "$transcript" > "$tmp"
   mv -f "$tmp" "$VOICE_TRANSCRIPT"
 
+  # ── Copy to clipboard ───────────────────────────────────────────
+  copy_to_clipboard "$transcript"
+
   # Cleanup WAV
   rm -f "$VOICE_WAV_FILE"
 
   printf 'Transcribed: %s\n' "$transcript" >&2
+  notify "📋 Transcribed to clipboard"
 }
 
 # ── Main ────────────────────────────────────────────────────────────

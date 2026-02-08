@@ -41,6 +41,19 @@ echo "  → Installing zsh voice bindings"
 mkdir -p "$ZDOTDIR_PATH"
 copy "$DOTFILES_DIR/shell/zsh/voice-bindings.zsh" "$ZDOTDIR_PATH/voice-bindings.zsh"
 
+# ── Install KDE global shortcuts ──────────────────────────────────
+KDE_SHORTCUT_DIR="$HOME/.local/share/kglobalaccel"
+if [[ -d "$VOICE_SRC/kde" ]]; then
+  echo "  → Installing KDE global shortcuts"
+  mkdir -p "$KDE_SHORTCUT_DIR"
+  for desktop_file in "$VOICE_SRC/kde"/*.desktop; do
+    [[ -f "$desktop_file" ]] || continue
+    dest="$KDE_SHORTCUT_DIR/$(basename "$desktop_file")"
+    sed "s|PLACEHOLDER_VOICE_RECORD|$HOME/.local/bin/voice-record|g" \
+      "$desktop_file" > "$dest"
+  done
+fi
+
 # ── Build whisper.cpp from source ──────────────────────────────────
 WHISPER_DIR="$HOME/.local/src/whisper.cpp"
 WHISPER_BIN="$HOME/.local/bin/whisper-cli"
@@ -52,7 +65,7 @@ else
 
   # Install build dependencies
   if command -v zypper >/dev/null 2>&1; then
-    sudo zypper install -y cmake gcc-c++ make git alsa-utils || true
+    sudo zypper install -y cmake gcc-c++ make git alsa-utils wl-clipboard || true
   fi
 
   if [[ -d "$WHISPER_DIR" ]]; then

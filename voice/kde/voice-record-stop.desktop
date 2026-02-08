@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Voice Record Stop
+Comment=Stop voice recording, transcribe, and copy to clipboard
+Exec=PLACEHOLDER_VOICE_RECORD stop
+Icon=audio-input-microphone
+Terminal=false
+Categories=Utility;
+X-KDE-GlobalAccel-CommandShortcut=true
+Actions=InvokeAction
+
+[Desktop Action InvokeAction]
+Name=Stop voice recording
+Exec=PLACEHOLDER_VOICE_RECORD stop
+X-KDE-Shortcuts=Meta+Shift+Y

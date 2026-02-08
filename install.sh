@@ -58,6 +58,12 @@ mkdir -p ~/.config/{zsh,nvim,helix,konsole,starship}
 bash "$DOTFILES_DIR/shell/install.sh"
 
 # ----------------------------
+# Tmux
+# ----------------------------
+echo "▶ Installing Tmux config"
+bash "$DOTFILES_DIR/shell/tmux/install.sh"
+
+# ----------------------------
 # Set default shell
 # ----------------------------
 if [[ "$SHELL" != *zsh ]]; then
