@@ -83,6 +83,8 @@ stop_recording() {
   fi
   rm -f "$VOICE_PID_FILE"
 
+  notify "⏳ Transcribing…"
+
   if [[ ! -f "$VOICE_WAV_FILE" ]]; then
     die "✖ No WAV file found at $VOICE_WAV_FILE"
   fi
@@ -95,9 +97,10 @@ stop_recording() {
 
   # ── Transcribe ───────────────────────────────────────────────────
   local transcript
-  transcript="$("$VOICE_ASR_BIN" \
+  transcript="$(nice -n 15 "$VOICE_ASR_BIN" \
     -m "$VOICE_MODEL" \
     -f "$VOICE_WAV_FILE" \
+    -t 2 \
     --no-timestamps \
     -nt 2>/dev/null)" || die "✖ Transcription failed"
 
