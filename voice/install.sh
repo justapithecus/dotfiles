@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# voice/install/install.sh — install voice input tooling
+# voice/install.sh — install voice input tooling
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 if [[ -d "$REPO_ROOT/dotfiles/voice" ]]; then
   DOTFILES_DIR="$REPO_ROOT/dotfiles"
