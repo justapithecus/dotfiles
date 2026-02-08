@@ -1,7 +1,7 @@
 # voice-bindings.zsh — ZLE widgets for voice-to-text input
 #
-# Ctrl-B  → start recording (arecord in background)
-# Ctrl-Y  → stop recording, transcribe, paste into prompt
+# Alt-r  → start recording (arecord in background)
+# Alt-s  → stop recording, transcribe, paste into prompt
 
 voice-record-widget() {
   zle -I
@@ -29,6 +29,6 @@ zle -N voice-record-widget
 zle -N voice-stop-paste-widget
 
 for map in emacs viins; do
-  bindkey -M "$map" '^B' voice-record-widget
-  bindkey -M "$map" '^Y' voice-stop-paste-widget
+  bindkey -M "$map" '\er' voice-record-widget
+  bindkey -M "$map" '\es' voice-stop-paste-widget
 done
