@@ -20,6 +20,7 @@ if [[ -o interactive ]]; then
   source "$ZDOTDIR/compdefs.zsh"
   source "$ZDOTDIR/keybindings.zsh"
   source "$ZDOTDIR/word-jump.zsh"
+  source "$ZDOTDIR/voice-bindings.zsh"
 fi
 
 # ------------------------------------------------------------------------------
