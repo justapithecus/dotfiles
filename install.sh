@@ -108,6 +108,12 @@ echo "▶ Installing AI Tooling"
 bash "$DOTFILES_DIR/ai/install.sh"
 
 # ----------------------------
+# Voice input
+# ----------------------------
+echo "▶ Installing Voice input"
+bash "$DOTFILES_DIR/voice/install/install.sh"
+
+# ----------------------------
 # Final message
 # ----------------------------
 echo

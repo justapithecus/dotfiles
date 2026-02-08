@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# voice-record — start background audio capture via arecord
+# Usage: voice-record        (start recording)
+#        voice-record --stop  (stop recording, transcribe, output transcript)
+set -euo pipefail
+
+# ── Config ──────────────────────────────────────────────────────────
+VOICE_CONFIG="${VOICE_CONFIG:-$HOME/.config/voice/config.env}"
+# shellcheck source=/dev/null
+[[ -f "$VOICE_CONFIG" ]] && source "$VOICE_CONFIG"
+
+# Fallback defaults (in case config is missing or empty)
+: "${VOICE_DEVICE:=pipewire}"
+: "${VOICE_FORMAT:=S16_LE}"
+: "${VOICE_RATE:=16000}"
+: "${VOICE_CHANNELS:=1}"
+: "${VOICE_ASR_BIN:=whisper-cli}"
+: "${VOICE_MODEL:=$HOME/.local/share/whisper/ggml-base.en.bin}"
+: "${VOICE_TRANSCRIPT:=$HOME/.config/voice/state/last.txt}"
+: "${VOICE_PID_FILE:=$HOME/.config/voice/state/arecord.pid}"
+: "${VOICE_WAV_FILE:=$HOME/.config/voice/state/capture.wav}"
+
+# ── Helpers ─────────────────────────────────────────────────────────
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+ensure_state_dir() {
+  mkdir -p "$(dirname "$VOICE_TRANSCRIPT")"
+}
+
+# ── Start recording ────────────────────────────────────────────────
+start_recording() {
+  command -v arecord >/dev/null 2>&1 || die "✖ arecord not found (install alsa-utils)"
+
+  # If already recording, bail
+  if [[ -f "$VOICE_PID_FILE" ]] && kill -0 "$(cat "$VOICE_PID_FILE")" 2>/dev/null; then
+    printf 'Already recording (PID %s)\n' "$(cat "$VOICE_PID_FILE")" >&2
+    return 0
+  fi
+
+  ensure_state_dir
+
+  arecord \
+    -D "$VOICE_DEVICE" \
+    -f "$VOICE_FORMAT" \
+    -r "$VOICE_RATE" \
+    -c "$VOICE_CHANNELS" \
+    -t wav \
+    "$VOICE_WAV_FILE" &>/dev/null &
+
+  printf '%d' $! > "$VOICE_PID_FILE"
+  printf 'Recording started (PID %d)\n' $! >&2
+}
+
+# ── Stop recording + transcribe ────────────────────────────────────
+stop_recording() {
+  if [[ ! -f "$VOICE_PID_FILE" ]]; then
+    die "✖ No recording in progress"
+  fi
+
+  local pid
+  pid="$(cat "$VOICE_PID_FILE")"
+
+  if kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  fi
+  rm -f "$VOICE_PID_FILE"
+
+  if [[ ! -f "$VOICE_WAV_FILE" ]]; then
+    die "✖ No WAV file found at $VOICE_WAV_FILE"
+  fi
+
+  # ── Validate ASR tooling ─────────────────────────────────────────
+  command -v "$VOICE_ASR_BIN" >/dev/null 2>&1 \
+    || die "✖ ASR binary not found: $VOICE_ASR_BIN"
+  [[ -f "$VOICE_MODEL" ]] \
+    || die "✖ Whisper model not found: $VOICE_MODEL"
+
+  # ── Transcribe ───────────────────────────────────────────────────
+  local transcript
+  transcript="$("$VOICE_ASR_BIN" \
+    -m "$VOICE_MODEL" \
+    -f "$VOICE_WAV_FILE" \
+    --no-timestamps \
+    -nt 2>/dev/null)" || die "✖ Transcription failed"
+
+  # Strip leading/trailing whitespace
+  transcript="$(printf '%s' "$transcript" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+  # ── Write transcript atomically ──────────────────────────────────
+  ensure_state_dir
+  local tmp
+  tmp="$(mktemp "${VOICE_TRANSCRIPT}.XXXXXX")"
+  printf '%s' "$transcript" > "$tmp"
+  mv -f "$tmp" "$VOICE_TRANSCRIPT"
+
+  # Cleanup WAV
+  rm -f "$VOICE_WAV_FILE"
+
+  printf 'Transcribed: %s\n' "$transcript" >&2
+}
+
+# ── Main ────────────────────────────────────────────────────────────
+case "${1:-start}" in
+  start)          start_recording ;;
+  --stop|stop)    stop_recording  ;;
+  *)              die "Usage: voice-record [start|stop]" ;;
+esac

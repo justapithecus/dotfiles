@@ -40,6 +40,7 @@ copy() { rm -f "$2"; cp -f "$1" "$2"; }
 for filename in \
   keybindings.zsh \
   word-jump.zsh \
+  voice-bindings.zsh \
   env.zsh \
   aliases.zsh \
   completions.zsh \

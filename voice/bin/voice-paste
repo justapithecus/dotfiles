@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# voice-paste — print last transcript to stdout
+set -euo pipefail
+
+VOICE_CONFIG="${VOICE_CONFIG:-$HOME/.config/voice/config.env}"
+# shellcheck source=/dev/null
+[[ -f "$VOICE_CONFIG" ]] && source "$VOICE_CONFIG"
+
+: "${VOICE_TRANSCRIPT:=$HOME/.config/voice/state/last.txt}"
+
+if [[ -f "$VOICE_TRANSCRIPT" ]]; then
+  cat "$VOICE_TRANSCRIPT"
+fi
