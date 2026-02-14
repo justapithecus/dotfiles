@@ -229,12 +229,13 @@ SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
       (to_entries[] |
         select(.key == "violations" or .key == "redundancies"
             or .key == "forbidden_exists" or .key == "ambiguities") |
+        .key as $field |
         if (.value | type) != "array" then
-          "\(.key): expected array, got \(.value | type)"
+          "\($field): expected array, got \(.value | type)"
         else
           (.value | to_entries[] |
             if (.value | type) != "string" then
-              "\(.key)[\(.key)]: expected string, got \(.value | type)"
+              "\($field)[\(.key)]: expected string, got \(.value | type)"
             else empty end)
         end)
     ] | .[];
