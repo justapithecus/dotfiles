@@ -315,8 +315,9 @@ Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 1. Repo-local `AGENTS.md` (highest — per-repo overrides)
 2. This file (`CLAUDE.md` — constitutional defaults)
-3. Role definitions (`roles/*.md` — mode-specific behavior)
-4. Optional context layers (`context/*.md` — supplementary)
+3. Mode-scoped normative docs (e.g., `REVIEW_ARCHITECTURE.md` — Reviewer only)
+4. Role definitions (`roles/*.md` — mode-specific behavior)
+5. Optional context layers (`context/*.md` — supplementary)
 
 ### Structural conflict resolution
 
@@ -342,6 +343,11 @@ Requirements:
 - Behavior must be deterministic and reproducible given the same inputs.
 - No output structures that are incompatible with diff-based review.
 - Role definitions and context layers must be plain text (Markdown).
+
+Tool boundary policy is defined in `REVIEW_ARCHITECTURE.md`. That file
+is normative, scoped to Reviewer mode, and loaded only by `ai-review.sh`.
+It governs the division between Claude Skills (structural validation) and
+Codex (tactical code review). See §7 for precedence.
 
 ---
 
