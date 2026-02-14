@@ -1,0 +1,9 @@
+version: 1
+
+registry:
+  - name: repo-convention-enforcer
+    version: v1
+    path: skills/repo-convention-enforcer/v1
+    mode: validator
+    trigger: always
+    cost: cheap
