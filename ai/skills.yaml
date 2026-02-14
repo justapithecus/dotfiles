@@ -1,5 +1,7 @@
 version: 1
 
+# Paths are relative to this file's directory (ai/).
+
 registry:
   - name: repo-convention-enforcer
     version: v1

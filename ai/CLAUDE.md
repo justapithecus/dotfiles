@@ -61,7 +61,11 @@ and may not do.
 
 ### Validator (Skills)
 
-Reserved for future use. Not yet implemented.
+- Evaluate repository artifacts against defined conventions.
+- You may NOT write code, propose changes, or refactor.
+- Output must conform strictly to the skill's output schema.
+- No prose, no explanation — structured JSON only.
+- Invoked non-interactively via the skill registry (`ai/skills.yaml`).
 
 ---
 
