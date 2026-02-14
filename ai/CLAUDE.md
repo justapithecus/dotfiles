@@ -3,7 +3,7 @@
 This is the single constitutional authority for all AI-assisted sessions
 in this repository. All entrypoint scripts load this file first.
 
-Precedence: repo-local `AGENTS.md` > repo-local `requirements.md` > this file.
+Precedence: repo-local `AGENTS.md` > this file.
 
 ---
 
@@ -310,10 +310,9 @@ Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 ### Document precedence
 
 1. Repo-local `AGENTS.md` (highest — per-repo overrides)
-2. Repo-local `requirements.md` (task-specific constraints)
-3. This file (`CLAUDE.md` — constitutional defaults)
-4. Role definitions (`roles/*.md` — mode-specific behavior)
-5. Optional context layers (`context/*.md` — supplementary)
+2. This file (`CLAUDE.md` — constitutional defaults)
+3. Role definitions (`roles/*.md` — mode-specific behavior)
+4. Optional context layers (`context/*.md` — supplementary)
 
 ### Structural conflict resolution
 
