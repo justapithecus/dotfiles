@@ -96,17 +96,16 @@ if [[ "$IN_REGISTRY" == "true" ]]; then
   fi
 fi
 
-# Mandatory skill protection: repo-local cannot shadow mandatory skills
+# Mandatory flag means "must be invoked" (enforced in Part VIII trigger strategy),
+# NOT "cannot have repo-local version." Repo-local versions specialize the check
+# for the target repo. Global constitutional rules are protected by injection order
+# (global CLAUDE.md is always loaded first and cannot be weakened).
 IS_MANDATORY="false"
 if [[ "$IN_REGISTRY" == "true" ]]; then
   IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
 fi
 
 if [[ -d "$REPO_LOCAL_SKILL" ]]; then
-  if [[ "$IS_MANDATORY" == "true" ]]; then
-    echo "error: repo-local cannot shadow mandatory skill: $SKILL_NAME" >&2
-    exit 1
-  fi
   SKILL_DIR="$REPO_LOCAL_SKILL"
   SKILL_SOURCE="repo-local"
 elif [[ -n "$GLOBAL_SKILL" ]] && [[ -d "$GLOBAL_SKILL" ]]; then
@@ -242,7 +241,6 @@ RESPONSE="$(echo "$USER_PROMPT" | CLAUDECODE= claude -p \
   --system-prompt "$SYSTEM_PROMPT" \
   --tools "" \
   --disable-slash-commands \
-  --json-schema "$OUTPUT_SCHEMA" \
   --no-session-persistence \
   --output-format text \
   2>/dev/null)" || {
