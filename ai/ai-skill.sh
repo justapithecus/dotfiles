@@ -96,17 +96,12 @@ if [[ "$IN_REGISTRY" == "true" ]]; then
   fi
 fi
 
-# Mandatory skill protection: repo-local cannot shadow mandatory skills
-IS_MANDATORY="false"
-if [[ "$IN_REGISTRY" == "true" ]]; then
-  IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
-fi
+# Mandatory flag means "must be invoked" (enforced in Part VIII trigger strategy),
+# NOT "cannot have repo-local version." Repo-local versions specialize the check
+# for the target repo. Global constitutional rules are protected by injection order
+# (global CLAUDE.md is always loaded first and cannot be weakened).
 
 if [[ -d "$REPO_LOCAL_SKILL" ]]; then
-  if [[ "$IS_MANDATORY" == "true" ]]; then
-    echo "error: repo-local cannot shadow mandatory skill: $SKILL_NAME" >&2
-    exit 1
-  fi
   SKILL_DIR="$REPO_LOCAL_SKILL"
   SKILL_SOURCE="repo-local"
 elif [[ -n "$GLOBAL_SKILL" ]] && [[ -d "$GLOBAL_SKILL" ]]; then
@@ -242,7 +237,6 @@ RESPONSE="$(echo "$USER_PROMPT" | CLAUDECODE= claude -p \
   --system-prompt "$SYSTEM_PROMPT" \
   --tools "" \
   --disable-slash-commands \
-  --json-schema "$OUTPUT_SCHEMA" \
   --no-session-persistence \
   --output-format text \
   2>/dev/null)" || {
@@ -266,9 +260,9 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-# Defense-in-depth: validate response shape even though --json-schema
-# enforces the contract at the API level. Catches edge cases where the
-# CLI flag is unsupported or the response bypasses schema enforcement.
+# Defense-in-depth: validate response shape against output.schema.json.
+# The prompt instructs the model to conform, but jq validation here
+# catches malformed or off-schema responses before they reach callers.
 SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
   def check:
     (keys - ["violations","redundancies","forbidden_exists","ambiguities"]) as $extra |
