@@ -146,6 +146,8 @@ Repositories follow a strict authority hierarchy based on role, not audience.
    - Files named in ALL_CAPS.md are authoritative.
    - These define law, contracts, guarantees, and constraints.
    - They are written to be machine-legible and must be treated as true.
+   - `CONTRACT_*.md` files must live in `docs/contracts/`.
+   - Other normative ALL_CAPS.md files (e.g. `IMPLEMENTATION_PLAN.md`) may live at `docs/` top-level.
 
 2. Explanatory sources (non-binding):
    - normal_case.md files (typically under docs/) explain, motivate, or teach.
