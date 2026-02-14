@@ -60,17 +60,19 @@ SKILL_QUERY=".registry[] | select(.name == \"$SKILL_NAME\")"
 
 REG_VERSION="$(yq e "$SKILL_QUERY | .version" "$REGISTRY")"
 REG_PATH="$(yq e "$SKILL_QUERY | .path" "$REGISTRY")"
+IN_REGISTRY=true
 
 if [[ -z "$REG_VERSION" ]] || [[ "$REG_VERSION" == "null" ]]; then
-  echo "error: skill not found in registry: $SKILL_NAME" >&2
-  exit 1
+  IN_REGISTRY=false
 fi
 
 # Use --version override if provided, otherwise registry default
-RESOLVED_VERSION="${SKILL_VERSION:-$REG_VERSION}"
-
-if [[ -z "$RESOLVED_VERSION" ]]; then
-  echo "error: no version found for skill: $SKILL_NAME" >&2
+if [[ -n "$SKILL_VERSION" ]]; then
+  RESOLVED_VERSION="$SKILL_VERSION"
+elif [[ "$IN_REGISTRY" == "true" ]]; then
+  RESOLVED_VERSION="$REG_VERSION"
+else
+  echo "error: skill '$SKILL_NAME' not in global registry; --version required" >&2
   exit 1
 fi
 
@@ -84,14 +86,21 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
 fi
 
 REPO_LOCAL_SKILL="$REPO_ROOT/ai/skills/$SKILL_NAME/$RESOLVED_VERSION"
-if [[ -n "$SKILL_VERSION" ]]; then
-  GLOBAL_SKILL="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
-else
-  GLOBAL_SKILL="$SCRIPT_DIR/$REG_PATH"
+
+GLOBAL_SKILL=""
+if [[ "$IN_REGISTRY" == "true" ]]; then
+  if [[ -n "$SKILL_VERSION" ]]; then
+    GLOBAL_SKILL="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
+  else
+    GLOBAL_SKILL="$SCRIPT_DIR/$REG_PATH"
+  fi
 fi
 
 # Mandatory skill protection: repo-local cannot shadow mandatory skills
-IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
+IS_MANDATORY="false"
+if [[ "$IN_REGISTRY" == "true" ]]; then
+  IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
+fi
 
 if [[ -d "$REPO_LOCAL_SKILL" ]]; then
   if [[ "$IS_MANDATORY" == "true" ]]; then
@@ -100,13 +109,13 @@ if [[ -d "$REPO_LOCAL_SKILL" ]]; then
   fi
   SKILL_DIR="$REPO_LOCAL_SKILL"
   SKILL_SOURCE="repo-local"
-elif [[ -d "$GLOBAL_SKILL" ]]; then
+elif [[ -n "$GLOBAL_SKILL" ]] && [[ -d "$GLOBAL_SKILL" ]]; then
   SKILL_DIR="$GLOBAL_SKILL"
   SKILL_SOURCE="global"
 else
   echo "error: skill directory not found (checked repo-local and global)" >&2
   echo "  repo-local: $REPO_LOCAL_SKILL" >&2
-  echo "  global:     $GLOBAL_SKILL" >&2
+  [[ -n "$GLOBAL_SKILL" ]] && echo "  global:     $GLOBAL_SKILL" >&2
   exit 1
 fi
 
