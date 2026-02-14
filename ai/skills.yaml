@@ -1,0 +1,11 @@
+version: 1
+
+# Paths are relative to this file's directory (ai/).
+
+registry:
+  - name: repo-convention-enforcer
+    version: v1
+    path: skills/repo-convention-enforcer/v1
+    mode: validator
+    trigger: always
+    cost: cheap
