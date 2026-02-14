@@ -9,3 +9,4 @@ registry:
     mode: validator
     trigger: always
     cost: cheap
+    mandatory: true

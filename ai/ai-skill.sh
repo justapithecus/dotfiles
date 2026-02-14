@@ -74,37 +74,53 @@ if [[ -z "$RESOLVED_VERSION" ]]; then
   exit 1
 fi
 
-# Resolve skill directory (paths are relative to registry file's directory)
-if [[ -n "$SKILL_VERSION" ]]; then
-  # Derive path from registry path, replacing version segment
-  SKILL_DIR="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
-else
-  SKILL_DIR="$SCRIPT_DIR/$REG_PATH"
-fi
-
-if [[ ! -d "$SKILL_DIR" ]]; then
-  echo "error: skill directory not found: $SKILL_DIR" >&2
-  exit 1
-fi
-
-# --- Validate required files ----------------------------------------------
-# input.schema.json is a contract document defining expected input shape.
-# It is checked for scaffold completeness but not runtime-validated since
-# the script constructs its own input deterministically.
-
-for f in metadata.yaml system.md input.schema.json output.schema.json; do
-  if [[ ! -f "$SKILL_DIR/$f" ]]; then
-    echo "error: missing required file: $SKILL_DIR/$f" >&2
-    exit 1
-  fi
-done
-
-# --- Detect repo root -----------------------------------------------------
+# Resolve skill directory with repo-local precedence.
+# Repo-local: repo-root/ai/skills/<skill>/<version>/
+# Global:     dotfiles/ai/skills/<skill>/<version>/ (via registry path)
 
 REPO_ROOT="$PWD"
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
+
+REPO_LOCAL_SKILL="$REPO_ROOT/ai/skills/$SKILL_NAME/$RESOLVED_VERSION"
+if [[ -n "$SKILL_VERSION" ]]; then
+  GLOBAL_SKILL="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
+else
+  GLOBAL_SKILL="$SCRIPT_DIR/$REG_PATH"
+fi
+
+# Mandatory skill protection: repo-local cannot shadow mandatory skills
+IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
+
+if [[ -d "$REPO_LOCAL_SKILL" ]]; then
+  if [[ "$IS_MANDATORY" == "true" ]]; then
+    echo "error: repo-local cannot shadow mandatory skill: $SKILL_NAME" >&2
+    exit 1
+  fi
+  SKILL_DIR="$REPO_LOCAL_SKILL"
+  SKILL_SOURCE="repo-local"
+elif [[ -d "$GLOBAL_SKILL" ]]; then
+  SKILL_DIR="$GLOBAL_SKILL"
+  SKILL_SOURCE="global"
+else
+  echo "error: skill directory not found (checked repo-local and global)" >&2
+  echo "  repo-local: $REPO_LOCAL_SKILL" >&2
+  echo "  global:     $GLOBAL_SKILL" >&2
+  exit 1
+fi
+
+# --- Validate required files ----------------------------------------------
+# SKILL.md: native Agent Skills format (frontmatter + instructions)
+# input.schema.json: contract document (scaffold completeness, not runtime-validated)
+# output.schema.json: enforced at API level and defense-in-depth
+
+for f in SKILL.md input.schema.json output.schema.json; do
+  if [[ ! -f "$SKILL_DIR/$f" ]]; then
+    echo "error: missing required file: $SKILL_DIR/$f" >&2
+    exit 1
+  fi
+done
 
 # --- Build repo tree ------------------------------------------------------
 
@@ -141,22 +157,34 @@ if [[ -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
   CLAUDE_MD="$(cat "$SCRIPT_DIR/CLAUDE.md")"
 fi
 
-SYSTEM_MD="$(cat "$SKILL_DIR/system.md")"
+# Read SKILL.md body (strip YAML frontmatter)
+SKILL_BODY="$(sed '1{/^---$/!q}; 1,/^---$/d' "$SKILL_DIR/SKILL.md")"
 OUTPUT_SCHEMA="$(cat "$SKILL_DIR/output.schema.json")"
 
-# Optional repo-local AGENTS.md
+# Optional repo-local AGENTS.md (loaded into system prompt for sovereignty)
 AGENTS_MD=""
 if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
   AGENTS_MD="$(cat "$REPO_ROOT/AGENTS.md")"
 fi
 
 # --- Build prompts --------------------------------------------------------
+# Injection order: Global CLAUDE.md → Repo-local AGENTS.md → SKILL.md body
 
 SYSTEM_PROMPT="You are operating in VALIDATOR mode.
 
-${CLAUDE_MD}
+${CLAUDE_MD}"
 
-${SYSTEM_MD}
+if [[ -n "$AGENTS_MD" ]]; then
+  SYSTEM_PROMPT="${SYSTEM_PROMPT}
+
+Repo-local constraints (AGENTS.md):
+
+${AGENTS_MD}"
+fi
+
+SYSTEM_PROMPT="${SYSTEM_PROMPT}
+
+${SKILL_BODY}
 
 You must output valid JSON conforming exactly to this schema:
 
@@ -167,16 +195,7 @@ No markdown. No prose. No explanation. No code fences. JSON only."
 USER_PROMPT="Evaluate the following repository.
 
 Repository tree:
-${REPO_TREE}"
-
-if [[ -n "$AGENTS_MD" ]]; then
-  USER_PROMPT="${USER_PROMPT}
-
-AGENTS.md:
-${AGENTS_MD}"
-fi
-
-USER_PROMPT="${USER_PROMPT}
+${REPO_TREE}
 
 Respond with JSON only. No other text."
 

@@ -1,5 +1,0 @@
-name: repo-convention-enforcer
-version: v1
-mode: validator
-cost: cheap
-trigger: always
