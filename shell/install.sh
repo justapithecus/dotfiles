@@ -51,3 +51,6 @@ do
 done
 
 copy "$DOTFILES_DIR/shell/starship.toml"       "$HOME/.config/starship.toml"
+
+# ── tmux ────────────────────────────────────────────────────────
+"$script_dir/tmux/install.sh"

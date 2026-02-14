@@ -15,13 +15,16 @@ VOICE_CONFIG="${VOICE_CONFIG:-$HOME/.config/voice/config.env}"
 : "${VOICE_RATE:=16000}"
 : "${VOICE_CHANNELS:=1}"
 : "${VOICE_ASR_BIN:=whisper-cli}"
-: "${VOICE_MODEL:=$HOME/.local/share/whisper/ggml-base.en.bin}"
+: "${VOICE_MODEL:=$HOME/.local/share/whisper/ggml-tiny.en.bin}"
 : "${VOICE_TRANSCRIPT:=$HOME/.config/voice/state/last.txt}"
 : "${VOICE_PID_FILE:=$HOME/.config/voice/state/arecord.pid}"
 : "${VOICE_WAV_FILE:=$HOME/.config/voice/state/capture.wav}"
+: "${VOICE_LOG:=/tmp/voice-record.log}"
+: "${VOICE_LOCK_FILE:=$HOME/.config/voice/state/stop.lock}"
 
 # ── Helpers ─────────────────────────────────────────────────────────
-die() { printf '%s\n' "$*" >&2; exit 1; }
+log() { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*" >> "$VOICE_LOG"; }
+die() { log "FATAL: $*"; printf '%s\n' "$*" >&2; exit 1; }
 
 ensure_state_dir() {
   mkdir -p "$(dirname "$VOICE_TRANSCRIPT")"
@@ -30,9 +33,9 @@ ensure_state_dir() {
 copy_to_clipboard() {
   local text="$1"
   if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] && command -v wl-copy >/dev/null 2>&1; then
-    printf '%s' "$text" | wl-copy
+    printf '%s' "$text" | setsid wl-copy
   elif command -v xclip >/dev/null 2>&1; then
-    printf '%s' "$text" | xclip -selection clipboard
+    printf '%s' "$text" | setsid xclip -selection clipboard
   fi
 }
 
@@ -70,32 +73,46 @@ start_recording() {
 
 # ── Stop recording + transcribe ────────────────────────────────────
 stop_recording() {
+  log "stop_recording: start"
+
+  # Prevent concurrent stop invocations
+  if ! mkdir "$VOICE_LOCK_FILE" 2>/dev/null; then
+    log "stop_recording: already running, exiting"
+    return 0
+  fi
+  trap 'rm -rf "$VOICE_LOCK_FILE"' EXIT
+
   if [[ ! -f "$VOICE_PID_FILE" ]]; then
     die "✖ No recording in progress"
   fi
 
   local pid
   pid="$(cat "$VOICE_PID_FILE")"
+  log "stop_recording: killing arecord PID=$pid"
 
   if kill -0 "$pid" 2>/dev/null; then
     kill "$pid" 2>/dev/null || true
     wait "$pid" 2>/dev/null || true
   fi
   rm -f "$VOICE_PID_FILE"
+  log "stop_recording: arecord killed"
 
   notify "⏳ Transcribing…"
 
   if [[ ! -f "$VOICE_WAV_FILE" ]]; then
     die "✖ No WAV file found at $VOICE_WAV_FILE"
   fi
+  log "stop_recording: WAV exists ($(wc -c < "$VOICE_WAV_FILE") bytes)"
 
   # ── Validate ASR tooling ─────────────────────────────────────────
   command -v "$VOICE_ASR_BIN" >/dev/null 2>&1 \
     || die "✖ ASR binary not found: $VOICE_ASR_BIN"
   [[ -f "$VOICE_MODEL" ]] \
     || die "✖ Whisper model not found: $VOICE_MODEL"
+  log "stop_recording: ASR tooling validated"
 
   # ── Transcribe ───────────────────────────────────────────────────
+  log "stop_recording: starting transcription"
   local transcript
   transcript="$(nice -n 15 "$VOICE_ASR_BIN" \
     -m "$VOICE_MODEL" \
@@ -103,6 +120,7 @@ stop_recording() {
     -t 2 \
     --no-timestamps \
     -nt 2>/dev/null)" || die "✖ Transcription failed"
+  log "stop_recording: transcription done: '$transcript'"
 
   # Strip leading/trailing whitespace
   transcript="$(printf '%s' "$transcript" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -113,20 +131,27 @@ stop_recording() {
   tmp="$(mktemp "${VOICE_TRANSCRIPT}.XXXXXX")"
   printf '%s' "$transcript" > "$tmp"
   mv -f "$tmp" "$VOICE_TRANSCRIPT"
+  log "stop_recording: transcript written to $VOICE_TRANSCRIPT"
 
   # ── Copy to clipboard ───────────────────────────────────────────
+  log "stop_recording: copying to clipboard"
   copy_to_clipboard "$transcript"
+  log "stop_recording: clipboard done"
 
   # ── Inject into tmux pane if running inside tmux ────────────────
   if [[ -n "${TMUX:-}" ]]; then
+    log "stop_recording: injecting into tmux pane"
     tmux send-keys -l -- "$transcript"
+    log "stop_recording: send-keys done"
+  else
+    log "stop_recording: not in tmux, skipping send-keys"
   fi
 
   # Cleanup WAV
   rm -f "$VOICE_WAV_FILE"
 
-  printf 'Transcribed: %s\n' "$transcript" >&2
   notify "📋 Transcribed to clipboard"
+  log "stop_recording: complete"
 }
 
 # ── Main ────────────────────────────────────────────────────────────
