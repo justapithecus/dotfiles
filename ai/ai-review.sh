@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Codex Review Script
+# Purpose:
+#   - Tactical code correctness review
+#   - NOT structural validation
+# Structural validation is handled by ai-skill.sh.
+
 command -v codex >/dev/null 2>&1 || {
   echo "codex not found. Run ./ai/deps.sh"
   exit 1
