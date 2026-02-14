@@ -83,6 +83,10 @@ These constraints apply in ALL modes, unconditionally.
 9. **Never guess intent beyond available context.** Ask instead.
 10. **Never invent tooling versions or assume "latest".** Defer to repo
     pins and ask when unclear.
+11. **Never install tools globally.** Always use repo-scoped tool versions.
+    Never pass global flags (e.g., `--global`, `-g`) unless explicitly
+    approved. If a tool is not available in the repo environment, ask
+    before installing.
 
 ---
 
@@ -101,15 +105,15 @@ If `AGENTS.md` or `docs/ARCH_INDEX.md` do not exist:
 - Ask before proceeding with design or refactors.
 
 Interpretation rules:
-- `ARCH_INDEX.md` answers **where things live** (navigation only).
+- `docs/ARCH_INDEX.md` answers **where things live** (navigation only).
 - `CONTRACT_*.md` define **what must be true** (authoritative).
 - Code defines **how it is implemented**.
 
 Conflict resolution:
-- If `ARCH_INDEX.md` conflicts with code, trust code.
+- If `docs/ARCH_INDEX.md` conflicts with code, trust code.
 - If code conflicts with contracts, trust contracts.
 
-Do not restate or inline `ARCH_INDEX.md` contents in conversational prompts.
+Do not restate or inline `docs/ARCH_INDEX.md` contents in conversational prompts.
 Entrypoint scripts may inline it to enforce required reads.
 Refer to it by path and read it when orientation is needed.
 
@@ -155,6 +159,16 @@ Agent behavior:
 - Do not infer guarantees from explanatory prose.
 - Do not inspect implementation details unless explicitly instructed.
 - If required behavior is not covered by normative sources or examples, escalate instead of guessing.
+
+### Tooling usage
+
+- Always use tooling provided by the repository environment (e.g., via
+  mise, asdf, nvm, or similar version managers).
+- Prefer repo-pinned tool versions over system-installed versions.
+- Never install tools globally or use global flags unless explicitly approved.
+- If a required tool is not available, ask before installing it.
+- When a repo provides a task runner or build tool, use it rather than
+  invoking underlying commands directly.
 
 ### Mise (tool version manager) policy
 
@@ -303,7 +317,7 @@ Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 ### Structural conflict resolution
 
-- `ARCH_INDEX.md` vs code: trust code.
+- `docs/ARCH_INDEX.md` vs code: trust code.
 - Code vs contracts (`CONTRACT_*.md`): trust contracts.
 - ALL_CAPS.md vs normal_case.md: trust ALL_CAPS.md.
 - ALL_CAPS.md > examples/ > normal_case.md > README.md

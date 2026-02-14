@@ -25,10 +25,8 @@ SYSTEM_PROMPT="$(
   echo "You are operating in IMPLEMENTER mode."
   echo
 
-  if [[ -f "$CLAUDE_FILE" ]]; then
-    cat "$CLAUDE_FILE"
-    echo
-  fi
+  cat "$CLAUDE_FILE"
+  echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
     cat "$f"
