@@ -170,18 +170,38 @@ fi
 SKILL_BODY="$(sed '1{/^---$/!q}; 1,/^---$/d' "$SKILL_DIR/SKILL.md")"
 OUTPUT_SCHEMA="$(cat "$SKILL_DIR/output.schema.json")"
 
-# Optional repo-local AGENTS.md (loaded into system prompt for sovereignty)
+# Optional repo-local CLAUDE.md (repo constitution, additive to global)
+REPO_CLAUDE_MD=""
+if [[ -f "$REPO_ROOT/CLAUDE.md" ]]; then
+  REPO_CLAUDE_MD="$(cat "$REPO_ROOT/CLAUDE.md")"
+fi
+
+# Optional repo-local AGENTS.md
 AGENTS_MD=""
 if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
   AGENTS_MD="$(cat "$REPO_ROOT/AGENTS.md")"
 fi
 
+# Optional ARCH_INDEX.md (structural ontology — skills need contents, not just path)
+ARCH_INDEX=""
+if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
+  ARCH_INDEX="$(cat "$REPO_ROOT/docs/ARCH_INDEX.md")"
+fi
+
 # --- Build prompts --------------------------------------------------------
-# Injection order: Global CLAUDE.md → Repo-local AGENTS.md → SKILL.md body
+# Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → ARCH_INDEX → SKILL.md
 
 SYSTEM_PROMPT="You are operating in VALIDATOR mode.
 
 ${CLAUDE_MD}"
+
+if [[ -n "$REPO_CLAUDE_MD" ]]; then
+  SYSTEM_PROMPT="${SYSTEM_PROMPT}
+
+Repo-local constitution (CLAUDE.md):
+
+${REPO_CLAUDE_MD}"
+fi
 
 if [[ -n "$AGENTS_MD" ]]; then
   SYSTEM_PROMPT="${SYSTEM_PROMPT}
@@ -189,6 +209,14 @@ if [[ -n "$AGENTS_MD" ]]; then
 Repo-local constraints (AGENTS.md):
 
 ${AGENTS_MD}"
+fi
+
+if [[ -n "$ARCH_INDEX" ]]; then
+  SYSTEM_PROMPT="${SYSTEM_PROMPT}
+
+Architecture index (docs/ARCH_INDEX.md):
+
+${ARCH_INDEX}"
 fi
 
 SYSTEM_PROMPT="${SYSTEM_PROMPT}
