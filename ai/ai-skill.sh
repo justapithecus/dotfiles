@@ -100,10 +100,6 @@ fi
 # NOT "cannot have repo-local version." Repo-local versions specialize the check
 # for the target repo. Global constitutional rules are protected by injection order
 # (global CLAUDE.md is always loaded first and cannot be weakened).
-IS_MANDATORY="false"
-if [[ "$IN_REGISTRY" == "true" ]]; then
-  IS_MANDATORY="$(yq e "$SKILL_QUERY | .mandatory // false" "$REGISTRY")"
-fi
 
 if [[ -d "$REPO_LOCAL_SKILL" ]]; then
   SKILL_DIR="$REPO_LOCAL_SKILL"
@@ -264,9 +260,9 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-# Defense-in-depth: validate response shape even though --json-schema
-# enforces the contract at the API level. Catches edge cases where the
-# CLI flag is unsupported or the response bypasses schema enforcement.
+# Defense-in-depth: validate response shape against output.schema.json.
+# The prompt instructs the model to conform, but jq validation here
+# catches malformed or off-schema responses before they reach callers.
 SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
   def check:
     (keys - ["violations","redundancies","forbidden_exists","ambiguities"]) as $extra |
