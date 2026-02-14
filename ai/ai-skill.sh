@@ -88,7 +88,8 @@ fi
 
 # Resolve skill directory (paths are relative to registry file's directory)
 if [[ -n "$SKILL_VERSION" ]]; then
-  SKILL_DIR="$SCRIPT_DIR/skills/$SKILL_NAME/$RESOLVED_VERSION"
+  # Derive path from registry path, replacing version segment
+  SKILL_DIR="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
 else
   SKILL_DIR="$SCRIPT_DIR/$REG_PATH"
 fi
@@ -128,7 +129,7 @@ if [[ -n "$SCOPE" ]]; then
   IFS=',' read -ra SCOPE_PARTS <<< "$SCOPE"
   for prefix in "${SCOPE_PARTS[@]}"; do
     prefix="$(echo "$prefix" | sed 's/[[:space:]]//g')"
-    MATCHES="$(echo "$REPO_TREE" | grep "^${prefix}" || true)"
+    MATCHES="$(echo "$REPO_TREE" | awk -v p="$prefix" 'substr($0, 1, length(p)) == p')"
     if [[ -n "$MATCHES" ]]; then
       FILTERED="${FILTERED:+${FILTERED}
 }${MATCHES}"
@@ -214,13 +215,38 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-for key in violations redundancies forbidden_exists ambiguities; do
-  if ! echo "$RESPONSE" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
-    echo "error: response missing required key: $key" >&2
-    echo "$RESPONSE" >&2
-    exit 1
-  fi
-done
+# Validate response against output.schema.json contract:
+#   - All required keys present
+#   - No additional properties
+#   - Each value is an array of strings
+SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
+  def check:
+    (keys - ["violations","redundancies","forbidden_exists","ambiguities"]) as $extra |
+    (["violations","redundancies","forbidden_exists","ambiguities"] - keys) as $missing |
+    [
+      ($missing[] | "missing required key: \(.)"),
+      ($extra[] | "unexpected key: \(.)"),
+      (to_entries[] |
+        select(.key == "violations" or .key == "redundancies"
+            or .key == "forbidden_exists" or .key == "ambiguities") |
+        if (.value | type) != "array" then
+          "\(.key): expected array, got \(.value | type)"
+        else
+          (.value | to_entries[] |
+            if (.value | type) != "string" then
+              "\(.key)[\(.key)]: expected string, got \(.value | type)"
+            else empty end)
+        end)
+    ] | .[];
+  check
+')"
+
+if [[ -n "$SCHEMA_ERRORS" ]]; then
+  echo "error: response does not conform to output schema:" >&2
+  echo "$SCHEMA_ERRORS" | sed 's/^/  /' >&2
+  echo "$RESPONSE" >&2
+  exit 1
+fi
 
 # --- Output ---------------------------------------------------------------
 
