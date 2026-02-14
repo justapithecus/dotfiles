@@ -16,8 +16,10 @@ This directory contains lightweight scripts and role prompts for AI-assisted dev
 
 ## Requirements
 
-- `claude` (Claude Code) for chat, plan, and implement scripts.
+- `claude` (Claude Code) for chat, plan, implement, and skill scripts.
 - `codex` (OpenAI Codex CLI) for the review script.
+- `jq` for JSON validation in `ai-skill.sh`.
+- `yq` for YAML registry parsing in `ai-skill.sh`.
 - `curl` if you want `deps.sh` to install Claude Code.
 - `npm` if you want `deps.sh` to install Codex.
 
