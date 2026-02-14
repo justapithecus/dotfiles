@@ -192,6 +192,8 @@ Respond with JSON only. No other text."
 RESPONSE="$(echo "$USER_PROMPT" | CLAUDECODE= claude -p \
   --system-prompt "$SYSTEM_PROMPT" \
   --tools "" \
+  --disable-slash-commands \
+  --json-schema "$OUTPUT_SCHEMA" \
   --no-session-persistence \
   --output-format text \
   2>/dev/null)" || {
@@ -215,10 +217,9 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-# Validate response against output.schema.json contract:
-#   - All required keys present
-#   - No additional properties
-#   - Each value is an array of strings
+# Defense-in-depth: validate response shape even though --json-schema
+# enforces the contract at the API level. Catches edge cases where the
+# CLI flag is unsupported or the response bypasses schema enforcement.
 SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
   def check:
     (keys - ["violations","redundancies","forbidden_exists","ambiguities"]) as $extra |
