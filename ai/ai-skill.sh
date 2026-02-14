@@ -15,6 +15,11 @@ command -v jq >/dev/null 2>&1 || {
   exit 1
 }
 
+command -v yq >/dev/null 2>&1 || {
+  echo "error: yq not found" >&2
+  exit 1
+}
+
 # --- Parse arguments ------------------------------------------------------
 
 SKILL_NAME=""
@@ -50,33 +55,16 @@ if [[ ! -f "$REGISTRY" ]]; then
   exit 1
 fi
 
-# Extract skill block (lines between matching "- name:" and next "- name:")
-SKILL_BLOCK="$(awk -v skill="$SKILL_NAME" '
-  /^[[:space:]]*- name:[[:space:]]/ {
-    gsub(/^[[:space:]]*- name:[[:space:]]*/, "")
-    gsub(/[[:space:]]*$/, "")
-    if ($0 == skill) { found=1 } else { found=0 }
-    next
-  }
-  found { print }
-' "$REGISTRY")"
+# Query registry with yq
+SKILL_QUERY=".registry[] | select(.name == \"$SKILL_NAME\")"
 
-if [[ -z "$SKILL_BLOCK" ]]; then
+REG_VERSION="$(yq e "$SKILL_QUERY | .version" "$REGISTRY")"
+REG_PATH="$(yq e "$SKILL_QUERY | .path" "$REGISTRY")"
+
+if [[ -z "$REG_VERSION" ]] || [[ "$REG_VERSION" == "null" ]]; then
   echo "error: skill not found in registry: $SKILL_NAME" >&2
   exit 1
 fi
-
-REG_VERSION="$(echo "$SKILL_BLOCK" | awk '/^[[:space:]]*version:/ {
-  gsub(/^[[:space:]]*version:[[:space:]]*/, "")
-  gsub(/[[:space:]]*$/, "")
-  print; exit
-}')"
-
-REG_PATH="$(echo "$SKILL_BLOCK" | awk '/^[[:space:]]*path:/ {
-  gsub(/^[[:space:]]*path:[[:space:]]*/, "")
-  gsub(/[[:space:]]*$/, "")
-  print; exit
-}')"
 
 # Use --version override if provided, otherwise registry default
 RESOLVED_VERSION="${SKILL_VERSION:-$REG_VERSION}"
@@ -100,6 +88,9 @@ if [[ ! -d "$SKILL_DIR" ]]; then
 fi
 
 # --- Validate required files ----------------------------------------------
+# input.schema.json is a contract document defining expected input shape.
+# It is checked for scaffold completeness but not runtime-validated since
+# the script constructs its own input deterministically.
 
 for f in metadata.yaml system.md input.schema.json output.schema.json; do
   if [[ ! -f "$SKILL_DIR/$f" ]]; then
@@ -138,6 +129,11 @@ if [[ -n "$SCOPE" ]]; then
   REPO_TREE="$FILTERED"
 fi
 
+if [[ -z "$REPO_TREE" ]]; then
+  echo "error: scope produced empty repo tree" >&2
+  exit 1
+fi
+
 # --- Load files -----------------------------------------------------------
 
 CLAUDE_MD=""
@@ -171,10 +167,7 @@ No markdown. No prose. No explanation. No code fences. JSON only."
 USER_PROMPT="Evaluate the following repository.
 
 Repository tree:
-${REPO_TREE}
-
-Constitution (CLAUDE.md):
-${CLAUDE_MD}"
+${REPO_TREE}"
 
 if [[ -n "$AGENTS_MD" ]]; then
   USER_PROMPT="${USER_PROMPT}
