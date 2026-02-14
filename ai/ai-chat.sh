@@ -8,6 +8,7 @@ command -v claude >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLES_DIR="$AI_DIR/roles"
 
@@ -39,6 +40,11 @@ SYSTEM_PROMPT="$(
   echo
   echo "Repository root: $REPO_ROOT"
   echo
+
+  if [[ -f "$CLAUDE_FILE" ]]; then
+    cat "$CLAUDE_FILE"
+    echo
+  fi
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
     cat "$f"

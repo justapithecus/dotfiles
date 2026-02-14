@@ -38,9 +38,10 @@ Purpose:
 Agents should treat this directory as authoritative.
 
 Contents:
+- `CLAUDE.md` — single constitutional authority for all AI sessions
 - `AGENTS.md` — global agent constraints and behavioral rules (when present)
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
-- `context/` — persistent anchors and long‑lived invariants
+- `context/` — optional context layers for supplementary prompt content
 - `prompts/` — reusable prompt fragments and compositions
 - `tools/` — agent-built tools that improve agent leverage
 - `ai-*.sh` — shell entrypoints binding prompts + tools

@@ -7,6 +7,7 @@ command -v codex >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/reviewer.md"
 
@@ -25,6 +26,11 @@ PROMPT="$(
 
   echo "You are operating in REVIEWER mode."
   echo
+
+  if [[ -f "$CLAUDE_FILE" ]]; then
+    cat "$CLAUDE_FILE"
+    echo
+  fi
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
     cat "$f"
