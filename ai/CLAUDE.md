@@ -3,7 +3,7 @@
 This is the single constitutional authority for all AI-assisted sessions
 in this repository. All entrypoint scripts load this file first.
 
-Precedence: repo-local `AGENTS.md` > this file.
+Precedence: repo-local `CLAUDE.md` > this file > `AGENTS.md`.
 
 ---
 
@@ -313,11 +313,16 @@ Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 ### Document precedence
 
-1. Repo-local `AGENTS.md` (highest — per-repo overrides)
-2. This file (`CLAUDE.md` — constitutional defaults)
-3. Mode-scoped normative docs (e.g., `REVIEW_ARCHITECTURE.md` — Reviewer only)
-4. Role definitions (`roles/*.md` — mode-specific behavior)
-5. Optional context layers (`context/*.md` — supplementary)
+1. Repo-local `CLAUDE.md` (highest — repo constitution)
+2. This file (global `CLAUDE.md` — constitutional defaults)
+3. Repo-local `AGENTS.md` (behavioral guardrails and coding conventions)
+4. Mode-scoped normative docs (e.g., `REVIEW_ARCHITECTURE.md` — Reviewer only)
+5. Role definitions (`roles/*.md` — mode-specific behavior)
+6. Optional context layers (`context/*.md` — supplementary)
+
+`AGENTS.md` may refine behavioral expectations (coding style, scope discipline,
+development workflow) but may not override structural invariants or hard laws
+defined in `CLAUDE.md`.
 
 ### Structural conflict resolution
 
@@ -348,6 +353,12 @@ Tool boundary policy is defined in `REVIEW_ARCHITECTURE.md`. That file
 is normative, scoped to Reviewer mode, and loaded only by `ai-review.sh`.
 It governs the division between Claude Skills (structural validation) and
 Codex (tactical code review). See §7 for precedence.
+
+Codex reads `AGENTS.md` but not `CLAUDE.md`. This is by design: Codex
+operates at the behavioral/tactical layer (coding conventions, style,
+scope discipline) which `AGENTS.md` fully covers. Structural governance
+and constitutional enforcement are handled by Claude Skills and do not
+require Codex visibility.
 
 ---
 
