@@ -8,6 +8,7 @@ command -v claude >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLES_DIR="$AI_DIR/roles"
 
@@ -38,6 +39,9 @@ SYSTEM_PROMPT="$(
   echo "Do not write code unless explicitly asked."
   echo
   echo "Repository root: $REPO_ROOT"
+  echo
+
+  cat "$CLAUDE_FILE"
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do

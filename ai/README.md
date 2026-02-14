@@ -4,14 +4,15 @@ This directory contains lightweight scripts and role prompts for AI-assisted dev
 
 ## Contents
 
+- `CLAUDE.md`: Single constitutional authority loaded by all entrypoint scripts.
 - `ai-chat.sh`: Starts an interactive Claude session with a selected role.
 - `ai-plan.sh`: Starts Claude in read-only planner mode.
 - `ai-review.sh`: Starts Codex in read-only reviewer mode.
 - `ai-implement.sh`: Starts Claude Code with the implementer role.
-- `install.sh`: Installs scripts and role prompts into `~/.config/ai`.
+- `install.sh`: Installs scripts, constitution, and role prompts into `~/.config/ai`.
 - `deps.sh`: Installs Claude Code and Codex CLI if not already present.
 - `roles/`: Role prompt files used by `ai-chat.sh`.
-- `context/`: Shared context snippets included in prompts.
+- `context/`: Optional context layers for supplementary prompt content.
 
 ## Requirements
 
@@ -57,10 +58,14 @@ Role prompts live in `roles/` and define behavior such as:
 
 ## How the prompt is assembled
 
-`ai-chat.sh` builds a prompt that includes:
+Each entrypoint script builds a system prompt in this order:
 
-1. Context files from `~/.config/ai/context` (global rules and conventions).
-2. The selected role prompt from `~/.config/ai/roles`.
-3. Repository `AGENTS.md` content if it exists at the current repo root.
+1. Preamble (mode declaration, repo root).
+2. `CLAUDE.md` — the constitutional authority.
+3. Optional context layers from `~/.config/ai/context/*.md` (sorted).
+4. The role prompt from `~/.config/ai/roles/`.
+5. Repository `AGENTS.md` content (if present at repo root).
+6. Repository `docs/ARCH_INDEX.md` content (if present).
 
-This layered approach keeps role behavior consistent while letting repository‑specific guidance shape responses.
+This layered approach keeps constitutional rules sovereign while letting
+roles and repository-specific guidance shape mode behavior.

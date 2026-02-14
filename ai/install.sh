@@ -19,6 +19,9 @@ mkdir -p "$AI_DST/roles"
 
 copy() { rm -f "$2"; cp -f "$1" "$2"; }
 
+# Install constitution
+copy "$AI_SRC/CLAUDE.md" "$AI_DST/CLAUDE.md"
+
 # Install AI entrypoint scripts
 for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh; do
   SRC="$AI_SRC/$cmd"

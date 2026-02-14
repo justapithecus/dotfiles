@@ -7,6 +7,7 @@ command -v claude >/dev/null 2>&1 || {
 }
 
 AI_DIR="$HOME/.config/ai"
+CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/planner.md"
 
@@ -24,6 +25,9 @@ SYSTEM_PROMPT="$(
   echo
 
   echo "You are operating in PLANNER mode."
+  echo
+
+  cat "$CLAUDE_FILE"
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do

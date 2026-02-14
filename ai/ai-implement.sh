@@ -4,6 +4,7 @@ set -euo pipefail
 command -v claude >/dev/null || { echo "claude not found"; exit 1; }
 
 AI_DIR="$HOME/.config/ai"
+CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLE_DIR="$AI_DIR/roles"
 
@@ -22,6 +23,9 @@ SYSTEM_PROMPT="$(
   echo
 
   echo "You are operating in IMPLEMENTER mode."
+  echo
+
+  cat "$CLAUDE_FILE"
   echo
 
   for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
