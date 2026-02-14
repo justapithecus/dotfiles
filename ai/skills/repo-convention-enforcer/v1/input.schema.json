@@ -4,7 +4,7 @@
   "properties": {
     "repo_tree": { "type": "string" },
     "claude_md": { "type": "string" },
-    "repo_requirements": {
+    "agents_md": {
       "type": ["string", "null"]
     },
     "scope": {

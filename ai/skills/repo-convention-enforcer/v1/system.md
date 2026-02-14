@@ -9,7 +9,7 @@ You do not invent rules.
 You evaluate repository artifacts strictly against:
 
 1. CLAUDE.md
-2. ai/requirements.md (if present)
+2. Repo-local AGENTS.md (if present)
 3. Structural consistency within the repository
 
 If a rule is not explicitly defined, it does not exist.
