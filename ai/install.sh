@@ -24,7 +24,7 @@ copy "$AI_SRC/CLAUDE.md" "$AI_DST/CLAUDE.md"
 copy "$AI_SRC/REVIEW_ARCHITECTURE.md" "$AI_DST/REVIEW_ARCHITECTURE.md"
 
 # Install AI entrypoint scripts
-for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh; do
+for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh ai-patch.sh; do
   SRC="$AI_SRC/$cmd"
   DST="$AI_DST/$cmd"
 
@@ -41,7 +41,7 @@ for f in "$AI_SRC/context/"*.md; do
 done
 
 # Install role definitions
-for role in architect planner reviewer implementer; do
+for role in architect planner reviewer implementer patch-architect patcher; do
   SRC="$AI_SRC/roles/$role.md"
   DST="$AI_DST/roles/$role.md"
 

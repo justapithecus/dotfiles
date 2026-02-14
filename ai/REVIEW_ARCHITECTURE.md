@@ -117,11 +117,13 @@ Human must confirm plan.
 
 ### Phase 2 — Patch Emission
 
-Invoke Codex with:
-- Architect plan
-- Only listed files
-- `patcher.md` role
+Run:
 
+```
+./ai/ai-patch.sh
+```
+
+Provide the architect plan and only the listed files.
 Codex emits unified diff only.
 
 ### Phase 3 — Structural Validation
