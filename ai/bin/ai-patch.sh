@@ -7,8 +7,28 @@ set -euo pipefail
 #   Phase 2 — Patch Emission (Codex, patcher role)
 #   Phase 3 — Validation (ai-check --bundle patch)
 
-SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Portable script directory resolution (no readlink -f dependency)
+SCRIPT_DIR="$(
+  src="${BASH_SOURCE[0]}"
+  while [[ -L "$src" ]]; do
+    dir="$(cd "$(dirname "$src")" && pwd -P)"
+    src="$(readlink "$src")"
+    [[ "$src" != /* ]] && src="$dir/$src"
+  done
+  cd "$(dirname "$src")" && pwd -P
+)"
+
+# Resolve AI_DIR: env override > repo-relative parent > install breadcrumb
+if [[ -n "${AI_DIR:-}" ]] && [[ -f "$AI_DIR/CLAUDE.md" ]]; then
+  : # caller-provided AI_DIR
+elif [[ -f "$SCRIPT_DIR/../CLAUDE.md" ]]; then
+  AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [[ -f "$SCRIPT_DIR/.ai-source" ]]; then
+  AI_DIR="$(cat "$SCRIPT_DIR/.ai-source")"
+else
+  echo "error: cannot locate ai/ directory. Set AI_DIR or reinstall." >&2
+  exit 1
+fi
 
 # --- Preflight ------------------------------------------------------------
 
