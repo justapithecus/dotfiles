@@ -97,6 +97,8 @@ These constraints apply in ALL modes, unconditionally.
     `../myrepo-feature-auth`). The suffix should be a short descriptor
     of the work. The main worktree must remain on `main` and clean.
     This prevents branch-switching interference between concurrent sessions.
+13. **Never create or use symlinks.** No symlinks in git-tracked content,
+    install artifacts, or any operational context. Copies only.
 
 ---
 
