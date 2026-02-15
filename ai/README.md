@@ -13,7 +13,7 @@ ai/
 ├── MIGRATION.md           # Migration protocol for existing repos
 ├── install.sh             # Copies scripts to ~/.local/bin
 ├── deps.sh                # Installs claude and codex
-├── skills.yaml            # Skill + bundle registry
+├── skills.yaml            # Skill + bundle registry (43 skills, 6 bundles)
 ├── bin/                   # Executable entrypoint scripts
 │   ├── ai-chat.sh         # Interactive Claude with role selection
 │   ├── ai-plan.sh         # Planner mode (read-only)
@@ -26,7 +26,7 @@ ai/
 │   ├── ai-install-hooks.sh # Git hook installer
 │   └── ai-migrate-repo.sh # Repo migration scaffolder
 ├── roles/                 # Cognitive role definitions
-├── skills/                # Skill definitions (7 skills)
+├── skills/                # Skill definitions (43 skills across 7 domains)
 ├── completion/            # Shell completion scripts
 ├── context/               # Optional context layers
 ├── templates/             # Migration scaffolds
@@ -67,40 +67,135 @@ ai-patch "task"      # three-phase surgery workflow
 
 Governance:
 ```sh
-ai-check                        # run default bundle
-ai-check --bundle heavy          # run all skills
-ai-check --bundle patch          # run patch-scoped skills
-ai-skill repo-convention-enforcer # run a single skill
-ai-list                          # list skills, bundles, and roles
-ai-install-hooks                 # install pre-push hook
-ai-migrate-repo /path/to/repo   # scaffold governance for a repo
+ai-check                            # run default bundle (15 skills)
+ai-check --bundle heavy             # run all 43 skills
+ai-check --bundle patch             # run patch-scoped skills
+ai-check --bundle structural-change # structural boundary checks
+ai-check --bundle api-change        # API/contract stability checks
+ai-check --bundle audit-full        # full-spectrum audit
+ai-skill repo-convention-enforcer   # run a single skill
+ai-list                             # list skills, bundles, and roles
+ai-install-hooks                    # install pre-push hook
+ai-migrate-repo /path/to/repo       # scaffold governance for a repo
 ```
 
 ## Skills
 
 Skills are non-interactive JSON validators invoked by `ai-skill` and
-orchestrated by `ai-check`. Each skill has:
-- `SKILL.md` — instructions + `fail_on` frontmatter
-- `input.schema.json` — input contract
-- `output.schema.json` — output contract (enforced at validation)
+orchestrated by `ai-check`. Each skill outputs a unified JSON schema:
 
-Current skills:
-- `repo-convention-enforcer` — structural convention validation
-- `arch-index-alignment` — ARCH_INDEX vs repo structure
-- `scope-violation-detector` — diff scope boundary enforcement
-- `api-surface-drift` — undocumented API changes
-- `dependency-layer-violation` — cross-layer import detection
-- `responsibility-duplication-detector` — overlapping module responsibilities
-- `large-diff-anomaly-detector` — anomalous diff patterns
+```json
+{
+  "skill": "name",
+  "version": "v1",
+  "status": "pass|fail",
+  "blocking": [],
+  "major": [],
+  "warning": [],
+  "info": []
+}
+```
+
+Severity model:
+- **BLOCKING** — hard violations that must prevent merge (exit code 1)
+- **MAJOR** — significant issues that should be addressed
+- **WARNING** — potential concerns worth reviewing
+- **INFO** — observations and context
+
+Skills are executed in cost order (cheap → moderate → heavy), then by
+mode (deterministic → heuristic → semantic).
+
+### Domain I — Structural Integrity (7 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `repo-convention-enforcer` | cheap | deterministic |
+| `arch-index-alignment` | cheap | deterministic |
+| `undocumented-module-detector` | cheap | heuristic |
+| `orphan-directory-detector` | cheap | deterministic |
+| `forbidden-top-level-detector` | cheap | deterministic |
+| `required-directory-detector` | cheap | deterministic |
+| `module-name-collision-detector` | cheap | heuristic |
+
+### Domain II — Architectural Boundaries (7 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `dependency-layer-violation` | moderate | deterministic |
+| `cross-module-coupling-detector` | moderate | heuristic |
+| `circular-dependency-detector` | moderate | deterministic |
+| `boundary-leak-detector` | moderate | heuristic |
+| `inversion-of-control-violation` | moderate | heuristic |
+| `internal-package-exposure-detector` | moderate | deterministic |
+| `forbidden-import-pattern-detector` | moderate | deterministic |
+
+### Domain III — Dependency Graph Integrity (5 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `unstable-dependency-detector` | heavy | heuristic |
+| `excessive-fan-in-detector` | heavy | heuristic |
+| `excessive-fan-out-detector` | heavy | heuristic |
+| `god-module-detector` | heavy | heuristic |
+| `module-cohesion-anomaly-detector` | heavy | heuristic |
+
+### Domain IV — API & Contract Stability (5 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `api-surface-drift` | moderate | deterministic |
+| `serialization-contract-drift` | moderate | deterministic |
+| `config-contract-drift` | moderate | deterministic |
+| `cli-contract-drift` | moderate | deterministic |
+| `backward-compatibility-violation-detector` | heavy | semantic |
+
+### Domain V — Change Discipline (5 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `scope-violation-detector` | cheap | deterministic |
+| `unexpected-file-creation-detector` | cheap | deterministic |
+| `refactor-without-declaration-detector` | cheap | deterministic |
+| `large-diff-anomaly-detector` | cheap | deterministic |
+| `semantic-drift-detector` | heavy | semantic |
+
+### Domain VI — Entropy & Complexity Control (7 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `responsibility-duplication-detector` | heavy | heuristic |
+| `near-duplicate-file-detector` | heavy | heuristic |
+| `abstraction-leak-detector` | heavy | semantic |
+| `unused-public-symbol-detector` | moderate | heuristic |
+| `dead-module-detector` | moderate | heuristic |
+| `orphan-test-detector` | moderate | heuristic |
+| `test-coverage-regression-detector` | heavy | deterministic |
+
+### Domain VII — Repository Hygiene & Operational Safety (7 skills)
+
+| Skill | Cost | Mode |
+|-------|------|------|
+| `unsafe-config-pattern-detector` | cheap | deterministic |
+| `environment-variable-leak-detector` | cheap | deterministic |
+| `hardcoded-secret-pattern-detector` | cheap | deterministic |
+| `unbounded-error-swallow-detector` | moderate | heuristic |
+| `unlogged-error-detector` | moderate | heuristic |
+| `inconsistent-error-propagation-detector` | moderate | heuristic |
+| `panic-or-exit-misuse-detector` | moderate | heuristic |
 
 ## Bundles
 
-Bundles group skills for common workflows:
-- `default` — convention + arch alignment + anomaly detection
-- `patch` — scope + convention + anomaly detection
-- `api-change` — convention + arch + API drift + dependency layers
-- `structural-change` — convention + arch + dependency + duplication
-- `heavy` — all skills
+Bundles group skills for common workflows. Skills within a bundle are
+executed in cost order, with `--fail-fast` stopping on first blocking failure.
+
+| Bundle | Skills | Purpose |
+|--------|--------|---------|
+| `patch` | 7 | Surgical edits (fast, strict, scoped) |
+| `default` | 15 | Normal work (broad coverage, reasonable cost) |
+| `structural-change` | 17 | Module structure / directory changes |
+| `api-change` | 13 | Public API, SDK, CLI, contract changes |
+| `heavy` | 43 | Large features/refactors (maximal daily driver) |
+| `audit-full` | 43 | Full-spectrum audit (absolute coverage) |
 
 ## Roles
 
