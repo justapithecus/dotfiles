@@ -281,13 +281,18 @@ if [[ -n "$STATUS" ]] && [[ "$STATUS" != "pass" ]] && [[ "$STATUS" != "fail" ]];
   SCHEMA_ERRORS+="status: must be \"pass\" or \"fail\", got \"$STATUS\"\n"
 fi
 
-# Check required array fields
+# Check required array fields (must be arrays of strings)
 for key in blocking major warning info; do
   KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
   if [[ "$KEY_TYPE" == "null" ]]; then
     SCHEMA_ERRORS+="missing required key: $key\n"
   elif [[ "$KEY_TYPE" != "array" ]]; then
     SCHEMA_ERRORS+="$key: expected array, got $KEY_TYPE\n"
+  else
+    NON_STRING="$(echo "$RESPONSE" | jq "[.[\"$key\"][] | select(type != \"string\")] | length")"
+    if [[ "$NON_STRING" -gt 0 ]]; then
+      SCHEMA_ERRORS+="$key: all elements must be strings ($NON_STRING non-string element(s) found)\n"
+    fi
   fi
 done
 

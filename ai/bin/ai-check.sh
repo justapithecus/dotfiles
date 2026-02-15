@@ -20,7 +20,6 @@ command -v jq >/dev/null 2>&1 || {
 
 BUNDLE="default"
 SCOPE=""
-BASE_REF=""
 FAIL_FAST=false
 
 while [[ $# -gt 0 ]]; do
@@ -31,13 +30,10 @@ while [[ $# -gt 0 ]]; do
     --scope)
       [[ $# -ge 2 ]] || { echo "error: --scope requires a value" >&2; exit 1; }
       SCOPE="$2"; shift 2 ;;
-    --base)
-      [[ $# -ge 2 ]] || { echo "error: --base requires a value" >&2; exit 1; }
-      BASE_REF="$2"; shift 2 ;;
     --fail-fast)
       FAIL_FAST=true; shift ;;
     -h|--help)
-      echo "usage: ai-check [--bundle <name>] [--scope path,...] [--base <ref>] [--fail-fast]"
+      echo "usage: ai-check [--bundle <name>] [--scope path,...] [--fail-fast]"
       echo
       echo "Bundles:"
       yq e '.bundles | keys | .[]' "$AI_DIR/skills.yaml" 2>/dev/null | sed 's/^/  /'
@@ -154,11 +150,15 @@ while IFS= read -r skill_name; do
     echo "  ✔ $skill_name (blocking:$SKILL_BLOCKING major:$SKILL_MAJOR warning:$SKILL_WARNING)"
   else
     FAILED=$((FAILED + 1))
-    echo "  ✖ $skill_name (blocking:$SKILL_BLOCKING major:$SKILL_MAJOR warning:$SKILL_WARNING)"
-    BLOCKING_FAILED=$((BLOCKING_FAILED + 1))
-    if [[ "$FAIL_FAST" == "true" ]]; then
-      echo "✖ Blocking failure (--fail-fast): $skill_name" >&2
-      break
+    if [[ "$IS_MANDATORY" == "true" ]]; then
+      echo "  ✖ $skill_name [mandatory] (blocking:$SKILL_BLOCKING major:$SKILL_MAJOR warning:$SKILL_WARNING)"
+      BLOCKING_FAILED=$((BLOCKING_FAILED + 1))
+      if [[ "$FAIL_FAST" == "true" ]]; then
+        echo "✖ Mandatory failure (--fail-fast): $skill_name" >&2
+        break
+      fi
+    else
+      echo "  ⚠ $skill_name [non-mandatory] (blocking:$SKILL_BLOCKING major:$SKILL_MAJOR warning:$SKILL_WARNING)"
     fi
   fi
 done <<< "$ORDERED_SKILLS"
