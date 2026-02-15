@@ -261,26 +261,38 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-# Defense-in-depth: validate response shape against output.schema.json.
-# The prompt instructs the model to conform, but validation here
-# catches malformed or off-schema responses before they reach callers.
-# Generic: reads required keys from the output schema itself.
-
-REQUIRED_KEYS="$(jq -r '.required[]' "$SKILL_DIR/output.schema.json")"
-
+# Defense-in-depth: validate unified output schema.
+# All skills must return: skill, version, status, blocking, major, warning, info
 SCHEMA_ERRORS=""
-while IFS= read -r key; do
-  [[ -n "$key" ]] || continue
+
+# Check required string fields
+for key in skill version status; do
+  KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
+  if [[ "$KEY_TYPE" == "null" ]]; then
+    SCHEMA_ERRORS+="missing required key: $key\n"
+  elif [[ "$KEY_TYPE" != "string" ]]; then
+    SCHEMA_ERRORS+="$key: expected string, got $KEY_TYPE\n"
+  fi
+done
+
+# Check status enum
+STATUS="$(echo "$RESPONSE" | jq -r '.status // ""')"
+if [[ -n "$STATUS" ]] && [[ "$STATUS" != "pass" ]] && [[ "$STATUS" != "fail" ]]; then
+  SCHEMA_ERRORS+="status: must be \"pass\" or \"fail\", got \"$STATUS\"\n"
+fi
+
+# Check required array fields
+for key in blocking major warning info; do
   KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
   if [[ "$KEY_TYPE" == "null" ]]; then
     SCHEMA_ERRORS+="missing required key: $key\n"
   elif [[ "$KEY_TYPE" != "array" ]]; then
     SCHEMA_ERRORS+="$key: expected array, got $KEY_TYPE\n"
   fi
-done <<< "$REQUIRED_KEYS"
+done
 
 if [[ -n "$SCHEMA_ERRORS" ]]; then
-  echo "error: response does not conform to output schema:" >&2
+  echo "error: response does not conform to unified output schema:" >&2
   printf "  %b" "$SCHEMA_ERRORS" >&2
   echo "$RESPONSE" >&2
   exit 1
@@ -290,16 +302,9 @@ fi
 
 echo "$RESPONSE" | jq .
 
-# --- Exit code based on fail_on fields -----------------------------------
-# Read fail_on from SKILL.md frontmatter; default to violations + forbidden_exists
+# --- Exit code: fail if status=fail AND blocking is non-empty -------------
 
-FAIL_ON="$(sed -n '/^---$/,/^---$/p' "$SKILL_DIR/SKILL.md" | yq e '.fail_on // ["violations", "forbidden_exists"]' -)"
-
-EXIT=0
-while IFS= read -r field; do
-  [[ -n "$field" ]] || continue
-  field="$(echo "$field" | sed 's/^- //')"
-  COUNT="$(echo "$RESPONSE" | jq --arg f "$field" '.[$f] // [] | length')"
-  [[ "$COUNT" -eq 0 ]] || EXIT=1
-done <<< "$FAIL_ON"
-exit $EXIT
+BLOCKING_COUNT="$(echo "$RESPONSE" | jq '.blocking | length')"
+if [[ "$STATUS" == "fail" ]] && [[ "$BLOCKING_COUNT" -gt 0 ]]; then
+  exit 1
+fi

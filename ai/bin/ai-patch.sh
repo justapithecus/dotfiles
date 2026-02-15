@@ -83,10 +83,16 @@ $TASK" 2>&1)" || {
   exit 1
 }
 
+# Persist plan for audit trail
+mkdir -p "$AI_DIR/out"
+jq -n --arg task "$TASK" --arg plan "$ARCHITECT_PLAN" --arg timestamp "$(date -Iseconds)" \
+  '{task: $task, plan: $plan, timestamp: $timestamp}' > "$AI_DIR/out/patch-plan.json"
+
 echo "$ARCHITECT_PLAN"
 
 echo
 echo "─── Review the plan above ───"
+echo "(Plan saved to ai/out/patch-plan.json)"
 read -rp "Proceed to patch emission? [y/N] " CONFIRM
 if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
   echo "Aborted."
