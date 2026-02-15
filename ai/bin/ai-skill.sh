@@ -269,7 +269,7 @@ if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; 
       [[ -n "$ufile" ]] || continue
       [[ -f "$REPO_ROOT/$ufile" ]] || continue
       # Detect actual file mode (executable vs regular)
-      local fmode="100644"
+      fmode="100644"
       [[ -x "$REPO_ROOT/$ufile" ]] && fmode="100755"
       # Build unified diff header for new file with detected mode
       UNTRACKED_DIFF="${UNTRACKED_DIFF}
