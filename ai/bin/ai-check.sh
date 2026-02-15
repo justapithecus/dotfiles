@@ -55,8 +55,8 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "error: --mode requires a value" >&2; exit 1; }
       MODE="$2"; shift 2 ;;
     --diff-profile)
-      # NOTE: accepted but not yet used for routing. Reserved for future
-      # paths_any/flags_any predicate filtering in skill selection.
+      # JSON diff profile from ai-implement. Enables predicate filtering
+      # (paths_any/flags_any) when combined with --mode routing.
       [[ $# -ge 2 ]] || { echo "error: --diff-profile requires a value" >&2; exit 1; }
       DIFF_PROFILE="$2"; shift 2 ;;
     --scope)
@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
     --fail-fast)
       FAIL_FAST=true; shift ;;
     -h|--help)
-      echo "usage: ai-check [--bundle <name>|--mode <MODE>] [--scope path,...] [--base <ref>] [--fail-fast]"
+      echo "usage: ai-check [--bundle <name>|--mode <MODE>] [--diff-profile <json>] [--scope path,...] [--base <ref>] [--fail-fast]"
       echo
       echo "Modes: PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT"
       echo
@@ -93,6 +93,68 @@ if [[ -n "$MODE" ]]; then
     *) echo "error: invalid mode '$MODE' (valid: PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT)" >&2; exit 1 ;;
   esac
 fi
+
+# --- Predicate evaluation -------------------------------------------------
+
+evaluate_predicates() {
+  local skill_name="$1"
+  local profile_json="$2"
+
+  # Extract predicates from registry
+  local paths_any flags_any
+  paths_any="$(yq e -o=json ".registry[] | select(.name == \"$skill_name\") | .run_when.paths_any // []" "$REGISTRY")"
+  flags_any="$(yq e -o=json ".registry[] | select(.name == \"$skill_name\") | .run_when.flags_any // []" "$REGISTRY")"
+
+  local has_paths has_flags
+  has_paths="$(echo "$paths_any" | jq 'length > 0')"
+  has_flags="$(echo "$flags_any" | jq 'length > 0')"
+
+  # No predicates = always match
+  if [[ "$has_paths" != "true" ]] && [[ "$has_flags" != "true" ]]; then
+    return 0
+  fi
+
+  # paths_any: any changed file matches any glob pattern
+  if [[ "$has_paths" == "true" ]]; then
+    local match
+    match="$(echo "$profile_json" | jq -r --argjson patterns "$paths_any" '
+      .changed_files // [] | . as $files |
+      any($files[]; . as $f |
+        any($patterns[]; . as $pat |
+          ($pat | gsub("\\*\\*"; "DBLSTAR") | gsub("\\*"; "SGLSTAR") | gsub("\\?"; "QMARK") | gsub("\\."; "\\.") | gsub("\\+"; "\\+") | gsub("\\("; "\\(") | gsub("\\)"; "\\)") | gsub("\\["; "\\[") | gsub("\\]"; "\\]") | gsub("\\{"; "\\{") | gsub("\\}"; "\\}") | gsub("\\^"; "\\^") | gsub("\\$"; "\\$") | gsub("\\|"; "\\|") | gsub("SGLSTAR"; "[^/]*") | gsub("DBLSTAR"; ".*") | gsub("QMARK"; "[^/]"))
+          | . as $re | ($f | test("^" + $re + "$"))
+        )
+      )
+    ')"
+    [[ "$match" == "true" ]] && return 0
+  fi
+
+  # flags_any: any flag condition is true
+  if [[ "$has_flags" == "true" ]]; then
+    local match
+    match="$(echo "$profile_json" | jq -r --argjson flags "$flags_any" '
+      . as $profile |
+      any($flags[]; . as $flag |
+        if ($flag | test("\\s*[><=!]+\\s*")) then
+          ($flag | capture("^(?<field>\\w+)\\s*(?<op>[><=!]+)\\s*(?<val>.+)$")) as $p |
+          ($profile[$p.field] // 0) as $actual | ($p.val | tonumber) as $thr |
+          if $p.op == ">"  then $actual > $thr
+          elif $p.op == ">=" then $actual >= $thr
+          elif $p.op == "<"  then $actual < $thr
+          elif $p.op == "<=" then $actual <= $thr
+          elif $p.op == "==" then $actual == $thr
+          else false end
+        else
+          $profile[$flag] // false |
+          if type == "boolean" then . elif type == "number" then . > 0 else false end
+        end
+      )
+    ')"
+    [[ "$match" == "true" ]] && return 0
+  fi
+
+  return 1
+}
 
 # --- Resolve skill set ----------------------------------------------------
 
@@ -182,6 +244,22 @@ while IFS= read -r skill_name; do
     continue
   fi
 
+  # Predicate filtering (mode-based routing + --diff-profile only)
+  if [[ -n "$DIFF_PROFILE" ]] && [[ -n "$MODE" ]]; then
+    if ! evaluate_predicates "$skill_name" "$DIFF_PROFILE"; then
+      SKIPPED=$((SKIPPED + 1))
+      echo "  ⊘ $skill_name [skipped: no predicate match]"
+      RESULT_ENTRY="$(jq -n \
+        --arg name "$skill_name" \
+        --arg status "skipped" \
+        --arg reason "no predicate match" \
+        --arg mandatory "$IS_MANDATORY" \
+        '{name: $name, status: $status, skipped_reason: $reason, blocking: 0, major: 0, warning: 0, exit_code: 0, mandatory: ($mandatory == "true")}')"
+      SKILL_RESULTS_JSON="$(echo "$SKILL_RESULTS_JSON" | jq --argjson entry "$RESULT_ENTRY" '. + [$entry]')"
+      continue
+    fi
+  fi
+
   echo "▶ Running: $skill_name [$SKILL_COST]"
 
   EXTRA_ARGS=""
@@ -262,14 +340,28 @@ echo "Source: $SOURCE"
 echo "Results: $PASSED/$TOTAL passed ($FAILED failed, $SKIPPED skipped, $BLOCKING_FAILED blocking)"
 echo "Output: $OUT_DIR/"
 
-# Fail if all skills were skipped (false pass — no actual validation occurred)
+# Fail if all skills were skipped — but distinguish skip reasons.
+# requires_diff skips (no --base) are false passes → exit 1.
+# Predicate-filtered skips are legitimate narrowing → pass with note.
 if [[ "$TOTAL" -gt 0 ]] && [[ "$SKIPPED" -eq "$TOTAL" ]]; then
-  echo
-  echo "✖ All $TOTAL skill(s) were skipped — no validation occurred" >&2
-  if [[ -z "$BASE_REF" ]]; then
+  DIFF_SKIPS="$(echo "$SKILL_RESULTS_JSON" | jq '[.[] | select(.skipped_reason == "requires_diff without --base")] | length')"
+  PREDICATE_SKIPS="$(echo "$SKILL_RESULTS_JSON" | jq '[.[] | select(.skipped_reason == "no predicate match")] | length')"
+  if [[ "$DIFF_SKIPS" -gt 0 ]] && [[ "$PREDICATE_SKIPS" -eq 0 ]]; then
+    # All skipped due to missing --base — no validation occurred
+    echo
+    echo "✖ All $TOTAL skill(s) were skipped — no validation occurred" >&2
     echo "  hint: pass --base <ref> to provide diff context for requires_diff skills" >&2
+    exit 1
+  elif [[ "$PREDICATE_SKIPS" -gt 0 ]]; then
+    # All skipped by predicates — legitimate narrow diff, pass with note
+    echo
+    echo "ℹ All $TOTAL skill(s) skipped by predicate filtering (narrow diff)"
+  else
+    # Mixed or unknown skip reasons — fail safe
+    echo
+    echo "✖ All $TOTAL skill(s) were skipped — no validation occurred" >&2
+    exit 1
   fi
-  exit 1
 fi
 
 if [[ "$BLOCKING_FAILED" -gt 0 ]]; then

@@ -141,6 +141,7 @@ registry:
     trigger: architecture
     run_when:
       modes: [STRUCTURAL, API, HEAVY, AUDIT]
+      flags_any: ["has_structural"]
 
   - name: inversion-of-control-violation
     version: v1
@@ -163,6 +164,7 @@ registry:
     trigger: architecture
     run_when:
       modes: [NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
+      paths_any: ["internal/**", "pkg/**"]
 
   - name: forbidden-import-pattern-detector
     version: v1
@@ -248,6 +250,7 @@ registry:
     trigger: api
     run_when:
       modes: [NORMAL, API, HEAVY, AUDIT]
+      paths_any: ["api/**", "sdk/**", "public/**", "cmd/**", "cli/**"]
 
   - name: serialization-contract-drift
     version: v1
@@ -259,6 +262,7 @@ registry:
     trigger: api
     run_when:
       modes: [API, HEAVY, AUDIT]
+      paths_any: ["api/**", "sdk/**", "public/**", "cmd/**", "cli/**"]
 
   - name: config-contract-drift
     version: v1
@@ -270,6 +274,7 @@ registry:
     trigger: api
     run_when:
       modes: [API, HEAVY, AUDIT]
+      paths_any: ["api/**", "sdk/**", "public/**", "cmd/**", "cli/**", "config/**", "*.config.*"]
 
   - name: cli-contract-drift
     version: v1
@@ -281,6 +286,7 @@ registry:
     trigger: api
     run_when:
       modes: [API, HEAVY, AUDIT]
+      paths_any: ["cmd/**", "cli/**"]
 
   - name: backward-compatibility-violation-detector
     version: v1
@@ -292,6 +298,7 @@ registry:
     trigger: heavy
     run_when:
       modes: [API, HEAVY, AUDIT]
+      paths_any: ["api/**", "sdk/**", "public/**", "cmd/**", "cli/**"]
 
   # =========================
   # V. CHANGE DISCIPLINE (SURGERY CONTROL)
@@ -317,6 +324,7 @@ registry:
     trigger: patch
     run_when:
       modes: [PATCH, HEAVY, AUDIT]
+      flags_any: ["new_files > 0"]
 
   - name: refactor-without-declaration-detector
     version: v1
@@ -328,6 +336,7 @@ registry:
     trigger: patch
     run_when:
       modes: [PATCH, HEAVY, AUDIT]
+      flags_any: ["renames > 0"]
 
   - name: large-diff-anomaly-detector
     version: v1
@@ -339,6 +348,7 @@ registry:
     trigger: always
     run_when:
       modes: [PATCH, NORMAL, API, HEAVY, AUDIT]
+      flags_any: ["diff_lines > 100"]
 
   - name: semantic-drift-detector
     version: v1

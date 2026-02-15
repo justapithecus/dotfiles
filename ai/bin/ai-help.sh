@@ -254,6 +254,7 @@ show_command_help() {
       echo "  Options:"
       echo "    --mode <MODE>          Route by mode (cost/mode-ordered)"
       echo "    --bundle <name>        Route by bundle (listing-ordered)"
+      echo "    --diff-profile <json>  Diff profile; enables predicate filtering"
       echo "    --scope path1,path2    Filter repo tree to paths"
       echo "    --base <ref>           Provide diff context (merge base)"
       echo "    --fail-fast            Stop on first mandatory failure"
