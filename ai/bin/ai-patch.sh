@@ -1,32 +1,99 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Patch Entrypoint (Codex)
-# Purpose:
-#   - Emit minimal unified diffs from a patch-architect plan
-#   - NOT structural validation, NOT code review
-# Structural validation: ai-skill.sh
-# Code review: ai-review.sh
+# Patch Surgery Workflow
+# Three-phase flow:
+#   Phase 1 — Patch Architecture (Claude, patch-architect role)
+#   Phase 2 — Patch Emission (Codex, patcher role)
+#   Phase 3 — Validation (ai-check --bundle patch)
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-command -v codex >/dev/null 2>&1 || {
-  echo "codex not found. Run ./ai/deps.sh"
+# --- Preflight ------------------------------------------------------------
+
+command -v claude >/dev/null 2>&1 || {
+  echo "error: claude not found. Run ./ai/deps.sh" >&2
   exit 1
 }
 
+command -v codex >/dev/null 2>&1 || {
+  echo "error: codex not found. Run ./ai/deps.sh" >&2
+  exit 1
+}
+
+# --- Parse arguments ------------------------------------------------------
+
+if [[ $# -lt 1 ]]; then
+  echo "usage: ai-patch \"<task description>\"" >&2
+  exit 1
+fi
+
+TASK="$1"
+
 CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
-ROLE_FILE="$AI_DIR/roles/patcher.md"
+ARCHITECT_ROLE="$AI_DIR/roles/patch-architect.md"
+PATCHER_ROLE="$AI_DIR/roles/patcher.md"
 
-# Detect repo root (fallback to current dir)
+# Detect repo root
 REPO_ROOT="$PWD"
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
 
-PROMPT="$(
+# --- Phase 1: Patch Architecture (Claude) ---------------------------------
+
+echo "═══ Phase 1: Patch Architecture ═══"
+echo "Task: $TASK"
+echo
+
+ARCHITECT_PROMPT="$(
+  echo "You are an AI assistant performing scoped change planning."
+  echo "Follow the role definition exactly."
+  echo
+  echo "Repository root: $REPO_ROOT"
+  echo
+
+  echo "You are operating in PATCH-ARCHITECT mode."
+  echo
+
+  cat "$CLAUDE_FILE"
+  echo
+
+  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+    cat "$f"
+    echo
+  done
+
+  cat "$ARCHITECT_ROLE"
+
+  if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
+    echo
+    echo "Repository context:"
+    cat "$REPO_ROOT/AGENTS.md"
+  fi
+)"
+
+# Interactive: user reviews and confirms the plan
+claude --system-prompt "$ARCHITECT_PROMPT" -p "Plan a patch for the following task. Output the files to modify, exact regions, and assertions for correctness:
+
+$TASK"
+
+echo
+echo "─── Review the plan above ───"
+read -rp "Proceed to patch emission? [y/N] " CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+  echo "Aborted."
+  exit 0
+fi
+
+# --- Phase 2: Patch Emission (Codex) --------------------------------------
+
+echo
+echo "═══ Phase 2: Patch Emission ═══"
+
+PATCHER_PROMPT="$(
   echo "You are an AI assistant performing minimal patch emission."
   echo "Follow the role definition exactly."
   echo
@@ -44,7 +111,7 @@ PROMPT="$(
     echo
   done
 
-  cat "$ROLE_FILE"
+  cat "$PATCHER_ROLE"
 
   if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
     echo
@@ -53,4 +120,20 @@ PROMPT="$(
   fi
 )"
 
-codex "$PROMPT"
+codex "$PATCHER_PROMPT
+
+Task: $TASK"
+
+# --- Phase 3: Validation -------------------------------------------------
+
+echo
+echo "═══ Phase 3: Validation ═══"
+
+"$SCRIPT_DIR/ai-check.sh" --bundle patch --fail-fast || {
+  echo
+  echo "✖ Patch validation failed. Review violations above." >&2
+  exit 1
+}
+
+echo
+echo "✔ Patch surgery complete."
