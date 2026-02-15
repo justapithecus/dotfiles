@@ -87,9 +87,15 @@ _ai_migrate_completions() {
   COMPREPLY=($(compgen -d -- "$cur"))
 }
 
+_ai_help_completions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "chat plan implement review patch skill check list help install-hooks migrate workflows" -- "$cur"))
+}
+
 complete -F _ai_check_completions ai-check
 complete -F _ai_skill_completions ai-skill
 complete -F _ai_chat_completions ai-chat
 complete -F _ai_implement_completions ai-implement
 complete -F _ai_plan_completions ai-plan
 complete -F _ai_migrate_completions ai-migrate
+complete -F _ai_help_completions ai-help
