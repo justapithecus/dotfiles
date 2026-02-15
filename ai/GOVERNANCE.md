@@ -127,8 +127,8 @@ Schema:
 {
   "task": "short description",
   "intent": "patch | normal | structural | api | heavy",
-  "constraints": ["constraint 1", "constraint 2"],
-  "notes": "freeform context for the implementer"
+  "constraints": {"max_files": 3, "no_new_deps": true},
+  "notes": ["note 1", "note 2"]
 }
 ```
 

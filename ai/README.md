@@ -228,5 +228,5 @@ Each entrypoint script builds a system prompt in this order:
 5. Repository `AGENTS.md` content (if present at repo root).
 6. Repository `docs/ARCH_INDEX.md` content (if present).
 
-Scripts resolve paths via `readlink -f` so they work correctly
-when installed to `~/.local/bin` as copies.
+Scripts resolve paths via a portable symlink-following loop so they
+work correctly when installed to `~/.local/bin` as copies.

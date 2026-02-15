@@ -3,7 +3,7 @@
 Interactive process for migrating legacy repositories into the AI
 governance system. Non-destructive, observable, and ordered.
 
-Entrypoint: `ai-migrate-repo /path/to/repo`
+Entrypoint: `ai-migrate /path/to/repo`
 
 ---
 
@@ -104,7 +104,7 @@ Review output. Fix any blocking violations before proceeding.
 
 ## Expected Order Per Repo
 
-1. Run `ai-migrate-repo /path/to/repo` (Phases A–F)
+1. Run `ai-migrate /path/to/repo` (Phases A–F)
 2. Review and customize generated files
 3. Fix any violations reported in Phase F
 4. Stabilize (re-run `ai-check` until clean)
