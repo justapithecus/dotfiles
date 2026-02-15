@@ -154,7 +154,8 @@ done
 # --- Build repo tree ------------------------------------------------------
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  REPO_TREE="$(git ls-files)"
+  # Include both tracked and untracked files (skills need to see new files)
+  REPO_TREE="$({ git ls-files; git ls-files --others --exclude-standard; } | LC_ALL=C sort -u)"
 else
   REPO_TREE="$(cd "$REPO_ROOT" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)"
 fi
@@ -203,10 +204,14 @@ if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
 fi
 
 # Optional ARCH_INDEX.md (structural ontology — skills need contents, not just path)
+# Check both root and docs/ locations
 ARCH_INDEX=""
-if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
-  ARCH_INDEX="$(cat "$REPO_ROOT/docs/ARCH_INDEX.md")"
-fi
+for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
+  if [[ -f "$_arch_path" ]]; then
+    ARCH_INDEX="$(cat "$_arch_path")"
+    break
+  fi
+done
 
 # --- Build prompts --------------------------------------------------------
 # Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → ARCH_INDEX → SKILL.md

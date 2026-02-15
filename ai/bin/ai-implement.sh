@@ -110,6 +110,25 @@ compute_diff_profile() {
   local diff_names
   diff_names="$(git diff --name-only "$base" 2>/dev/null || echo "")"
 
+  # Include untracked files (git diff never shows these)
+  local untracked
+  untracked="$(git ls-files --others --exclude-standard 2>/dev/null || echo "")"
+  if [[ -n "$untracked" ]]; then
+    if [[ -n "$diff_names" ]]; then
+      diff_names="$(printf '%s\n%s' "$diff_names" "$untracked" | sort -u)"
+    else
+      diff_names="$untracked"
+    fi
+    # Untracked files are new files — append to name_status as additions
+    local untracked_status
+    untracked_status="$(echo "$untracked" | sed 's/^/A\t/')"
+    if [[ -n "$name_status" ]]; then
+      name_status="$(printf '%s\n%s' "$name_status" "$untracked_status")"
+    else
+      name_status="$untracked_status"
+    fi
+  fi
+
   local files_changed=0
   local new_files=0
   local renames=0
@@ -308,10 +327,10 @@ while [[ "$ITERATION" -lt "$MAX_ITERATIONS" ]]; do
     exit 0
   fi
 
-  # Check if there are any changes at all
-  # Include both committed and uncommitted changes (merge-base to working tree)
+  # Check if there are any changes at all (tracked + untracked)
   DIFF_CHECK="$(git diff --name-only "$MERGE_BASE" 2>/dev/null || echo "")"
-  if [[ -z "$DIFF_CHECK" ]]; then
+  UNTRACKED_CHECK="$(git ls-files --others --exclude-standard 2>/dev/null || echo "")"
+  if [[ -z "$DIFF_CHECK" ]] && [[ -z "$UNTRACKED_CHECK" ]]; then
     echo
     echo "⚠ No changes detected from merge base — skipping gating"
     echo "✔ Session complete (no changes)"
