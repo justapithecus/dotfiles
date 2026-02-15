@@ -72,4 +72,20 @@ SYSTEM_PROMPT="$(
   fi
 )"
 
-exec claude --system-prompt "$SYSTEM_PROMPT" "$@"
+OUT_DIR="$AI_DIR/out"
+mkdir -p "$OUT_DIR"
+
+# Run session (no exec — script continues after)
+claude --system-prompt "$SYSTEM_PROMPT" "$@" || true
+
+# Detect plan.json written during session
+PLAN_FILE="$OUT_DIR/plan.json"
+if [[ -f "$PLAN_FILE" ]]; then
+  echo
+  echo "✔ plan.json detected at $PLAN_FILE"
+  echo "  intent: $(jq -r '.intent // "unspecified"' "$PLAN_FILE" 2>/dev/null)"
+  echo "  ai-implement will consume this automatically"
+else
+  echo
+  echo "ℹ No plan.json written (optional — ai-implement will use diff-based mode detection)"
+fi
