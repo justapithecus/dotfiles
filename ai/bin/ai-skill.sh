@@ -260,6 +260,26 @@ DIFF_PAYLOAD=""
 if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # Diff merge-base to working tree (includes uncommitted session edits)
   DIFF_PAYLOAD="$(git diff "$BASE_REF" 2>/dev/null || true)"
+
+  # Append synthetic diff for untracked files (git diff never includes these)
+  UNTRACKED="$(git ls-files --others --exclude-standard 2>/dev/null || true)"
+  if [[ -n "$UNTRACKED" ]]; then
+    UNTRACKED_DIFF=""
+    while IFS= read -r ufile; do
+      [[ -n "$ufile" ]] || continue
+      [[ -f "$ufile" ]] || continue
+      # Build unified diff header for new file
+      UNTRACKED_DIFF="${UNTRACKED_DIFF}
+diff --git a/$ufile b/$ufile
+new file mode 100644
+--- /dev/null
++++ b/$ufile
+$(git diff --no-index /dev/null "$ufile" 2>/dev/null | tail -n +5 || true)"
+    done <<< "$UNTRACKED"
+    if [[ -n "$UNTRACKED_DIFF" ]]; then
+      DIFF_PAYLOAD="${DIFF_PAYLOAD}${UNTRACKED_DIFF}"
+    fi
+  fi
 fi
 
 USER_PROMPT="Evaluate the following repository.
