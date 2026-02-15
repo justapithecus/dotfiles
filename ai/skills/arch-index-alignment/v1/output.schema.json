@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "phantom_entries",
+    "undocumented_directories",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "phantom_entries": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "undocumented_directories": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

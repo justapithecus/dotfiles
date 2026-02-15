@@ -6,7 +6,72 @@ registry:
   - name: repo-convention-enforcer
     version: v1
     path: skills/repo-convention-enforcer/v1
-    mode: validator
-    trigger: always
     cost: cheap
     mandatory: true
+
+  - name: arch-index-alignment
+    version: v1
+    path: skills/arch-index-alignment/v1
+    cost: cheap
+    mandatory: true
+
+  - name: scope-violation-detector
+    version: v1
+    path: skills/scope-violation-detector/v1
+    cost: cheap
+    mandatory: true
+
+  - name: api-surface-drift
+    version: v1
+    path: skills/api-surface-drift/v1
+    cost: moderate
+    mandatory: false
+
+  - name: dependency-layer-violation
+    version: v1
+    path: skills/dependency-layer-violation/v1
+    cost: moderate
+    mandatory: false
+
+  - name: responsibility-duplication-detector
+    version: v1
+    path: skills/responsibility-duplication-detector/v1
+    cost: heavy
+    mandatory: false
+
+  - name: large-diff-anomaly-detector
+    version: v1
+    path: skills/large-diff-anomaly-detector/v1
+    cost: cheap
+    mandatory: false
+
+bundles:
+  default:
+    - repo-convention-enforcer
+    - arch-index-alignment
+    - large-diff-anomaly-detector
+
+  patch:
+    - scope-violation-detector
+    - repo-convention-enforcer
+    - large-diff-anomaly-detector
+
+  api-change:
+    - repo-convention-enforcer
+    - arch-index-alignment
+    - api-surface-drift
+    - dependency-layer-violation
+
+  structural-change:
+    - repo-convention-enforcer
+    - arch-index-alignment
+    - dependency-layer-violation
+    - responsibility-duplication-detector
+
+  heavy:
+    - repo-convention-enforcer
+    - arch-index-alignment
+    - api-surface-drift
+    - dependency-layer-violation
+    - responsibility-duplication-detector
+    - large-diff-anomaly-detector

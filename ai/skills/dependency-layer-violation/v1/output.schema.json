@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "forbidden_imports",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "forbidden_imports": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
