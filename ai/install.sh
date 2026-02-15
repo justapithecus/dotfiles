@@ -24,4 +24,12 @@ if [[ -f "$SCRIPT_DIR/completion/ai.bash" ]]; then
   cp -f "$SCRIPT_DIR/completion/ai.bash" "$COMP_DIR/ai"
 fi
 
+# Cleanup deprecated scripts
+for deprecated in ai-migrate-repo; do
+  if [[ -f "$DEST/$deprecated" ]]; then
+    rm -f "$DEST/$deprecated"
+    echo "Removed deprecated: $deprecated"
+  fi
+done
+
 echo "Installed to $DEST (copies)"
