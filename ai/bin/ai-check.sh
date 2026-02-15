@@ -55,6 +55,8 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "error: --mode requires a value" >&2; exit 1; }
       MODE="$2"; shift 2 ;;
     --diff-profile)
+      # NOTE: accepted but not yet used for routing. Reserved for future
+      # paths_any/flags_any predicate filtering in skill selection.
       [[ $# -ge 2 ]] || { echo "error: --diff-profile requires a value" >&2; exit 1; }
       DIFF_PROFILE="$2"; shift 2 ;;
     --scope)
@@ -259,6 +261,16 @@ echo "═══ ai-check summary ═══"
 echo "Source: $SOURCE"
 echo "Results: $PASSED/$TOTAL passed ($FAILED failed, $SKIPPED skipped, $BLOCKING_FAILED blocking)"
 echo "Output: $OUT_DIR/"
+
+# Fail if all skills were skipped (false pass — no actual validation occurred)
+if [[ "$TOTAL" -gt 0 ]] && [[ "$SKIPPED" -eq "$TOTAL" ]]; then
+  echo
+  echo "✖ All $TOTAL skill(s) were skipped — no validation occurred" >&2
+  if [[ -z "$BASE_REF" ]]; then
+    echo "  hint: pass --base <ref> to provide diff context for requires_diff skills" >&2
+  fi
+  exit 1
+fi
 
 if [[ "$BLOCKING_FAILED" -gt 0 ]]; then
   echo

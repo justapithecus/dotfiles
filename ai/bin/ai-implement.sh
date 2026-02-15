@@ -75,6 +75,10 @@ fi
 
 # Consume plan.json if present
 PLAN_INTENT=""
+# NOTE: PLAN_CONSTRAINTS is parsed and preserved for future enforcement
+# (allow_new_files, allow_moves, allowed_files, etc.). Currently used only
+# for intent-based mode hinting. Constraint enforcement is deferred to v2
+# when paths_any/flags_any predicates are wired into ai-check routing.
 PLAN_CONSTRAINTS=""
 PLAN_FILE="$OUT_DIR/plan.json"
 if [[ -f "$PLAN_FILE" ]]; then
@@ -98,7 +102,7 @@ compute_diff_profile() {
   local base="$1"
 
   local diff_output
-  diff_output="$(git diff "$base"...HEAD 2>/dev/null || echo "")"
+  diff_output="$(git diff "$base" 2>/dev/null || echo "")"
   local stat_output
   stat_output="$(git diff --stat "$base"...HEAD 2>/dev/null || echo "")"
   local name_status
@@ -257,11 +261,15 @@ build_system_prompt() {
     cat "$REPO_ROOT/AGENTS.md"
   fi
 
-  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
-    echo
-    echo "Repository architecture index:"
-    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
-  fi
+  # Check both root and docs/ for ARCH_INDEX.md
+  for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
+    if [[ -f "$_arch_path" ]]; then
+      echo
+      echo "Repository architecture index:"
+      cat "$_arch_path"
+      break
+    fi
+  done
 
   if [[ -n "$extra_context" ]]; then
     echo
@@ -301,7 +309,8 @@ while [[ "$ITERATION" -lt "$MAX_ITERATIONS" ]]; do
   fi
 
   # Check if there are any changes at all
-  DIFF_CHECK="$(git diff --name-only "$MERGE_BASE"...HEAD 2>/dev/null || echo "")"
+  # Include both committed and uncommitted changes (merge-base to working tree)
+  DIFF_CHECK="$(git diff --name-only "$MERGE_BASE" 2>/dev/null || echo "")"
   if [[ -z "$DIFF_CHECK" ]]; then
     echo
     echo "⚠ No changes detected from merge base — skipping gating"
@@ -333,7 +342,7 @@ while [[ "$ITERATION" -lt "$MAX_ITERATIONS" ]]; do
     echo "✔ Governance gate passed (mode: $MODE)"
 
     # Save artifacts
-    git diff "$MERGE_BASE"...HEAD > "$OUT_DIR/last.patch" 2>/dev/null || true
+    git diff "$MERGE_BASE" > "$OUT_DIR/last.patch" 2>/dev/null || true
     if [[ -f "$OUT_DIR/ai-check.json" ]]; then
       cp "$OUT_DIR/ai-check.json" "$OUT_DIR/last.report.json"
     fi

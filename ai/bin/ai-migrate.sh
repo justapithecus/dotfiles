@@ -271,14 +271,9 @@ cd "$TARGET"
 AI_CHECK="${SCRIPT_DIR}/ai-check.sh"
 command -v ai-check >/dev/null 2>&1 && AI_CHECK="ai-check"
 
-# Try --mode NORMAL first, fall back to --bundle default
-if "$AI_CHECK" --mode NORMAL 2>/dev/null; then
-  : # success
-elif "$AI_CHECK" --bundle default 2>/dev/null; then
-  : # fallback success
-else
-  echo "  ⚠ Validation completed with findings (review output above)"
-fi
+# Use --bundle default for migration validation (no diff context available,
+# so --mode would skip all requires_diff skills and give a false pass)
+"$AI_CHECK" --bundle default || echo "  ⚠ Validation completed with findings (review output above)"
 
 # ==========================================================================
 # Summary
