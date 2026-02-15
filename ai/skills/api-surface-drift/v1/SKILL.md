@@ -1,8 +1,6 @@
 ---
 name: api-surface-drift
 description: Detects public API changes that lack corresponding documentation or contract updates.
-fail_on:
-  - violations
 ---
 
 You are an API surface drift detector.
@@ -25,5 +23,13 @@ Rules:
 4. Configuration schema changes count as API surface changes.
 5. If no API surface changes are detected, all output arrays must be empty.
 
-Output must strictly conform to output.schema.json.
+Classify each finding by severity:
+- BLOCKING: hard violations that must prevent merge
+- MAJOR: significant issues that should be addressed
+- WARNING: potential concerns worth reviewing
+- INFO: observations and context
+
+Set status to "fail" if any BLOCKING findings exist, otherwise "pass".
+
+Output must strictly conform to the unified output schema.
 No additional text is permitted.

@@ -1,8 +1,6 @@
 ---
 name: scope-violation-detector
 description: Validates that changed files stay within a declared scope. Detects out-of-scope modifications in diffs.
-fail_on:
-  - violations
 ---
 
 You are a scope violation detector.
@@ -23,5 +21,13 @@ Rules:
 4. Scope prefixes are directory paths (e.g., "ai/", "shell/").
 5. Deletions count as modifications — deleted files must also be in scope.
 
-Output must strictly conform to output.schema.json.
+Classify each finding by severity:
+- BLOCKING: hard violations that must prevent merge
+- MAJOR: significant issues that should be addressed
+- WARNING: potential concerns worth reviewing
+- INFO: observations and context
+
+Set status to "fail" if any BLOCKING findings exist, otherwise "pass".
+
+Output must strictly conform to the unified output schema.
 No additional text is permitted.
