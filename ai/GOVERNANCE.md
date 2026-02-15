@@ -157,6 +157,22 @@ Behavior:
 - All-skipped detection: exit 1 if every skill was skipped (prevents
   false pass)
 
+### Predicate Filtering (v1.1)
+
+When `ai-check` receives `--diff-profile` with `--mode`, skills are
+filtered after mode selection using two predicate types:
+
+- `paths_any` — glob patterns matched against `changed_files`. If any
+  changed file matches any pattern, the skill runs.
+- `flags_any` — boolean/threshold conditions against diff profile fields.
+  Booleans check truthiness; thresholds use `field > value` syntax.
+
+Rules:
+- No predicates = always run (backward compatible)
+- Predicates apply to `--mode` only, never `--bundle`
+- `paths_any` and `flags_any` are OR'd
+- Skipped skills show "no predicate match" in output
+
 ---
 
 ## 8. Skill Output Schema
@@ -211,7 +227,6 @@ non-empty.
 
 ## 11. Known Limitations (v1)
 
-- `--diff-profile` flag accepted but not yet used for predicate routing
 - Plan constraints parsed but not enforced
-- Mode routing is tier-based; no per-skill path predicates yet
+- Predicate globs are simple (`**`, `*`, `?`); no brace expansion or negation
 - One Claude call per skill (no batching)

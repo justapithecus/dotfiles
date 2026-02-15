@@ -46,6 +46,10 @@ ai-check --bundle patch --fail-fast --base main
 
 `--mode` orders skills by cost then mode type. `--bundle` uses listing order.
 
+Note: `ai-implement` passes `--diff-profile` to `ai-check` automatically,
+enabling predicate filtering. Manual invocations run all mode-selected
+skills unless `--diff-profile` is explicitly provided.
+
 ## Single skill validation
 
 Run one skill in isolation for targeted checks.
