@@ -121,7 +121,7 @@ evaluate_predicates() {
       .changed_files // [] | . as $files |
       any($files[]; . as $f |
         any($patterns[]; . as $pat |
-          ($pat | gsub("\\*\\*"; "DBLSTAR") | gsub("\\*"; "SGLSTAR") | gsub("\\?"; "QMARK") | gsub("\\."; "\\\\.") | gsub("\\+"; "\\\\+") | gsub("\\("; "\\\\(") | gsub("\\)"; "\\\\)") | gsub("\\["; "\\\\[") | gsub("\\]"; "\\\\]") | gsub("\\{"; "\\\\{") | gsub("\\}"; "\\\\}") | gsub("\\^"; "\\\\^") | gsub("\\$"; "\\\\$") | gsub("\\|"; "\\\\|") | gsub("SGLSTAR"; "[^/]*") | gsub("DBLSTAR"; ".*") | gsub("QMARK"; "[^/]"))
+          ($pat | gsub("\\*\\*"; "DBLSTAR") | gsub("\\*"; "SGLSTAR") | gsub("\\?"; "QMARK") | gsub("\\."; "\\.") | gsub("\\+"; "\\+") | gsub("\\("; "\\(") | gsub("\\)"; "\\)") | gsub("\\["; "\\[") | gsub("\\]"; "\\]") | gsub("\\{"; "\\{") | gsub("\\}"; "\\}") | gsub("\\^"; "\\^") | gsub("\\$"; "\\$") | gsub("\\|"; "\\|") | gsub("SGLSTAR"; "[^/]*") | gsub("DBLSTAR"; ".*") | gsub("QMARK"; "[^/]"))
           | . as $re | ($f | test("^" + $re + "$"))
         )
       )
