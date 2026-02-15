@@ -2,51 +2,23 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+BIN_DIR="$SCRIPT_DIR/bin"
+DEST="${AI_BIN_DIR:-$HOME/.local/bin}"
+COMP_DIR="${BASH_COMPLETION_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions}"
 
-if [[ -d "$REPO_ROOT/dotfiles/ai" ]]; then
-  DOTFILES_DIR="$REPO_ROOT/dotfiles"
-else
-  DOTFILES_DIR="$REPO_ROOT"
+mkdir -p "$DEST"
+
+for script in "$BIN_DIR"/ai-*.sh; do
+  [ -f "$script" ] || continue
+  name="$(basename "${script%.sh}")"
+  cp -f "$script" "$DEST/$name"
+  chmod +x "$DEST/$name"
+done
+
+# Install completion if available
+if [[ -f "$SCRIPT_DIR/completion/ai.bash" ]]; then
+  mkdir -p "$COMP_DIR"
+  cp -f "$SCRIPT_DIR/completion/ai.bash" "$COMP_DIR/ai"
 fi
 
-AI_SRC="$DOTFILES_DIR/ai"
-AI_DST="$HOME/.config/ai"
-
-mkdir -p "$AI_DST"
-mkdir -p "$AI_DST/context"
-mkdir -p "$AI_DST/roles"
-
-copy() { rm -f "$2"; cp -f "$1" "$2"; }
-
-# Install constitution and normative docs
-copy "$AI_SRC/CLAUDE.md" "$AI_DST/CLAUDE.md"
-copy "$AI_SRC/REVIEW_ARCHITECTURE.md" "$AI_DST/REVIEW_ARCHITECTURE.md"
-
-# Install AI entrypoint scripts
-for cmd in ai-chat.sh ai-plan.sh ai-review.sh ai-implement.sh ai-patch.sh; do
-  SRC="$AI_SRC/$cmd"
-  DST="$AI_DST/$cmd"
-
-  if [[ -f "$SRC" ]]; then
-    copy "$SRC" "$DST"
-    chmod +x "$DST"
-  fi
-done
-
-# Install ALL context files
-for f in "$AI_SRC/context/"*.md; do
-  [ -f "$f" ] || continue
-  copy "$f" "$AI_DST/context/$(basename "$f")"
-done
-
-# Install role definitions
-for role in architect planner reviewer implementer patch-architect patcher; do
-  SRC="$AI_SRC/roles/$role.md"
-  DST="$AI_DST/roles/$role.md"
-
-  if [[ -f "$SRC" ]]; then
-    copy "$SRC" "$DST"
-  fi
-done
-
+echo "Installed to $DEST (copies)"
