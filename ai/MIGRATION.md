@@ -71,11 +71,17 @@ The skill does NOT evaluate (yet):
 
 ### Step 2.2 — Manual Execution Only
 
-Run from the target repo root (assumes `ai-skill.sh` is installed to
-`~/.config/ai/` or invoked from your dotfiles checkout):
+Run from the target repo root (assumes `ai-skill` is installed to
+`~/.local/bin/` via `ai/install.sh`):
 
 ```
-~/.config/ai/ai-skill.sh repo-convention-enforcer --version v1
+ai-skill repo-convention-enforcer --version v1
+```
+
+Or use `ai-migrate-repo` for automated scaffolding:
+
+```
+ai-migrate-repo /path/to/repo
 ```
 
 Do NOT add CI gating, block PRs, or change review workflow.
@@ -107,8 +113,8 @@ Proceed only after violations stabilize.
 Once violations are near-zero:
 
 ```
-~/.config/ai/ai-skill.sh repo-convention-enforcer --version v1
-~/.config/ai/ai-review.sh
+ai-check --bundle default
+ai-review
 ```
 
 Still manual. No automation yet.

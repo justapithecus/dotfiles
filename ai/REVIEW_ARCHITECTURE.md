@@ -92,7 +92,7 @@ If a Claude Skill and Codex disagree:
 
 ---
 
-## Two-Phase Edit Protocol
+## Three-Phase Patch Workflow
 
 When a change request meets all criteria:
 - Affects ≤ 3 files
@@ -101,11 +101,11 @@ When a change request meets all criteria:
 - No new abstractions
 - No module boundary changes
 
-Use the patch workflow instead of full implementation.
+Use `ai-patch` instead of full implementation. It runs three phases:
 
 ### Phase 1 — Patch Architecture
 
-Invoke Claude with `patch-architect.md`.
+Claude with `patch-architect.md` plans the change.
 
 Output must contain:
 - Files to modify
@@ -117,34 +117,20 @@ Human must confirm plan.
 
 ### Phase 2 — Patch Emission
 
-Run:
+Codex with `patcher.md` emits unified diff based on the plan.
 
-```
-./ai/ai-patch.sh
-```
+### Phase 3 — Validation
 
-Provide the architect plan and only the listed files.
-Codex emits unified diff only.
-
-### Phase 3 — Structural Validation
+`ai-check --bundle patch --fail-fast` validates the result.
+Must pass before the patch is considered complete.
 
 Run:
 
 ```
-./ai/ai-skill.sh repo-convention-enforcer
+ai-patch "task description"
 ```
 
-Must pass.
-
-### Phase 4 — Codex Review (Full)
-
-Run:
-
-```
-./ai/ai-review.sh
-```
-
-Must pass.
+All three phases are automated within the single command.
 
 ---
 
@@ -153,13 +139,14 @@ Must pass.
 1. Run structural validation:
 
    ```
-   ./ai/ai-skill.sh repo-convention-enforcer
+   ai-check --bundle default
    ```
 
 2. If exit code 0, run tactical code review:
 
    ```
-   ./ai/ai-review.sh
+   ai-review
    ```
 
-Automation of this flow belongs in Part VIII (Trigger Strategy).
+Automation: use `ai-install-hooks` to add a pre-push hook that runs
+`ai-check --bundle default` automatically.

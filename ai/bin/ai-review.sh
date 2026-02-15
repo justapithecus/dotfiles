@@ -7,12 +7,14 @@ set -euo pipefail
 #   - NOT structural validation
 # Structural validation is handled by ai-skill.sh.
 
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 command -v codex >/dev/null 2>&1 || {
   echo "codex not found. Run ./ai/deps.sh"
   exit 1
 }
 
-AI_DIR="$HOME/.config/ai"
 CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 REVIEW_ARCH="$AI_DIR/REVIEW_ARCHITECTURE.md"
 CTX_DIR="$AI_DIR/context"

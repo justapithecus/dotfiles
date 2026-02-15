@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Patch Entrypoint (Codex)
-# Purpose:
-#   - Emit minimal unified diffs from a patch-architect plan
-#   - NOT structural validation, NOT code review
-# Structural validation: ai-skill.sh
-# Code review: ai-review.sh
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-command -v codex >/dev/null 2>&1 || {
-  echo "codex not found. Run ./ai/deps.sh"
+command -v claude >/dev/null 2>&1 || {
+  echo "claude not found. Run ./ai/deps.sh"
   exit 1
 }
 
-AI_DIR="$HOME/.config/ai"
 CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
-ROLE_FILE="$AI_DIR/roles/patcher.md"
+ROLE_FILE="$AI_DIR/roles/planner.md"
 
 # Detect repo root (fallback to current dir)
 REPO_ROOT="$PWD"
@@ -24,14 +19,14 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
 
-PROMPT="$(
-  echo "You are an AI assistant performing minimal patch emission."
+SYSTEM_PROMPT="$(
+  echo "You are an AI assistant engaged in an interactive technical conversation."
   echo "Follow the role definition exactly."
   echo
   echo "Repository root: $REPO_ROOT"
   echo
 
-  echo "You are operating in PATCHER mode."
+  echo "You are operating in PLANNER mode."
   echo
 
   cat "$CLAUDE_FILE"
@@ -49,6 +44,12 @@ PROMPT="$(
     echo "Repository context:"
     cat "$REPO_ROOT/AGENTS.md"
   fi
+
+  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
+    echo
+    echo "Repository architecture index:"
+    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
+  fi
 )"
 
-codex "$PROMPT"
+exec claude --system-prompt "$SYSTEM_PROMPT" "$@"

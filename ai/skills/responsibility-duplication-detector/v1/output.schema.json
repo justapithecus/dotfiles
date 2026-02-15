@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "duplicated_names",
+    "similar_files",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "duplicated_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "similar_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

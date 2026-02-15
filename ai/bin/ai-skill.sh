@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # --- Preflight ------------------------------------------------------------
 
@@ -49,7 +50,7 @@ fi
 
 # --- Resolve skill from registry ------------------------------------------
 
-REGISTRY="$SCRIPT_DIR/skills.yaml"
+REGISTRY="$AI_DIR/skills.yaml"
 if [[ ! -f "$REGISTRY" ]]; then
   echo "error: registry not found: $REGISTRY" >&2
   exit 1
@@ -90,9 +91,9 @@ REPO_LOCAL_SKILL="$REPO_ROOT/ai/skills/$SKILL_NAME/$RESOLVED_VERSION"
 GLOBAL_SKILL=""
 if [[ "$IN_REGISTRY" == "true" ]]; then
   if [[ -n "$SKILL_VERSION" ]]; then
-    GLOBAL_SKILL="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
+    GLOBAL_SKILL="$AI_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
   else
-    GLOBAL_SKILL="$SCRIPT_DIR/$REG_PATH"
+    GLOBAL_SKILL="$AI_DIR/$REG_PATH"
   fi
 fi
 
@@ -157,8 +158,8 @@ fi
 # --- Load files -----------------------------------------------------------
 
 CLAUDE_MD=""
-if [[ -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
-  CLAUDE_MD="$(cat "$SCRIPT_DIR/CLAUDE.md")"
+if [[ -f "$AI_DIR/CLAUDE.md" ]]; then
+  CLAUDE_MD="$(cat "$AI_DIR/CLAUDE.md")"
 fi
 
 # Read SKILL.md body (strip YAML frontmatter)
@@ -261,34 +262,26 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
 fi
 
 # Defense-in-depth: validate response shape against output.schema.json.
-# The prompt instructs the model to conform, but jq validation here
+# The prompt instructs the model to conform, but validation here
 # catches malformed or off-schema responses before they reach callers.
-SCHEMA_ERRORS="$(echo "$RESPONSE" | jq -r '
-  def check:
-    (keys - ["violations","redundancies","forbidden_exists","ambiguities"]) as $extra |
-    (["violations","redundancies","forbidden_exists","ambiguities"] - keys) as $missing |
-    [
-      ($missing[] | "missing required key: \(.)"),
-      ($extra[] | "unexpected key: \(.)"),
-      (to_entries[] |
-        select(.key == "violations" or .key == "redundancies"
-            or .key == "forbidden_exists" or .key == "ambiguities") |
-        .key as $field |
-        if (.value | type) != "array" then
-          "\($field): expected array, got \(.value | type)"
-        else
-          (.value | to_entries[] |
-            if (.value | type) != "string" then
-              "\($field)[\(.key)]: expected string, got \(.value | type)"
-            else empty end)
-        end)
-    ] | .[];
-  check
-')"
+# Generic: reads required keys from the output schema itself.
+
+REQUIRED_KEYS="$(jq -r '.required[]' "$SKILL_DIR/output.schema.json")"
+
+SCHEMA_ERRORS=""
+while IFS= read -r key; do
+  [[ -n "$key" ]] || continue
+  KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
+  if [[ "$KEY_TYPE" == "null" ]]; then
+    SCHEMA_ERRORS+="missing required key: $key\n"
+  elif [[ "$KEY_TYPE" != "array" ]]; then
+    SCHEMA_ERRORS+="$key: expected array, got $KEY_TYPE\n"
+  fi
+done <<< "$REQUIRED_KEYS"
 
 if [[ -n "$SCHEMA_ERRORS" ]]; then
   echo "error: response does not conform to output schema:" >&2
-  echo "$SCHEMA_ERRORS" | sed 's/^/  /' >&2
+  printf "  %b" "$SCHEMA_ERRORS" >&2
   echo "$RESPONSE" >&2
   exit 1
 fi
@@ -297,10 +290,16 @@ fi
 
 echo "$RESPONSE" | jq .
 
-# Exit non-zero if violations or forbidden_exists present
-VIOLATIONS="$(echo "$RESPONSE" | jq '.violations | length')"
-FORBIDDEN="$(echo "$RESPONSE" | jq '.forbidden_exists | length')"
+# --- Exit code based on fail_on fields -----------------------------------
+# Read fail_on from SKILL.md frontmatter; default to violations + forbidden_exists
 
-if [[ "$VIOLATIONS" -gt 0 ]] || [[ "$FORBIDDEN" -gt 0 ]]; then
-  exit 1
-fi
+FAIL_ON="$(sed -n '/^---$/,/^---$/p' "$SKILL_DIR/SKILL.md" | yq e '.fail_on // ["violations", "forbidden_exists"]' -)"
+
+EXIT=0
+while IFS= read -r field; do
+  [[ -n "$field" ]] || continue
+  field="$(echo "$field" | sed 's/^- //')"
+  COUNT="$(echo "$RESPONSE" | jq --arg f "$field" '.[$f] // [] | length')"
+  [[ "$COUNT" -eq 0 ]] || EXIT=1
+done <<< "$FAIL_ON"
+exit $EXIT

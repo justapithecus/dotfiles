@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "out_of_scope_files",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "out_of_scope_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

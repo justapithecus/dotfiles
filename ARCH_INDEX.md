@@ -18,6 +18,8 @@ Maintenance rule:
 ## Root
 
 - `ARCH_INDEX.md` — architectural navigation index (this file)
+- `CLAUDE.md` — repo-local constitution (dotfiles-specific)
+- `AGENTS.md` — behavioral expectations (also read by Codex)
 - `README.md` — repository overview and navigational entrypoint
 - `.gitignore` — git exclusions
 - miscellaneous dotfiles — tool- or editor-specific entrypoints
@@ -39,12 +41,13 @@ Agents should treat this directory as authoritative.
 
 Contents:
 - `CLAUDE.md` — single constitutional authority for all AI sessions
-- `AGENTS.md` — global agent constraints and behavioral rules (when present)
+- `bin/` — executable entrypoint scripts (ai-chat, ai-check, ai-skill, etc.)
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
+- `skills/` — skill definitions with SKILL.md + schema contracts (7 skills)
+- `completion/` — shell completion scripts
+- `out/` — runtime artifacts from ai-check runs (gitignored)
 - `context/` — optional context layers for supplementary prompt content
-- `prompts/` — reusable prompt fragments and compositions
-- `tools/` — agent-built tools that improve agent leverage
-- `ai-*.sh` — shell entrypoints binding prompts + tools
+- `templates/` — migration scaffolds for onboarding new repos
 
 Stability:
 - Intentionally unstable

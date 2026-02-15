@@ -1,12 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-command -v claude >/dev/null || { echo "claude not found"; exit 1; }
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-AI_DIR="$HOME/.config/ai"
+# Preflight
+command -v claude >/dev/null 2>&1 || {
+  echo "claude not found. Run ./ai/deps.sh"
+  exit 1
+}
+
 CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
-ROLE_DIR="$AI_DIR/roles"
+ROLES_DIR="$AI_DIR/roles"
+
+ROLE="architect"
+if [[ $# -ge 1 ]]; then
+  ROLE="$1"
+fi
+
+ROLE_FILE="$ROLES_DIR/$ROLE.md"
+
+if [[ ! -f "$ROLE_FILE" ]]; then
+  echo "Unknown role: $ROLE"
+  echo "Available roles:"
+  ls "$ROLES_DIR" | sed 's/\.md$//' | sed 's/^/  - /'
+  exit 1
+fi
 
 # Detect repo root (fallback to current dir)
 REPO_ROOT="$PWD"
@@ -14,15 +34,13 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT="$(git rev-parse --show-toplevel)"
 fi
 
-# Build system prompt from context + role
+# Build system prompt
 SYSTEM_PROMPT="$(
   echo "You are an AI assistant engaged in an interactive technical conversation."
   echo "Follow the role definition exactly."
+  echo "Do not write code unless explicitly asked."
   echo
   echo "Repository root: $REPO_ROOT"
-  echo
-
-  echo "You are operating in IMPLEMENTER mode."
   echo
 
   cat "$CLAUDE_FILE"
@@ -32,7 +50,8 @@ SYSTEM_PROMPT="$(
     cat "$f"
     echo
   done
-  cat "$ROLE_DIR/implementer.md"
+
+  cat "$ROLE_FILE"
 
   if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
     echo
@@ -47,5 +66,5 @@ SYSTEM_PROMPT="$(
   fi
 )"
 
-# Interactive session, not one-shot
+# Start interactive Claude session
 exec claude --system-prompt "$SYSTEM_PROMPT" "$@"

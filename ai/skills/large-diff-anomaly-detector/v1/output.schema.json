@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "anomalies",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "anomalies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
