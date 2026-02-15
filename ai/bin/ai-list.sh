@@ -38,9 +38,8 @@ ROLES_DIR="$AI_DIR/roles"
 
 echo "═══ Skills ═══"
 if [[ -f "$REGISTRY" ]]; then
-  yq e '.registry[] | "  " + .name + " (" + .version + ") [" + .cost + "]" + (select(.mandatory == true) | " *mandatory*" // "")' "$REGISTRY" 2>/dev/null || true
-  # Fallback: simpler listing if yq expression fails
-  if [[ $? -ne 0 ]]; then
+  if ! yq e '.registry[] | "  " + .name + " (" + .version + ") [" + .cost + "]" + (select(.mandatory == true) | " *mandatory*" // "")' "$REGISTRY" 2>/dev/null; then
+    # Fallback: simpler listing if yq expression fails
     yq e '.registry[].name' "$REGISTRY" | sed 's/^/  /'
   fi
 else

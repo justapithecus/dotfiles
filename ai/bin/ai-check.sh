@@ -131,7 +131,8 @@ while IFS= read -r skill_name; do
       --arg name "$skill_name" \
       --arg status "skipped" \
       --arg reason "requires_diff without --base" \
-      '{name: $name, status: $status, skipped_reason: $reason, blocking: 0, major: 0, warning: 0, exit_code: 0, mandatory: false}')"
+      --arg mandatory "$IS_MANDATORY" \
+      '{name: $name, status: $status, skipped_reason: $reason, blocking: 0, major: 0, warning: 0, exit_code: 0, mandatory: ($mandatory == "true")}')"
     SKILL_RESULTS_JSON="$(echo "$SKILL_RESULTS_JSON" | jq --argjson entry "$RESULT_ENTRY" '. + [$entry]')"
     continue
   fi
