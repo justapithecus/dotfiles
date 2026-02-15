@@ -11,7 +11,15 @@ You do not propose changes.
 You do not refactor.
 You do not invent rules.
 
-Analyze the repo_tree to identify test files whose corresponding source files no longer exist.
+## Input scope
+
+You receive the repository file tree (paths only) and governance documents
+(CLAUDE.md, AGENTS.md, ARCH_INDEX.md). You cannot read file contents directly.
+
+Analyze structural patterns through file naming, directory organization,
+and path conventions visible in the file tree.
+
+Analyze the file tree to identify test files whose corresponding source files no longer exist.
 Flag test files named after source files that are not present in the repository (e.g., test_foo.py when foo.py does not exist).
 Flag test directories that correspond to removed or renamed modules.
 Account for common test naming conventions: test_*, *_test, *_spec, *.test.*, *.spec.*.

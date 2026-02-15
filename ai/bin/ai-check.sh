@@ -106,6 +106,7 @@ command -v ai-skill >/dev/null 2>&1 && AI_SKILL="ai-skill"
 TOTAL=0
 PASSED=0
 FAILED=0
+SKIPPED=0
 BLOCKING_FAILED=0
 SKILL_RESULTS_JSON="[]"
 
@@ -113,9 +114,27 @@ while IFS= read -r skill_name; do
   [[ -n "$skill_name" ]] || continue
   TOTAL=$((TOTAL + 1))
 
-  # Check mandatory flag from registry
+  # Check registry metadata
   IS_MANDATORY="$(yq e ".registry[] | select(.name == \"$skill_name\") | .mandatory" "$REGISTRY")"
   SKILL_COST="$(yq e ".registry[] | select(.name == \"$skill_name\") | .cost" "$REGISTRY")"
+  REQUIRES_DIFF="$(yq e ".registry[] | select(.name == \"$skill_name\") | .requires_diff" "$REGISTRY")"
+  if [[ "$REQUIRES_DIFF" == "null" ]] || [[ -z "$REQUIRES_DIFF" ]]; then
+    REQUIRES_DIFF="$(yq e '.defaults.requires_diff' "$REGISTRY")"
+    [[ "$REQUIRES_DIFF" == "null" ]] && REQUIRES_DIFF="true"
+  fi
+
+  # Skip diff-dependent skills when no --base provided
+  if [[ "$REQUIRES_DIFF" != "false" ]] && [[ -z "$BASE_REF" ]]; then
+    SKIPPED=$((SKIPPED + 1))
+    echo "  ⊘ $skill_name [skipped: requires --base for diff context]"
+    RESULT_ENTRY="$(jq -n \
+      --arg name "$skill_name" \
+      --arg status "skipped" \
+      --arg reason "requires_diff without --base" \
+      '{name: $name, status: $status, skipped_reason: $reason, blocking: 0, major: 0, warning: 0, exit_code: 0, mandatory: false}')"
+    SKILL_RESULTS_JSON="$(echo "$SKILL_RESULTS_JSON" | jq --argjson entry "$RESULT_ENTRY" '. + [$entry]')"
+    continue
+  fi
 
   echo "▶ Running: $skill_name [$SKILL_COST]"
 
@@ -179,9 +198,10 @@ SUMMARY_JSON="$(jq -n \
   --argjson total "$TOTAL" \
   --argjson passed "$PASSED" \
   --argjson failed "$FAILED" \
+  --argjson skipped "$SKIPPED" \
   --argjson blocking_failed "$BLOCKING_FAILED" \
   --argjson results "$SKILL_RESULTS_JSON" \
-  '{bundle: $bundle, timestamp: $timestamp, total: $total, passed: $passed, failed: $failed, blocking_failed: $blocking_failed, results: $results}')"
+  '{bundle: $bundle, timestamp: $timestamp, total: $total, passed: $passed, failed: $failed, skipped: $skipped, blocking_failed: $blocking_failed, results: $results}')"
 
 echo "$SUMMARY_JSON" > "$OUT_DIR/ai-check.json"
 
@@ -193,7 +213,7 @@ echo "$SUMMARY_JSON" > "$AI_DIR/out/ai-check.json"
 echo
 echo "═══ ai-check summary ═══"
 echo "Bundle: $BUNDLE"
-echo "Results: $PASSED/$TOTAL passed ($BLOCKING_FAILED blocking)"
+echo "Results: $PASSED/$TOTAL passed ($FAILED failed, $SKIPPED skipped, $BLOCKING_FAILED blocking)"
 echo "Output: $OUT_DIR/"
 
 if [[ "$BLOCKING_FAILED" -gt 0 ]]; then

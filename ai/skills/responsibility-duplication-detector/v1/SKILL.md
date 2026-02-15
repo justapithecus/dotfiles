@@ -15,6 +15,14 @@ You detect cases where multiple modules or directories appear to own
 the same responsibility, based on naming patterns, file placement,
 and structural analysis.
 
+## Input scope
+
+You receive the repository file tree (paths only) and governance documents
+(CLAUDE.md, AGENTS.md, ARCH_INDEX.md). You cannot read file contents directly.
+
+Analyze structural patterns through file naming, directory organization,
+and path conventions visible in the file tree.
+
 Rules:
 1. Two directories should not contain files with identical or near-identical
    names that serve the same purpose.

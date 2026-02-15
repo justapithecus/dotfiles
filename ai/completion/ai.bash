@@ -39,7 +39,7 @@ _ai_skill_completions() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   case "$prev" in
-    --version|--scope)
+    --version|--scope|--base)
       return ;;
   esac
 
@@ -47,7 +47,7 @@ _ai_skill_completions() {
   local ai_dir
   ai_dir="$(_ai_resolve_dir ai-skill)" || return
   if [[ -f "$ai_dir/skills.yaml" ]] && command -v yq >/dev/null 2>&1; then
-    COMPREPLY=($(compgen -W "$(yq e '.registry[].name' "$ai_dir/skills.yaml" 2>/dev/null) --version --scope" -- "$cur"))
+    COMPREPLY=($(compgen -W "$(yq e '.registry[].name' "$ai_dir/skills.yaml" 2>/dev/null) --version --scope --base" -- "$cur"))
   fi
 }
 
