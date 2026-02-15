@@ -1,6 +1,6 @@
 # AI tooling
 
-This directory contains lightweight scripts and role prompts for AI-assisted development using Claude Code (with Codex CLI retained for the reviewer).
+This directory contains lightweight scripts and role prompts for AI-assisted development using Claude Code (with Codex CLI retained for review and patch workflows).
 
 ## Contents
 
@@ -9,6 +9,7 @@ This directory contains lightweight scripts and role prompts for AI-assisted dev
 - `ai-plan.sh`: Starts Claude in read-only planner mode.
 - `ai-review.sh`: Starts Codex in read-only reviewer mode.
 - `ai-implement.sh`: Starts Claude Code with the implementer role.
+- `ai-patch.sh`: Starts Codex in patcher mode for minimal diff emission.
 - `install.sh`: Installs scripts, constitution, and role prompts into `~/.config/ai`.
 - `deps.sh`: Installs Claude Code and Codex CLI if not already present.
 - `roles/`: Role prompt files used by `ai-chat.sh`.
@@ -17,7 +18,7 @@ This directory contains lightweight scripts and role prompts for AI-assisted dev
 ## Requirements
 
 - `claude` (Claude Code) for chat, plan, implement, and skill scripts.
-- `codex` (OpenAI Codex CLI) for the review script.
+- `codex` (OpenAI Codex CLI) for review and patch scripts.
 - `jq` for JSON validation in `ai-skill.sh`.
 - `yq` for YAML registry parsing in `ai-skill.sh`.
 - `curl` if you want `deps.sh` to install Claude Code.
@@ -43,6 +44,7 @@ Specialized entrypoints:
 ~/.config/ai/ai-plan.sh      # read-only task planning
 ~/.config/ai/ai-review.sh    # read-only code review
 ~/.config/ai/ai-implement.sh # Claude Code implementation session
+~/.config/ai/ai-patch.sh     # Codex patcher for minimal diffs
 ```
 
 - Default role is `architect` if none is provided.
@@ -57,6 +59,8 @@ Role prompts live in `roles/` and define behavior such as:
 - `planner`: Task breakdowns and sequencing (no file edits).
 - `reviewer`: Code review with concrete issues.
 - `implementer`: Precise edits when explicitly asked.
+- `patch-architect`: Scoped change reasoning for narrow modifications (≤ 3 files).
+- `patcher`: Minimal unified diff emission (Codex-targeted).
 
 ## How the prompt is assembled
 

@@ -11,6 +11,7 @@ Tool separation policy for code review and structural validation.
 - Planning
 - Architecture
 - Implementation (scoped)
+- Patch Architecture (scoped reasoning for narrow changes)
 - No enforcement authority
 
 ### Claude Skills
@@ -23,6 +24,7 @@ Tool separation policy for code review and structural validation.
 
 ### Codex
 
+- Patch emission (minimal diffs from architect plan)
 - Code-level correctness
 - API misuse
 - Edge cases
@@ -87,6 +89,62 @@ If a Claude Skill and Codex disagree:
 1. Structural violations take precedence.
 2. Code correctness issues take precedence over stylistic suggestions.
 3. Human review is final authority.
+
+---
+
+## Two-Phase Edit Protocol
+
+When a change request meets all criteria:
+- Affects ≤ 3 files
+- No directory changes
+- No public API changes
+- No new abstractions
+- No module boundary changes
+
+Use the patch workflow instead of full implementation.
+
+### Phase 1 — Patch Architecture
+
+Invoke Claude with `patch-architect.md`.
+
+Output must contain:
+- Files to modify
+- Exact functions or regions
+- Description of change
+- Confirmation of no structural impact
+
+Human must confirm plan.
+
+### Phase 2 — Patch Emission
+
+Run:
+
+```
+./ai/ai-patch.sh
+```
+
+Provide the architect plan and only the listed files.
+Codex emits unified diff only.
+
+### Phase 3 — Structural Validation
+
+Run:
+
+```
+./ai/ai-skill.sh repo-convention-enforcer
+```
+
+Must pass.
+
+### Phase 4 — Codex Review (Full)
+
+Run:
+
+```
+./ai/ai-review.sh
+```
+
+Must pass.
 
 ---
 
