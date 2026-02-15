@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
     --fail-fast)
       FAIL_FAST=true; shift ;;
     -h|--help)
-      echo "usage: ai-check [--bundle <name>|--mode <MODE>] [--scope path,...] [--base <ref>] [--fail-fast]"
+      echo "usage: ai-check [--bundle <name>|--mode <MODE>] [--diff-profile <json>] [--scope path,...] [--base <ref>] [--fail-fast]"
       echo
       echo "Modes: PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT"
       echo
@@ -121,7 +121,7 @@ evaluate_predicates() {
       .changed_files // [] | . as $files |
       any($files[]; . as $f |
         any($patterns[]; . as $pat |
-          ($pat | gsub("\\*\\*"; "DBLSTAR") | gsub("\\*"; "[^/]*") | gsub("DBLSTAR"; ".*") | gsub("\\?"; "[^/]"))
+          ($pat | gsub("\\*\\*"; "DBLSTAR") | gsub("\\*"; "SGLSTAR") | gsub("\\?"; "QMARK") | gsub("\\."; "\\\\.") | gsub("\\+"; "\\\\+") | gsub("\\("; "\\\\(") | gsub("\\)"; "\\\\)") | gsub("\\["; "\\\\[") | gsub("\\]"; "\\\\]") | gsub("\\{"; "\\\\{") | gsub("\\}"; "\\\\}") | gsub("\\^"; "\\\\^") | gsub("\\$"; "\\\\$") | gsub("\\|"; "\\\\|") | gsub("SGLSTAR"; "[^/]*") | gsub("DBLSTAR"; ".*") | gsub("QMARK"; "[^/]"))
           | . as $re | ($f | test("^" + $re + "$"))
         )
       )
