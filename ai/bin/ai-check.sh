@@ -39,15 +39,24 @@ command -v jq >/dev/null 2>&1 || {
 # --- Parse arguments ------------------------------------------------------
 
 BUNDLE="default"
+MODE=""
 SCOPE=""
 BASE_REF=""
+DIFF_PROFILE=""
 FAIL_FAST=false
+BUNDLE_SET=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --bundle)
       [[ $# -ge 2 ]] || { echo "error: --bundle requires a value" >&2; exit 1; }
-      BUNDLE="$2"; shift 2 ;;
+      BUNDLE="$2"; BUNDLE_SET=true; shift 2 ;;
+    --mode)
+      [[ $# -ge 2 ]] || { echo "error: --mode requires a value" >&2; exit 1; }
+      MODE="$2"; shift 2 ;;
+    --diff-profile)
+      [[ $# -ge 2 ]] || { echo "error: --diff-profile requires a value" >&2; exit 1; }
+      DIFF_PROFILE="$2"; shift 2 ;;
     --scope)
       [[ $# -ge 2 ]] || { echo "error: --scope requires a value" >&2; exit 1; }
       SCOPE="$2"; shift 2 ;;
@@ -57,7 +66,9 @@ while [[ $# -gt 0 ]]; do
     --fail-fast)
       FAIL_FAST=true; shift ;;
     -h|--help)
-      echo "usage: ai-check [--bundle <name>] [--scope path,...] [--base <ref>] [--fail-fast]"
+      echo "usage: ai-check [--bundle <name>|--mode <MODE>] [--scope path,...] [--base <ref>] [--fail-fast]"
+      echo
+      echo "Modes: PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT"
       echo
       echo "Bundles:"
       yq e '.bundles | keys | .[]' "$AI_DIR/skills.yaml" 2>/dev/null | sed 's/^/  /'
@@ -67,7 +78,21 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# --- Resolve bundle -------------------------------------------------------
+# Mutual exclusion: --mode and --bundle cannot both be explicitly set
+if [[ -n "$MODE" ]] && [[ "$BUNDLE_SET" == "true" ]]; then
+  echo "error: --mode and --bundle are mutually exclusive" >&2
+  exit 1
+fi
+
+# Validate --mode value
+if [[ -n "$MODE" ]]; then
+  case "$MODE" in
+    PATCH|NORMAL|STRUCTURAL|API|HEAVY|AUDIT) ;;
+    *) echo "error: invalid mode '$MODE' (valid: PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT)" >&2; exit 1 ;;
+  esac
+fi
+
+# --- Resolve skill set ----------------------------------------------------
 
 REGISTRY="$AI_DIR/skills.yaml"
 if [[ ! -f "$REGISTRY" ]]; then
@@ -75,20 +100,38 @@ if [[ ! -f "$REGISTRY" ]]; then
   exit 1
 fi
 
-BUNDLE_SKILLS="$(yq e ".bundles.$BUNDLE[]" "$REGISTRY" 2>/dev/null)"
-if [[ -z "$BUNDLE_SKILLS" ]] || [[ "$BUNDLE_SKILLS" == "null" ]]; then
-  echo "error: bundle '$BUNDLE' not found in registry" >&2
-  echo "Available bundles:" >&2
-  yq e '.bundles | keys | .[]' "$REGISTRY" | sed 's/^/  /' >&2
-  exit 1
+SOURCE=""
+
+if [[ -n "$MODE" ]]; then
+  # --- Mode-based routing: select skills by run_when.modes ----------------
+  # Sort: cheap→moderate→heavy, then deterministic→heuristic→semantic
+  COST_ORDER='{"cheap":0,"moderate":1,"heavy":2}'
+  MODE_ORDER='{"deterministic":0,"heuristic":1,"semantic":2}'
+  ORDERED_SKILLS="$(yq e -o=json '.registry' "$REGISTRY" \
+    | jq -r --arg mode "$MODE" --argjson cost_order "$COST_ORDER" --argjson mode_order "$MODE_ORDER" '
+      [.[] | select(.run_when.modes // [] | index($mode))]
+      | sort_by($cost_order[.cost] // 99, $mode_order[.mode] // 99)
+      | .[].name
+    ')"
+  if [[ -z "$ORDERED_SKILLS" ]]; then
+    echo "error: no skills matched mode '$MODE'" >&2
+    exit 1
+  fi
+  SOURCE="mode:$MODE"
+else
+  # --- Bundle-based routing (original behavior) ---------------------------
+  BUNDLE_SKILLS="$(yq e ".bundles.$BUNDLE[]" "$REGISTRY" 2>/dev/null)"
+  if [[ -z "$BUNDLE_SKILLS" ]] || [[ "$BUNDLE_SKILLS" == "null" ]]; then
+    echo "error: bundle '$BUNDLE' not found in registry" >&2
+    echo "Available bundles:" >&2
+    yq e '.bundles | keys | .[]' "$REGISTRY" | sed 's/^/  /' >&2
+    exit 1
+  fi
+  # Bundle listing order is authoritative. The bundle author controls
+  # execution sequence intentionally (e.g., gate skills first).
+  ORDERED_SKILLS="$BUNDLE_SKILLS"
+  SOURCE="bundle:$BUNDLE"
 fi
-
-# --- Skill ordering -------------------------------------------------------
-# Bundle listing order is authoritative. The bundle author controls
-# execution sequence intentionally (e.g., gate skills first).
-# Cost/mode metadata is informational only — not used for re-sorting.
-
-ORDERED_SKILLS="$BUNDLE_SKILLS"
 
 # --- Create output directory ----------------------------------------------
 
@@ -194,7 +237,7 @@ done <<< "$ORDERED_SKILLS"
 # --- Write aggregate JSON output -----------------------------------------
 
 SUMMARY_JSON="$(jq -n \
-  --arg bundle "$BUNDLE" \
+  --arg source "$SOURCE" \
   --arg timestamp "$TIMESTAMP" \
   --argjson total "$TOTAL" \
   --argjson passed "$PASSED" \
@@ -202,7 +245,7 @@ SUMMARY_JSON="$(jq -n \
   --argjson skipped "$SKIPPED" \
   --argjson blocking_failed "$BLOCKING_FAILED" \
   --argjson results "$SKILL_RESULTS_JSON" \
-  '{bundle: $bundle, timestamp: $timestamp, total: $total, passed: $passed, failed: $failed, skipped: $skipped, blocking_failed: $blocking_failed, results: $results}')"
+  '{source: $source, timestamp: $timestamp, total: $total, passed: $passed, failed: $failed, skipped: $skipped, blocking_failed: $blocking_failed, results: $results}')"
 
 echo "$SUMMARY_JSON" > "$OUT_DIR/ai-check.json"
 
@@ -213,7 +256,7 @@ echo "$SUMMARY_JSON" > "$AI_DIR/out/ai-check.json"
 
 echo
 echo "═══ ai-check summary ═══"
-echo "Bundle: $BUNDLE"
+echo "Source: $SOURCE"
 echo "Results: $PASSED/$TOTAL passed ($FAILED failed, $SKIPPED skipped, $BLOCKING_FAILED blocking)"
 echo "Output: $OUT_DIR/"
 
