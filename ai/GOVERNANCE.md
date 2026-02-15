@@ -145,8 +145,11 @@ Selection:
 - `--bundle` is preserved for backward compatibility and migration
   contexts (where no diff context exists)
 
-Execution order: bundle listing order is authoritative. Bundle authors
-control the sequence (e.g., cheap gate skills first).
+Execution order:
+- `--bundle`: listing order in `skills.yaml` is authoritative. Bundle
+  authors control the sequence (e.g., cheap gate skills first).
+- `--mode`: skills are sorted by cost (cheap → moderate → heavy), then
+  by mode (deterministic → heuristic → semantic).
 
 Behavior:
 - `--fail-fast` stops on first mandatory failure
