@@ -24,10 +24,12 @@ ai/
 │   ├── ai-skill.sh        # Single skill runner
 │   ├── ai-check.sh        # Bundle orchestrator
 │   ├── ai-list.sh         # Registry listing
+│   ├── ai-help.sh         # Help and usage reference
 │   ├── ai-install-hooks.sh # Git hook installer
 │   └── ai-migrate.sh     # Repo migration scaffolder (Phase A-F)
 ├── roles/                 # Cognitive role definitions
 ├── skills/                # Skill definitions (43 skills across 7 domains)
+├── docs/                  # Explanatory guides (quickstart, workflows)
 ├── completion/            # Shell completion scripts
 ├── context/               # Optional context layers
 ├── templates/             # Migration scaffolds
@@ -88,6 +90,13 @@ ai-skill repo-convention-enforcer   # run a single skill
 ai-list                             # list skills, bundles, and roles
 ai-install-hooks                    # install pre-push hook
 ai-migrate /path/to/repo            # Phase A-F repo migration
+```
+
+Help:
+```sh
+ai-help                             # command overview
+ai-help <command>                   # per-command usage
+ai-help workflows                   # common patterns
 ```
 
 ## Skills
@@ -219,6 +228,11 @@ failure.
 - `patch-architect` — scoped change reasoning (≤ 3 files)
 - `patcher` — minimal unified diff emission (Codex-targeted)
 
+## Guides
+
+- `docs/quickstart.md` -- first-time setup and first workflow
+- `docs/workflows.md` -- common patterns and troubleshooting
+
 ## How the prompt is assembled
 
 Each entrypoint script builds a system prompt in this order:
@@ -228,7 +242,7 @@ Each entrypoint script builds a system prompt in this order:
 3. Optional context layers from `context/*.md` (sorted).
 4. The role prompt from `roles/`.
 5. Repository `AGENTS.md` content (if present at repo root).
-6. Repository `docs/ARCH_INDEX.md` content (if present).
+6. Repository `ARCH_INDEX.md` content (checks root and `docs/`).
 
 Scripts resolve paths via a portable symlink-following loop so they
 work correctly when installed to `~/.local/bin` as copies.

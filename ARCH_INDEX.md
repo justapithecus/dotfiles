@@ -46,6 +46,7 @@ Contents:
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
 - `skills/` — skill definitions with SKILL.md + schema contracts (43 skills across 7 domains)
 - `skills.yaml` — skill + bundle + mode registry (43 skills, 6 bundles, 6 modes)
+- `docs/` — explanatory guides (quickstart, workflows)
 - `completion/` — shell completion scripts
 - `out/` — runtime artifacts: ai-check results, plan.json, last.patch, last.report.json (gitignored)
 - `context/` — optional context layers for supplementary prompt content
