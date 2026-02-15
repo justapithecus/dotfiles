@@ -11,6 +11,7 @@ ai/
 ├── CLAUDE.md              # Constitutional authority (sovereign)
 ├── REVIEW_ARCHITECTURE.md # Tool separation policy
 ├── MIGRATION.md           # Migration protocol for existing repos
+├── GOVERNANCE.md          # Agentic governance model specification
 ├── install.sh             # Copies scripts to ~/.local/bin
 ├── deps.sh                # Installs claude and codex
 ├── skills.yaml            # Skill + bundle registry (43 skills, 6 bundles)
@@ -73,7 +74,7 @@ The `ai-implement` (alias: `aii`) workflow:
 5. On failure: offers to re-enter session with findings injected
 6. On pass: saves last.patch + last.report.json, exits blessed
 
-Governance (automatic via `--mode` or manual via `--bundle`):
+Governance (see `GOVERNANCE.md` for full spec; automatic via `--mode` or manual via `--bundle`):
 ```sh
 ai-check --mode NORMAL              # auto-routed (15 skills)
 ai-check --mode PATCH               # surgical edits (7 skills)
@@ -112,8 +113,9 @@ Severity model:
 - **WARNING** — potential concerns worth reviewing
 - **INFO** — observations and context
 
-Skills are executed in cost order (cheap → moderate → heavy), then by
-mode (deterministic → heuristic → semantic).
+Skills are ordered by cost (cheap → moderate → heavy), then by
+mode (deterministic → heuristic → semantic). Bundles list skills in
+this conventional order; `ai-check` executes them in listing order.
 
 ### Domain I — Structural Integrity (7 skills)
 
@@ -196,7 +198,8 @@ mode (deterministic → heuristic → semantic).
 ## Bundles
 
 Bundles group skills for common workflows. Skills within a bundle are
-executed in cost order, with `--fail-fast` stopping on first blocking failure.
+executed in listing order, with `--fail-fast` stopping on first blocking
+failure.
 
 | Bundle | Skills | Purpose |
 |--------|--------|---------|
@@ -227,5 +230,5 @@ Each entrypoint script builds a system prompt in this order:
 5. Repository `AGENTS.md` content (if present at repo root).
 6. Repository `docs/ARCH_INDEX.md` content (if present).
 
-Scripts resolve paths via `readlink -f` so they work correctly
-when installed to `~/.local/bin` as copies.
+Scripts resolve paths via a portable symlink-following loop so they
+work correctly when installed to `~/.local/bin` as copies.

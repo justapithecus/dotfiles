@@ -1,7 +1,9 @@
 # Migration Protocol for Existing Repositories
 
-Incremental process for migrating legacy repositories into the formalized
-AI governance system. Non-destructive, observable, and ordered.
+Interactive process for migrating legacy repositories into the AI
+governance system. Non-destructive, observable, and ordered.
+
+Entrypoint: `ai-migrate /path/to/repo`
 
 ---
 
@@ -16,138 +18,99 @@ AI governance system. Non-destructive, observable, and ordered.
 
 ---
 
-## Phase 1 — Authority Alignment (Non-Enforcing)
+## Phase A — Scan
 
-### Step 1.1 — Add Repo-Local CLAUDE.md
+Detect repository characteristics:
 
-Create `CLAUDE.md` at repo root using the template in
-`ai/templates/migration/CLAUDE.md`.
+- Top-level directories
+- Languages (via `go.mod`, `package.json`, `pyproject.toml`,
+  `Cargo.toml`, `pom.xml`, `Gemfile`)
+- Existing governance documents (`CLAUDE.md`, `AGENTS.md`,
+  `ARCH_INDEX.md`)
 
-This file:
-- Declares the constitutional order of authority
-- Clarifies the role of AGENTS.md (behavioral, not structural)
-- Clarifies the role of ARCH_INDEX.md (ontology, not enforcement)
-- Declares initial high-confidence structural invariants
-
-This file does NOT:
-- Copy or restate AGENTS.md content
-- Rewrite ARCH_INDEX.md
-- Change any existing behavior
-
-### Step 1.2 — Verify No Behavioral Change
-
-After adding CLAUDE.md, confirm:
-- Existing CI passes
-- Existing review flow unchanged
-- No developer workflow disruption
+Output: summary printed to terminal. No files modified.
 
 ---
 
-## Phase 2 — Minimal Structural Skill (Observation Mode)
+## Phase B — ARCH_INDEX Hardening
 
-### Step 2.1 — Add Repo-Local Skill
+If `ARCH_INDEX.md` is absent:
+- Offer interactive creation with Claude architect role
+- Fall back to scaffolding a minimal template if declined
 
-Create:
-
-```
-repo-root/ai/skills/repo-convention-enforcer/v1/
-  SKILL.md
-  input.schema.json
-  output.schema.json
-```
-
-Use templates from `ai/templates/migration/skill/`.
-
-The skill evaluates:
-- Top-level directory existence
-- Major module presence
-- Forbidden orphan directories
-- Duplicate responsibility indicators
-
-The skill does NOT evaluate (yet):
-- Deep naming conventions
-- Minor file-level rules
-- Submodule constraints
-
-### Step 2.2 — Manual Execution Only
-
-Run from the target repo root (assumes `ai-skill` is installed to
-`~/.local/bin/` via `ai/install.sh`):
-
-```
-ai-skill repo-convention-enforcer --version v1
-```
-
-Or use `ai-migrate-repo` for automated scaffolding:
-
-```
-ai-migrate-repo /path/to/repo
-```
-
-Do NOT add CI gating, block PRs, or change review workflow.
-
-Collect and review output.
+If `ARCH_INDEX.md` is present:
+- Print current contents summary
+- Offer review / upgrade via Claude architect
 
 ---
 
-## Phase 3 — Drift Resolution
+## Phase C — Repo CLAUDE.md
 
-For each reported violation, classify:
+If `CLAUDE.md` is absent:
+- Scaffold from `ai/templates/migration/CLAUDE.md`
 
-1. **Real drift** — fix the structure
-2. **Intentional exception** — update CLAUDE.md invariants
-3. **Incorrect skill assumption** — update SKILL.md logic
-
-Never silence violations without justification.
-Never disable the skill.
-Never patch around the system.
-
-Proceed only after violations stabilize.
+If `CLAUDE.md` is present:
+- Print first 20 lines
+- Offer review via Claude architect
 
 ---
 
-## Phase 4 — Enforcement Activation
+## Phase D — Directory Scaffolds
 
-### Step 4.1 — Enable Recommended PR Flow
-
-Once violations are near-zero:
+Create governance directories:
 
 ```
+repo-root/
+├── ai/
+│   ├── skills/
+│   ├── baselines/
+│   └── out/          (.gitignored)
+```
+
+Scaffold initial skill:
+- `ai/skills/repo-convention-enforcer/v1/` from
+  `ai/templates/migration/skill/`
+
+Update `.gitignore`:
+- Add `ai/out/` if not present
+
+---
+
+## Phase E — Baselines (Optional)
+
+Capture initial repository state:
+
+- **Directory listing** — top-level structure snapshot
+- **File count metrics** — lines of code, file counts by extension
+
+Stored in `ai/baselines/` for future drift detection.
+
+---
+
+## Phase F — Validate
+
+Run governance check:
+
+```sh
 ai-check --bundle default
-ai-review
 ```
 
-Still manual. No automation yet.
+Uses `--bundle` (not `--mode`) because no diff context exists during
+initial migration.
 
-### Step 4.2 — CI Integration (Part VIII)
-
-Only after stability. Belongs to Trigger Strategy.
-
----
-
-## Phase 5 — ARCH_INDEX Hardening (Optional)
-
-Once baseline is stable, enhance skill to validate:
-- Every top-level module appears in ARCH_INDEX
-- No undocumented modules exist
-- No orphan directories exist
-- Responsibility boundaries align
-
-Converts ARCH_INDEX from documentation to enforcement anchor.
-Do this gradually.
+Review output. Fix any blocking violations before proceeding.
 
 ---
 
 ## Expected Order Per Repo
 
-1. Add repo-local CLAUDE.md
-2. Add minimal structural skill
-3. Run manually
-4. Fix drift
-5. Stabilize
-6. Enable enforcement
-7. (Later) automate
-8. (Later) tighten rules
+1. Run `ai-migrate /path/to/repo` (Phases A–F)
+2. Review and customize generated files
+3. Fix any violations reported in Phase F
+4. Stabilize (re-run `ai-check` until clean)
+5. Enable enforcement workflows
+6. (Later) automate
+7. (Later) tighten rules
 
 Repeat for each repo before designing new-repo bootstrap.
 
@@ -155,7 +118,8 @@ Repeat for each repo before designing new-repo bootstrap.
 
 ## Acceptance Criteria (Per Repo)
 
-- Repo-local CLAUDE.md exists and is authoritative
+- Repo-local `CLAUDE.md` exists and is authoritative
+- `ARCH_INDEX.md` exists and reflects actual structure
 - Structural skill runs without false positives
 - No major structural drift exists
 - Codex review flow unchanged
