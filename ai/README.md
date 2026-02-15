@@ -113,8 +113,9 @@ Severity model:
 - **WARNING** — potential concerns worth reviewing
 - **INFO** — observations and context
 
-Skills are executed in cost order (cheap → moderate → heavy), then by
-mode (deterministic → heuristic → semantic).
+Skills are ordered by cost (cheap → moderate → heavy), then by
+mode (deterministic → heuristic → semantic). Bundles list skills in
+this conventional order; `ai-check` executes them in listing order.
 
 ### Domain I — Structural Integrity (7 skills)
 
@@ -197,7 +198,8 @@ mode (deterministic → heuristic → semantic).
 ## Bundles
 
 Bundles group skills for common workflows. Skills within a bundle are
-executed in cost order, with `--fail-fast` stopping on first blocking failure.
+executed in listing order, with `--fail-fast` stopping on first blocking
+failure.
 
 | Bundle | Skills | Purpose |
 |--------|--------|---------|

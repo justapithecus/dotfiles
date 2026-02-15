@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$SKILL_NAME" ]]; then
-  echo "usage: ai-skill.sh <skill-name> [--version vX] [--scope path1,path2] [--base <ref>]" >&2
+  echo "usage: ai-skill <skill-name> [--version vX] [--scope path1,path2] [--base <ref>]" >&2
   exit 1
 fi
 
