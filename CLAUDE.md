@@ -33,6 +33,7 @@ Forbidden:
 - Executable scripts (`ai-*.sh`) at `ai/` root (must live in `ai/bin/`)
 - Hardcoded `~/.config/ai` paths in scripts (use `$AI_DIR` resolution)
 - Symlinks as install artifacts (copies only — symlinks break on branch switch)
+- Working directly in the main worktree (use `git worktree add` for all work)
 
 ## 4. Install Model
 
