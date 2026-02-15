@@ -40,6 +40,7 @@ command -v jq >/dev/null 2>&1 || {
 
 BUNDLE="default"
 SCOPE=""
+BASE_REF=""
 FAIL_FAST=false
 
 while [[ $# -gt 0 ]]; do
@@ -50,10 +51,13 @@ while [[ $# -gt 0 ]]; do
     --scope)
       [[ $# -ge 2 ]] || { echo "error: --scope requires a value" >&2; exit 1; }
       SCOPE="$2"; shift 2 ;;
+    --base)
+      [[ $# -ge 2 ]] || { echo "error: --base requires a value" >&2; exit 1; }
+      BASE_REF="$2"; shift 2 ;;
     --fail-fast)
       FAIL_FAST=true; shift ;;
     -h|--help)
-      echo "usage: ai-check [--bundle <name>] [--scope path,...] [--fail-fast]"
+      echo "usage: ai-check [--bundle <name>] [--scope path,...] [--base <ref>] [--fail-fast]"
       echo
       echo "Bundles:"
       yq e '.bundles | keys | .[]' "$AI_DIR/skills.yaml" 2>/dev/null | sed 's/^/  /'
@@ -79,31 +83,12 @@ if [[ -z "$BUNDLE_SKILLS" ]] || [[ "$BUNDLE_SKILLS" == "null" ]]; then
   exit 1
 fi
 
-# --- Sort skills by cost then mode ----------------------------------------
-# cost_order: cheap=0, moderate=1, heavy=2
-# mode_order: deterministic=0, heuristic=1, semantic=2
+# --- Skill ordering -------------------------------------------------------
+# Bundle listing order is authoritative. The bundle author controls
+# execution sequence intentionally (e.g., gate skills first).
+# Cost/mode metadata is informational only — not used for re-sorting.
 
-SORTED_SKILLS=""
-while IFS= read -r skill_name; do
-  [[ -n "$skill_name" ]] || continue
-  COST="$(yq e ".registry[] | select(.name == \"$skill_name\") | .cost" "$REGISTRY" 2>/dev/null)"
-  MODE="$(yq e ".registry[] | select(.name == \"$skill_name\") | .mode" "$REGISTRY" 2>/dev/null)"
-  case "$COST" in
-    cheap)    COST_N=0 ;;
-    moderate) COST_N=1 ;;
-    heavy)    COST_N=2 ;;
-    *)        COST_N=9 ;;
-  esac
-  case "$MODE" in
-    deterministic) MODE_N=0 ;;
-    heuristic)     MODE_N=1 ;;
-    semantic)      MODE_N=2 ;;
-    *)             MODE_N=9 ;;
-  esac
-  SORTED_SKILLS+="${COST_N}${MODE_N} ${skill_name}\n"
-done <<< "$BUNDLE_SKILLS"
-
-ORDERED_SKILLS="$(printf "%b" "$SORTED_SKILLS" | LC_ALL=C sort | awk '{print $2}')"
+ORDERED_SKILLS="$BUNDLE_SKILLS"
 
 # --- Create output directory ----------------------------------------------
 
@@ -134,15 +119,18 @@ while IFS= read -r skill_name; do
 
   echo "▶ Running: $skill_name [$SKILL_COST]"
 
-  SCOPE_ARG=""
+  EXTRA_ARGS=""
   if [[ -n "$SCOPE" ]]; then
-    SCOPE_ARG="--scope $SCOPE"
+    EXTRA_ARGS+=" --scope $SCOPE"
+  fi
+  if [[ -n "$BASE_REF" ]]; then
+    EXTRA_ARGS+=" --base $BASE_REF"
   fi
 
   SKILL_OUTPUT=""
   SKILL_EXIT=0
   # shellcheck disable=SC2086
-  SKILL_OUTPUT="$("$AI_SKILL" "$skill_name" $SCOPE_ARG 2>&1)" || SKILL_EXIT=$?
+  SKILL_OUTPUT="$("$AI_SKILL" "$skill_name" $EXTRA_ARGS 2>&1)" || SKILL_EXIT=$?
 
   # Save individual output
   echo "$SKILL_OUTPUT" > "$OUT_DIR/$skill_name.json"

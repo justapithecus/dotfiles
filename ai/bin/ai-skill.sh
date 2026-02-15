@@ -46,6 +46,7 @@ command -v yq >/dev/null 2>&1 || {
 SKILL_NAME=""
 SKILL_VERSION=""
 SCOPE=""
+BASE_REF=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -55,6 +56,9 @@ while [[ $# -gt 0 ]]; do
     --scope)
       [[ $# -ge 2 ]] || { echo "error: --scope requires a value" >&2; exit 1; }
       SCOPE="$2"; shift 2 ;;
+    --base)
+      [[ $# -ge 2 ]] || { echo "error: --base requires a value" >&2; exit 1; }
+      BASE_REF="$2"; shift 2 ;;
     -*)
       echo "error: unknown flag: $1" >&2; exit 1 ;;
     *)
@@ -64,7 +68,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$SKILL_NAME" ]]; then
-  echo "usage: ai-skill.sh <skill-name> [--version vX] [--scope path1,path2]" >&2
+  echo "usage: ai-skill.sh <skill-name> [--version vX] [--scope path1,path2] [--base <ref>]" >&2
   exit 1
 fi
 
@@ -245,10 +249,26 @@ ${OUTPUT_SCHEMA}
 
 No markdown. No prose. No explanation. No code fences. JSON only."
 
+# --- Build diff payload (if --base provided) --------------------------------
+
+DIFF_PAYLOAD=""
+if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  DIFF_PAYLOAD="$(git diff "${BASE_REF}...HEAD" 2>/dev/null || git diff "$BASE_REF" HEAD 2>/dev/null || true)"
+fi
+
 USER_PROMPT="Evaluate the following repository.
 
 Repository tree:
-${REPO_TREE}
+${REPO_TREE}"
+
+if [[ -n "$DIFF_PAYLOAD" ]]; then
+  USER_PROMPT="${USER_PROMPT}
+
+Diff (base: ${BASE_REF}):
+${DIFF_PAYLOAD}"
+fi
+
+USER_PROMPT="${USER_PROMPT}
 
 Respond with JSON only. No other text."
 

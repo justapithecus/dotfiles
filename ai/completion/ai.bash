@@ -30,7 +30,7 @@ _ai_check_completions() {
       return ;;
   esac
 
-  COMPREPLY=($(compgen -W "--bundle --scope --fail-fast --help" -- "$cur"))
+  COMPREPLY=($(compgen -W "--bundle --scope --base --fail-fast --help" -- "$cur"))
 }
 
 _ai_skill_completions() {
