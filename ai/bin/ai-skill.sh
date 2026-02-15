@@ -253,7 +253,8 @@ No markdown. No prose. No explanation. No code fences. JSON only."
 
 DIFF_PAYLOAD=""
 if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  DIFF_PAYLOAD="$(git diff "${BASE_REF}...HEAD" 2>/dev/null || git diff "$BASE_REF" HEAD 2>/dev/null || true)"
+  # Diff merge-base to working tree (includes uncommitted session edits)
+  DIFF_PAYLOAD="$(git diff "$BASE_REF" 2>/dev/null || true)"
 fi
 
 USER_PROMPT="Evaluate the following repository.

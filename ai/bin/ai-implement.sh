@@ -104,11 +104,11 @@ compute_diff_profile() {
   local diff_output
   diff_output="$(git diff "$base" 2>/dev/null || echo "")"
   local stat_output
-  stat_output="$(git diff --stat "$base"...HEAD 2>/dev/null || echo "")"
+  stat_output="$(git diff --stat "$base" 2>/dev/null || echo "")"
   local name_status
-  name_status="$(git diff --name-status "$base"...HEAD 2>/dev/null || echo "")"
+  name_status="$(git diff --name-status "$base" 2>/dev/null || echo "")"
   local diff_names
-  diff_names="$(git diff --name-only "$base"...HEAD 2>/dev/null || echo "")"
+  diff_names="$(git diff --name-only "$base" 2>/dev/null || echo "")"
 
   local files_changed=0
   local new_files=0
