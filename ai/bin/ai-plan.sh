@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 command -v claude >/dev/null 2>&1 || {
   echo "claude not found. Run ./ai/deps.sh"
   exit 1
 }
 
-AI_DIR="$HOME/.config/ai"
 CLAUDE_FILE="$AI_DIR/CLAUDE.md"
 CTX_DIR="$AI_DIR/context"
 ROLE_FILE="$AI_DIR/roles/planner.md"

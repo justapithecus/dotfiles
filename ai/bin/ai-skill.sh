@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # --- Preflight ------------------------------------------------------------
 
@@ -49,7 +50,7 @@ fi
 
 # --- Resolve skill from registry ------------------------------------------
 
-REGISTRY="$SCRIPT_DIR/skills.yaml"
+REGISTRY="$AI_DIR/skills.yaml"
 if [[ ! -f "$REGISTRY" ]]; then
   echo "error: registry not found: $REGISTRY" >&2
   exit 1
@@ -90,9 +91,9 @@ REPO_LOCAL_SKILL="$REPO_ROOT/ai/skills/$SKILL_NAME/$RESOLVED_VERSION"
 GLOBAL_SKILL=""
 if [[ "$IN_REGISTRY" == "true" ]]; then
   if [[ -n "$SKILL_VERSION" ]]; then
-    GLOBAL_SKILL="$SCRIPT_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
+    GLOBAL_SKILL="$AI_DIR/${REG_PATH%/*}/$RESOLVED_VERSION"
   else
-    GLOBAL_SKILL="$SCRIPT_DIR/$REG_PATH"
+    GLOBAL_SKILL="$AI_DIR/$REG_PATH"
   fi
 fi
 
@@ -157,8 +158,8 @@ fi
 # --- Load files -----------------------------------------------------------
 
 CLAUDE_MD=""
-if [[ -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
-  CLAUDE_MD="$(cat "$SCRIPT_DIR/CLAUDE.md")"
+if [[ -f "$AI_DIR/CLAUDE.md" ]]; then
+  CLAUDE_MD="$(cat "$AI_DIR/CLAUDE.md")"
 fi
 
 # Read SKILL.md body (strip YAML frontmatter)
