@@ -155,7 +155,7 @@ done
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # Include both tracked and untracked files (skills need to see new files)
-  REPO_TREE="$({ git ls-files; git ls-files --others --exclude-standard; } | LC_ALL=C sort -u)"
+  REPO_TREE="$({ git -C "$REPO_ROOT" ls-files; git -C "$REPO_ROOT" ls-files --others --exclude-standard; } | LC_ALL=C sort -u)"
 else
   REPO_TREE="$(cd "$REPO_ROOT" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)"
 fi
@@ -262,19 +262,22 @@ if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; 
   DIFF_PAYLOAD="$(git diff "$BASE_REF" 2>/dev/null || true)"
 
   # Append synthetic diff for untracked files (git diff never includes these)
-  UNTRACKED="$(git ls-files --others --exclude-standard 2>/dev/null || true)"
+  UNTRACKED="$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null || true)"
   if [[ -n "$UNTRACKED" ]]; then
     UNTRACKED_DIFF=""
     while IFS= read -r ufile; do
       [[ -n "$ufile" ]] || continue
-      [[ -f "$ufile" ]] || continue
-      # Build unified diff header for new file
+      [[ -f "$REPO_ROOT/$ufile" ]] || continue
+      # Detect actual file mode (executable vs regular)
+      local fmode="100644"
+      [[ -x "$REPO_ROOT/$ufile" ]] && fmode="100755"
+      # Build unified diff header for new file with detected mode
       UNTRACKED_DIFF="${UNTRACKED_DIFF}
 diff --git a/$ufile b/$ufile
-new file mode 100644
+new file mode $fmode
 --- /dev/null
 +++ b/$ufile
-$(git diff --no-index /dev/null "$ufile" 2>/dev/null | tail -n +5 || true)"
+$(git diff --no-index /dev/null "$REPO_ROOT/$ufile" 2>/dev/null | tail -n +5 || true)"
     done <<< "$UNTRACKED"
     if [[ -n "$UNTRACKED_DIFF" ]]; then
       DIFF_PAYLOAD="${DIFF_PAYLOAD}${UNTRACKED_DIFF}"

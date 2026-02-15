@@ -112,7 +112,7 @@ compute_diff_profile() {
 
   # Include untracked files (git diff never shows these)
   local untracked
-  untracked="$(git ls-files --others --exclude-standard 2>/dev/null || echo "")"
+  untracked="$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null || echo "")"
   if [[ -n "$untracked" ]]; then
     if [[ -n "$diff_names" ]]; then
       diff_names="$(printf '%s\n%s' "$diff_names" "$untracked" | sort -u)"
@@ -329,7 +329,7 @@ while [[ "$ITERATION" -lt "$MAX_ITERATIONS" ]]; do
 
   # Check if there are any changes at all (tracked + untracked)
   DIFF_CHECK="$(git diff --name-only "$MERGE_BASE" 2>/dev/null || echo "")"
-  UNTRACKED_CHECK="$(git ls-files --others --exclude-standard 2>/dev/null || echo "")"
+  UNTRACKED_CHECK="$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null || echo "")"
   if [[ -z "$DIFF_CHECK" ]] && [[ -z "$UNTRACKED_CHECK" ]]; then
     echo
     echo "⚠ No changes detected from merge base — skipping gating"
