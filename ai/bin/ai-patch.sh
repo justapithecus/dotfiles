@@ -75,10 +75,15 @@ ARCHITECT_PROMPT="$(
   fi
 )"
 
-# Interactive: user reviews and confirms the plan
-claude --system-prompt "$ARCHITECT_PROMPT" -p "Plan a patch for the following task. Output the files to modify, exact regions, and assertions for correctness:
+# Capture architect plan output
+ARCHITECT_PLAN="$(claude --system-prompt "$ARCHITECT_PROMPT" -p "Plan a patch for the following task. Output the files to modify, exact regions, and assertions for correctness:
 
-$TASK"
+$TASK" 2>&1)" || {
+  echo "error: patch architecture phase failed" >&2
+  exit 1
+}
+
+echo "$ARCHITECT_PLAN"
 
 echo
 echo "─── Review the plan above ───"
@@ -122,14 +127,21 @@ PATCHER_PROMPT="$(
 
 codex "$PATCHER_PROMPT
 
-Task: $TASK"
+Architect plan:
+$ARCHITECT_PLAN
+
+Task: $TASK
+
+Execute the architect plan above. Emit only unified diffs for the listed files."
 
 # --- Phase 3: Validation -------------------------------------------------
 
 echo
 echo "═══ Phase 3: Validation ═══"
 
-"$SCRIPT_DIR/ai-check.sh" --bundle patch --fail-fast || {
+AI_CHECK="${SCRIPT_DIR}/ai-check.sh"
+command -v ai-check >/dev/null 2>&1 && AI_CHECK="ai-check"
+"$AI_CHECK" --bundle patch --fail-fast || {
   echo
   echo "✖ Patch validation failed. Review violations above." >&2
   exit 1

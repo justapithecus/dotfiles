@@ -85,7 +85,9 @@ while IFS= read -r skill_name; do
   SKILL_OUTPUT=""
   SKILL_EXIT=0
   # shellcheck disable=SC2086
-  SKILL_OUTPUT="$("$SCRIPT_DIR/ai-skill.sh" "$skill_name" $SCOPE_ARG 2>&1)" || SKILL_EXIT=$?
+  AI_SKILL="${SCRIPT_DIR}/ai-skill.sh"
+  command -v ai-skill >/dev/null 2>&1 && AI_SKILL="ai-skill"
+  SKILL_OUTPUT="$("$AI_SKILL" "$skill_name" $SCOPE_ARG 2>&1)" || SKILL_EXIT=$?
 
   # Save output
   echo "$SKILL_OUTPUT" > "$OUT_DIR/$skill_name.json"

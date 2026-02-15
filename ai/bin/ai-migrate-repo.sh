@@ -95,7 +95,9 @@ echo "═══ Running ai-check --bundle default ═══"
 echo
 
 cd "$TARGET"
-"$SCRIPT_DIR/ai-check.sh" --bundle default || true
+AI_CHECK="${SCRIPT_DIR}/ai-check.sh"
+command -v ai-check >/dev/null 2>&1 && AI_CHECK="ai-check"
+"$AI_CHECK" --bundle default || true
 
 # --- Next steps -----------------------------------------------------------
 
