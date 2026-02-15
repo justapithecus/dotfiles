@@ -82,6 +82,7 @@ tree diff against merge base.
 | `top_level_dirs` | string[] | Distinct top-level directories touched |
 | `public_surface_paths` | string[] | Paths matching public surface globs |
 | `has_structural` | bool | Control-plane path detected |
+| `changed_files` | string[] | All changed file paths (tracked + untracked) |
 
 Source: `git diff $MERGE_BASE` (merge base to working tree, includes
 uncommitted changes).

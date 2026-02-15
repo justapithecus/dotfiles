@@ -177,6 +177,12 @@ compute_diff_profile() {
     fi
   fi
 
+  # Full file list for predicate routing
+  local changed_files="[]"
+  if [[ -n "$diff_names" ]]; then
+    changed_files="$(echo "$diff_names" | jq -R . | jq -sc .)"
+  fi
+
   jq -n \
     --argjson files_changed "$files_changed" \
     --argjson new_files "$new_files" \
@@ -187,6 +193,7 @@ compute_diff_profile() {
     --argjson top_level_dirs "$top_level_dirs" \
     --argjson public_surface_paths "$public_surface_paths" \
     --argjson has_structural "$has_structural" \
+    --argjson changed_files "$changed_files" \
     '{
       files_changed: $files_changed,
       new_files: $new_files,
@@ -196,7 +203,8 @@ compute_diff_profile() {
       diff_lines: $diff_lines,
       top_level_dirs: $top_level_dirs,
       public_surface_paths: $public_surface_paths,
-      has_structural: $has_structural
+      has_structural: $has_structural,
+      changed_files: $changed_files
     }'
 }
 
