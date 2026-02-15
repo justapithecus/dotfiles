@@ -11,6 +11,7 @@ ai/
 ├── CLAUDE.md              # Constitutional authority (sovereign)
 ├── REVIEW_ARCHITECTURE.md # Tool separation policy
 ├── MIGRATION.md           # Migration protocol for existing repos
+├── GOVERNANCE.md          # Agentic governance model specification
 ├── install.sh             # Copies scripts to ~/.local/bin
 ├── deps.sh                # Installs claude and codex
 ├── skills.yaml            # Skill + bundle registry (43 skills, 6 bundles)
@@ -73,7 +74,7 @@ The `ai-implement` (alias: `aii`) workflow:
 5. On failure: offers to re-enter session with findings injected
 6. On pass: saves last.patch + last.report.json, exits blessed
 
-Governance (automatic via `--mode` or manual via `--bundle`):
+Governance (see `GOVERNANCE.md` for full spec; automatic via `--mode` or manual via `--bundle`):
 ```sh
 ai-check --mode NORMAL              # auto-routed (15 skills)
 ai-check --mode PATCH               # surgical edits (7 skills)

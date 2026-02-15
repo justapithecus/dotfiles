@@ -41,6 +41,7 @@ Agents should treat this directory as authoritative.
 
 Contents:
 - `CLAUDE.md` — single constitutional authority for all AI sessions
+- `GOVERNANCE.md` — agentic governance model specification
 - `bin/` — executable entrypoint scripts (ai-chat, ai-implement, ai-plan, ai-check, ai-migrate, etc.)
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
 - `skills/` — skill definitions with SKILL.md + schema contracts (43 skills across 7 domains)
