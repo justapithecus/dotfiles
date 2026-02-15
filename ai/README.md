@@ -24,7 +24,7 @@ ai/
 │   ├── ai-check.sh        # Bundle orchestrator
 │   ├── ai-list.sh         # Registry listing
 │   ├── ai-install-hooks.sh # Git hook installer
-│   └── ai-migrate-repo.sh # Repo migration scaffolder
+│   └── ai-migrate.sh     # Repo migration scaffolder (Phase A-F)
 ├── roles/                 # Cognitive role definitions
 ├── skills/                # Skill definitions (43 skills across 7 domains)
 ├── completion/            # Shell completion scripts
@@ -59,24 +59,34 @@ ai-chat [role]
 
 Specialized entrypoints:
 ```sh
-ai-plan              # read-only task planning
-ai-implement         # Claude Code implementation session
+ai-plan              # read-only planning (writes plan.json for aii)
+ai-implement         # implementation with auto-gating loop
 ai-review            # Codex code review
 ai-patch "task"      # three-phase surgery workflow
 ```
 
-Governance:
+The `ai-implement` (alias: `aii`) workflow:
+1. Preflight: checks branch, detects merge base, consumes plan.json
+2. Launches interactive Claude session
+3. After session: computes diff profile, determines governance mode
+4. Runs `ai-check --mode <MODE>` automatically
+5. On failure: offers to re-enter session with findings injected
+6. On pass: saves last.patch + last.report.json, exits blessed
+
+Governance (automatic via `--mode` or manual via `--bundle`):
 ```sh
-ai-check                            # run default bundle (15 skills)
-ai-check --bundle heavy             # run all 43 skills
-ai-check --bundle patch             # run patch-scoped skills
-ai-check --bundle structural-change # structural boundary checks
-ai-check --bundle api-change        # API/contract stability checks
-ai-check --bundle audit-full        # full-spectrum audit
+ai-check --mode NORMAL              # auto-routed (15 skills)
+ai-check --mode PATCH               # surgical edits (7 skills)
+ai-check --mode STRUCTURAL          # structural changes (17 skills)
+ai-check --mode API                 # API/contract changes (13 skills)
+ai-check --mode HEAVY               # large features (43 skills)
+ai-check --mode AUDIT               # full-spectrum audit (43 skills)
+ai-check --bundle default           # backward-compat bundle routing
+ai-check --bundle heavy             # backward-compat bundle routing
 ai-skill repo-convention-enforcer   # run a single skill
 ai-list                             # list skills, bundles, and roles
 ai-install-hooks                    # install pre-push hook
-ai-migrate-repo /path/to/repo       # scaffold governance for a repo
+ai-migrate /path/to/repo            # Phase A-F repo migration
 ```
 
 ## Skills

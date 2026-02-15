@@ -28,9 +28,12 @@ _ai_check_completions() {
         COMPREPLY=($(compgen -W "$(yq e '.bundles | keys | .[]' "$ai_dir/skills.yaml" 2>/dev/null)" -- "$cur"))
       fi
       return ;;
+    --mode)
+      COMPREPLY=($(compgen -W "PATCH NORMAL STRUCTURAL API HEAVY AUDIT" -- "$cur"))
+      return ;;
   esac
 
-  COMPREPLY=($(compgen -W "--bundle --scope --base --fail-fast --help" -- "$cur"))
+  COMPREPLY=($(compgen -W "--bundle --mode --diff-profile --scope --base --fail-fast --help" -- "$cur"))
 }
 
 _ai_skill_completions() {
@@ -63,6 +66,30 @@ _ai_chat_completions() {
   fi
 }
 
+_ai_implement_completions() {
+  local cur
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  # ai-implement passes args through to claude
+  COMPREPLY=($(compgen -W "--help" -- "$cur"))
+}
+
+_ai_plan_completions() {
+  local cur
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  # ai-plan passes args through to claude
+  COMPREPLY=($(compgen -W "--help" -- "$cur"))
+}
+
+_ai_migrate_completions() {
+  local cur
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  # ai-migrate takes a directory path
+  COMPREPLY=($(compgen -d -- "$cur"))
+}
+
 complete -F _ai_check_completions ai-check
 complete -F _ai_skill_completions ai-skill
 complete -F _ai_chat_completions ai-chat
+complete -F _ai_implement_completions ai-implement
+complete -F _ai_plan_completions ai-plan
+complete -F _ai_migrate_completions ai-migrate
