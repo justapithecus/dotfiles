@@ -41,11 +41,12 @@ Agents should treat this directory as authoritative.
 
 Contents:
 - `CLAUDE.md` — single constitutional authority for all AI sessions
-- `bin/` — executable entrypoint scripts (ai-chat, ai-check, ai-skill, etc.)
+- `bin/` — executable entrypoint scripts (ai-chat, ai-implement, ai-plan, ai-check, ai-migrate, etc.)
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
-- `skills/` — skill definitions with SKILL.md + schema contracts (7 skills)
+- `skills/` — skill definitions with SKILL.md + schema contracts (43 skills across 7 domains)
+- `skills.yaml` — skill + bundle + mode registry (43 skills, 6 bundles, 6 modes)
 - `completion/` — shell completion scripts
-- `out/` — runtime artifacts from ai-check runs (gitignored)
+- `out/` — runtime artifacts: ai-check results, plan.json, last.patch, last.report.json (gitignored)
 - `context/` — optional context layers for supplementary prompt content
 - `templates/` — migration scaffolds for onboarding new repos
 

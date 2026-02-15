@@ -65,11 +65,31 @@ SYSTEM_PROMPT="$(
     cat "$REPO_ROOT/AGENTS.md"
   fi
 
-  if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
-    echo
-    echo "Repository architecture index:"
-    cat "$REPO_ROOT/docs/ARCH_INDEX.md"
-  fi
+  # Check both root and docs/ for ARCH_INDEX.md
+  for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
+    if [[ -f "$_arch_path" ]]; then
+      echo
+      echo "Repository architecture index:"
+      cat "$_arch_path"
+      break
+    fi
+  done
 )"
 
-exec claude --system-prompt "$SYSTEM_PROMPT" "$@"
+OUT_DIR="$AI_DIR/out"
+mkdir -p "$OUT_DIR"
+
+# Run session (no exec — script continues after)
+claude --system-prompt "$SYSTEM_PROMPT" "$@" || true
+
+# Detect plan.json written during session
+PLAN_FILE="$OUT_DIR/plan.json"
+if [[ -f "$PLAN_FILE" ]]; then
+  echo
+  echo "✔ plan.json detected at $PLAN_FILE"
+  echo "  intent: $(jq -r '.intent // "unspecified"' "$PLAN_FILE" 2>/dev/null)"
+  echo "  ai-implement will consume this automatically"
+else
+  echo
+  echo "ℹ No plan.json written (optional — ai-implement will use diff-based mode detection)"
+fi

@@ -193,7 +193,7 @@ EOF
 # ==========================================================
 # ai: tooling
 # ==========================================================
-alias aic="$HOME/.config/ai/ai-chat.sh"
-alias aip="$HOME/.config/ai/ai-plan.sh"
-alias air="$HOME/.config/ai/ai-review.sh"
-alias aii="$HOME/.config/ai/ai-implement.sh"
+alias aic="ai-chat"
+alias aip="ai-plan"
+alias air="ai-review"
+alias aii="ai-implement"

@@ -154,7 +154,8 @@ done
 # --- Build repo tree ------------------------------------------------------
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  REPO_TREE="$(git ls-files)"
+  # Include both tracked and untracked files (skills need to see new files)
+  REPO_TREE="$({ git -C "$REPO_ROOT" ls-files; git -C "$REPO_ROOT" ls-files --others --exclude-standard; } | LC_ALL=C sort -u)"
 else
   REPO_TREE="$(cd "$REPO_ROOT" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)"
 fi
@@ -203,10 +204,14 @@ if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
 fi
 
 # Optional ARCH_INDEX.md (structural ontology — skills need contents, not just path)
+# Check both root and docs/ locations
 ARCH_INDEX=""
-if [[ -f "$REPO_ROOT/docs/ARCH_INDEX.md" ]]; then
-  ARCH_INDEX="$(cat "$REPO_ROOT/docs/ARCH_INDEX.md")"
-fi
+for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
+  if [[ -f "$_arch_path" ]]; then
+    ARCH_INDEX="$(cat "$_arch_path")"
+    break
+  fi
+done
 
 # --- Build prompts --------------------------------------------------------
 # Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → ARCH_INDEX → SKILL.md
@@ -253,7 +258,31 @@ No markdown. No prose. No explanation. No code fences. JSON only."
 
 DIFF_PAYLOAD=""
 if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  DIFF_PAYLOAD="$(git diff "${BASE_REF}...HEAD" 2>/dev/null || git diff "$BASE_REF" HEAD 2>/dev/null || true)"
+  # Diff merge-base to working tree (includes uncommitted session edits)
+  DIFF_PAYLOAD="$(git diff "$BASE_REF" 2>/dev/null || true)"
+
+  # Append synthetic diff for untracked files (git diff never includes these)
+  UNTRACKED="$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null || true)"
+  if [[ -n "$UNTRACKED" ]]; then
+    UNTRACKED_DIFF=""
+    while IFS= read -r ufile; do
+      [[ -n "$ufile" ]] || continue
+      [[ -f "$REPO_ROOT/$ufile" ]] || continue
+      # Detect actual file mode (executable vs regular)
+      fmode="100644"
+      [[ -x "$REPO_ROOT/$ufile" ]] && fmode="100755"
+      # Build unified diff header for new file with detected mode
+      UNTRACKED_DIFF="${UNTRACKED_DIFF}
+diff --git a/$ufile b/$ufile
+new file mode $fmode
+--- /dev/null
++++ b/$ufile
+$(git diff --no-index /dev/null "$REPO_ROOT/$ufile" 2>/dev/null | tail -n +5 || true)"
+    done <<< "$UNTRACKED"
+    if [[ -n "$UNTRACKED_DIFF" ]]; then
+      DIFF_PAYLOAD="${DIFF_PAYLOAD}${UNTRACKED_DIFF}"
+    fi
+  fi
 fi
 
 USER_PROMPT="Evaluate the following repository.

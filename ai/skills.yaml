@@ -20,6 +20,8 @@ registry:
     mandatory: true
     trigger: always
     requires_diff: false
+    run_when:
+      modes: [PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: arch-index-alignment
     version: v1
@@ -30,6 +32,8 @@ registry:
     mandatory: true
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: undocumented-module-detector
     version: v1
@@ -40,6 +44,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [STRUCTURAL, HEAVY, AUDIT]
 
   - name: orphan-directory-detector
     version: v1
@@ -50,6 +56,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   - name: forbidden-top-level-detector
     version: v1
@@ -60,6 +68,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   - name: required-directory-detector
     version: v1
@@ -70,6 +80,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   - name: module-name-collision-detector
     version: v1
@@ -80,6 +92,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   # =========================
   # II. ARCHITECTURAL BOUNDARIES
@@ -92,6 +106,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: cross-module-coupling-detector
     version: v1
@@ -101,6 +117,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [STRUCTURAL, HEAVY, AUDIT]
 
   - name: circular-dependency-detector
     version: v1
@@ -110,6 +128,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   - name: boundary-leak-detector
     version: v1
@@ -119,6 +139,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: inversion-of-control-violation
     version: v1
@@ -128,6 +150,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: internal-package-exposure-detector
     version: v1
@@ -137,6 +161,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: forbidden-import-pattern-detector
     version: v1
@@ -146,6 +172,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: architecture
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   # =========================
   # III. DEPENDENCY GRAPH INTEGRITY
@@ -158,6 +186,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: excessive-fan-in-detector
     version: v1
@@ -167,6 +197,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: excessive-fan-out-detector
     version: v1
@@ -176,6 +208,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: god-module-detector
     version: v1
@@ -186,6 +220,8 @@ registry:
     mandatory: false
     trigger: heavy
     requires_diff: false
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: module-cohesion-anomaly-detector
     version: v1
@@ -196,6 +232,8 @@ registry:
     mandatory: false
     trigger: heavy
     requires_diff: false
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   # =========================
   # IV. API & CONTRACT STABILITY
@@ -208,6 +246,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: api
+    run_when:
+      modes: [NORMAL, API, HEAVY, AUDIT]
 
   - name: serialization-contract-drift
     version: v1
@@ -217,6 +257,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: api
+    run_when:
+      modes: [API, HEAVY, AUDIT]
 
   - name: config-contract-drift
     version: v1
@@ -226,6 +268,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: api
+    run_when:
+      modes: [API, HEAVY, AUDIT]
 
   - name: cli-contract-drift
     version: v1
@@ -235,6 +279,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: api
+    run_when:
+      modes: [API, HEAVY, AUDIT]
 
   - name: backward-compatibility-violation-detector
     version: v1
@@ -244,6 +290,8 @@ registry:
     mode: semantic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [API, HEAVY, AUDIT]
 
   # =========================
   # V. CHANGE DISCIPLINE (SURGERY CONTROL)
@@ -256,6 +304,8 @@ registry:
     mode: deterministic
     mandatory: true
     trigger: patch
+    run_when:
+      modes: [PATCH, HEAVY, AUDIT]
 
   - name: unexpected-file-creation-detector
     version: v1
@@ -265,6 +315,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: patch
+    run_when:
+      modes: [PATCH, HEAVY, AUDIT]
 
   - name: refactor-without-declaration-detector
     version: v1
@@ -274,6 +326,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: patch
+    run_when:
+      modes: [PATCH, HEAVY, AUDIT]
 
   - name: large-diff-anomaly-detector
     version: v1
@@ -283,6 +337,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: always
+    run_when:
+      modes: [PATCH, NORMAL, API, HEAVY, AUDIT]
 
   - name: semantic-drift-detector
     version: v1
@@ -292,6 +348,8 @@ registry:
     mode: semantic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   # =========================
   # VI. ENTROPY & COMPLEXITY CONTROL
@@ -305,6 +363,8 @@ registry:
     mandatory: false
     trigger: structural
     requires_diff: false
+    run_when:
+      modes: [STRUCTURAL, HEAVY, AUDIT]
 
   - name: near-duplicate-file-detector
     version: v1
@@ -315,6 +375,8 @@ registry:
     mandatory: false
     trigger: heavy
     requires_diff: false
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: abstraction-leak-detector
     version: v1
@@ -324,6 +386,8 @@ registry:
     mode: semantic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: unused-public-symbol-detector
     version: v1
@@ -333,6 +397,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: dead-module-detector
     version: v1
@@ -342,6 +408,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [STRUCTURAL, HEAVY, AUDIT]
 
   - name: orphan-test-detector
     version: v1
@@ -352,6 +420,8 @@ registry:
     mandatory: false
     trigger: heavy
     requires_diff: false
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: test-coverage-regression-detector
     version: v1
@@ -361,6 +431,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   # =========================
   # VII. REPO HYGIENE & OPERATIONAL SAFETY
@@ -373,6 +445,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: always
+    run_when:
+      modes: [NORMAL, STRUCTURAL, HEAVY, AUDIT]
 
   - name: environment-variable-leak-detector
     version: v1
@@ -382,6 +456,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: always
+    run_when:
+      modes: [PATCH, NORMAL, API, HEAVY, AUDIT]
 
   - name: hardcoded-secret-pattern-detector
     version: v1
@@ -391,6 +467,8 @@ registry:
     mode: deterministic
     mandatory: false
     trigger: always
+    run_when:
+      modes: [PATCH, NORMAL, STRUCTURAL, API, HEAVY, AUDIT]
 
   - name: unbounded-error-swallow-detector
     version: v1
@@ -400,6 +478,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: unlogged-error-detector
     version: v1
@@ -409,6 +489,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: inconsistent-error-propagation-detector
     version: v1
@@ -418,6 +500,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
   - name: panic-or-exit-misuse-detector
     version: v1
@@ -427,6 +511,8 @@ registry:
     mode: heuristic
     mandatory: false
     trigger: heavy
+    run_when:
+      modes: [HEAVY, AUDIT]
 
 # =========================
 # BUNDLES (DISCIPLINED + EXHAUSTIVE)
