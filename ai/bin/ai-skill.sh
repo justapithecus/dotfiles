@@ -1,8 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Portable script directory resolution (no readlink -f dependency)
+SCRIPT_DIR="$(
+  src="${BASH_SOURCE[0]}"
+  while [[ -L "$src" ]]; do
+    dir="$(cd "$(dirname "$src")" && pwd -P)"
+    src="$(readlink "$src")"
+    [[ "$src" != /* ]] && src="$dir/$src"
+  done
+  cd "$(dirname "$src")" && pwd -P
+)"
+
+# Resolve AI_DIR: env override > repo-relative parent > install breadcrumb
+if [[ -n "${AI_DIR:-}" ]] && [[ -f "$AI_DIR/CLAUDE.md" ]]; then
+  : # caller-provided AI_DIR
+elif [[ -f "$SCRIPT_DIR/../CLAUDE.md" ]]; then
+  AI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [[ -f "$SCRIPT_DIR/.ai-source" ]]; then
+  AI_DIR="$(cat "$SCRIPT_DIR/.ai-source")"
+else
+  echo "error: cannot locate ai/ directory. Set AI_DIR or reinstall." >&2
+  exit 1
+fi
 
 # --- Preflight ------------------------------------------------------------
 
@@ -26,6 +46,7 @@ command -v yq >/dev/null 2>&1 || {
 SKILL_NAME=""
 SKILL_VERSION=""
 SCOPE=""
+BASE_REF=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -35,6 +56,9 @@ while [[ $# -gt 0 ]]; do
     --scope)
       [[ $# -ge 2 ]] || { echo "error: --scope requires a value" >&2; exit 1; }
       SCOPE="$2"; shift 2 ;;
+    --base)
+      [[ $# -ge 2 ]] || { echo "error: --base requires a value" >&2; exit 1; }
+      BASE_REF="$2"; shift 2 ;;
     -*)
       echo "error: unknown flag: $1" >&2; exit 1 ;;
     *)
@@ -44,7 +68,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$SKILL_NAME" ]]; then
-  echo "usage: ai-skill.sh <skill-name> [--version vX] [--scope path1,path2]" >&2
+  echo "usage: ai-skill.sh <skill-name> [--version vX] [--scope path1,path2] [--base <ref>]" >&2
   exit 1
 fi
 
@@ -225,10 +249,26 @@ ${OUTPUT_SCHEMA}
 
 No markdown. No prose. No explanation. No code fences. JSON only."
 
+# --- Build diff payload (if --base provided) --------------------------------
+
+DIFF_PAYLOAD=""
+if [[ -n "$BASE_REF" ]] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  DIFF_PAYLOAD="$(git diff "${BASE_REF}...HEAD" 2>/dev/null || git diff "$BASE_REF" HEAD 2>/dev/null || true)"
+fi
+
 USER_PROMPT="Evaluate the following repository.
 
 Repository tree:
-${REPO_TREE}
+${REPO_TREE}"
+
+if [[ -n "$DIFF_PAYLOAD" ]]; then
+  USER_PROMPT="${USER_PROMPT}
+
+Diff (base: ${BASE_REF}):
+${DIFF_PAYLOAD}"
+fi
+
+USER_PROMPT="${USER_PROMPT}
 
 Respond with JSON only. No other text."
 
@@ -261,26 +301,43 @@ if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
   exit 1
 fi
 
-# Defense-in-depth: validate response shape against output.schema.json.
-# The prompt instructs the model to conform, but validation here
-# catches malformed or off-schema responses before they reach callers.
-# Generic: reads required keys from the output schema itself.
-
-REQUIRED_KEYS="$(jq -r '.required[]' "$SKILL_DIR/output.schema.json")"
-
+# Defense-in-depth: validate unified output schema.
+# All skills must return: skill, version, status, blocking, major, warning, info
 SCHEMA_ERRORS=""
-while IFS= read -r key; do
-  [[ -n "$key" ]] || continue
+
+# Check required string fields
+for key in skill version status; do
+  KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
+  if [[ "$KEY_TYPE" == "null" ]]; then
+    SCHEMA_ERRORS+="missing required key: $key\n"
+  elif [[ "$KEY_TYPE" != "string" ]]; then
+    SCHEMA_ERRORS+="$key: expected string, got $KEY_TYPE\n"
+  fi
+done
+
+# Check status enum
+STATUS="$(echo "$RESPONSE" | jq -r '.status // ""')"
+if [[ -n "$STATUS" ]] && [[ "$STATUS" != "pass" ]] && [[ "$STATUS" != "fail" ]]; then
+  SCHEMA_ERRORS+="status: must be \"pass\" or \"fail\", got \"$STATUS\"\n"
+fi
+
+# Check required array fields (must be arrays of strings)
+for key in blocking major warning info; do
   KEY_TYPE="$(echo "$RESPONSE" | jq -r ".[\"$key\"] | type")"
   if [[ "$KEY_TYPE" == "null" ]]; then
     SCHEMA_ERRORS+="missing required key: $key\n"
   elif [[ "$KEY_TYPE" != "array" ]]; then
     SCHEMA_ERRORS+="$key: expected array, got $KEY_TYPE\n"
+  else
+    NON_STRING="$(echo "$RESPONSE" | jq "[.[\"$key\"][] | select(type != \"string\")] | length")"
+    if [[ "$NON_STRING" -gt 0 ]]; then
+      SCHEMA_ERRORS+="$key: all elements must be strings ($NON_STRING non-string element(s) found)\n"
+    fi
   fi
-done <<< "$REQUIRED_KEYS"
+done
 
 if [[ -n "$SCHEMA_ERRORS" ]]; then
-  echo "error: response does not conform to output schema:" >&2
+  echo "error: response does not conform to unified output schema:" >&2
   printf "  %b" "$SCHEMA_ERRORS" >&2
   echo "$RESPONSE" >&2
   exit 1
@@ -290,16 +347,9 @@ fi
 
 echo "$RESPONSE" | jq .
 
-# --- Exit code based on fail_on fields -----------------------------------
-# Read fail_on from SKILL.md frontmatter; default to violations + forbidden_exists
+# --- Exit code: fail if status=fail AND blocking is non-empty -------------
 
-FAIL_ON="$(sed -n '/^---$/,/^---$/p' "$SKILL_DIR/SKILL.md" | yq e '.fail_on // ["violations", "forbidden_exists"]' -)"
-
-EXIT=0
-while IFS= read -r field; do
-  [[ -n "$field" ]] || continue
-  field="$(echo "$field" | sed 's/^- //')"
-  COUNT="$(echo "$RESPONSE" | jq --arg f "$field" '.[$f] // [] | length')"
-  [[ "$COUNT" -eq 0 ]] || EXIT=1
-done <<< "$FAIL_ON"
-exit $EXIT
+BLOCKING_COUNT="$(echo "$RESPONSE" | jq '.blocking | length')"
+if [[ "$STATUS" == "fail" ]] && [[ "$BLOCKING_COUNT" -gt 0 ]]; then
+  exit 1
+fi

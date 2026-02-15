@@ -1,77 +1,594 @@
 version: 1
 
-# Paths are relative to this file's directory (ai/).
+defaults:
+  skill_version: v1
+  bundles_fail_on: blocking
+  cost_order: [cheap, moderate, heavy]
+  mode_order: [deterministic, heuristic, semantic]
+  requires_diff: true
 
 registry:
+  # =========================
+  # I. STRUCTURAL INTEGRITY
+  # =========================
   - name: repo-convention-enforcer
     version: v1
     path: skills/repo-convention-enforcer/v1
+    domain: structural
     cost: cheap
+    mode: deterministic
     mandatory: true
+    trigger: always
+    requires_diff: false
 
   - name: arch-index-alignment
     version: v1
     path: skills/arch-index-alignment/v1
+    domain: structural
     cost: cheap
+    mode: deterministic
     mandatory: true
+    trigger: structural
+    requires_diff: false
 
-  - name: scope-violation-detector
+  - name: undocumented-module-detector
     version: v1
-    path: skills/scope-violation-detector/v1
+    path: skills/undocumented-module-detector/v1
+    domain: structural
     cost: cheap
-    mandatory: true
-
-  - name: api-surface-drift
-    version: v1
-    path: skills/api-surface-drift/v1
-    cost: moderate
+    mode: heuristic
     mandatory: false
+    trigger: structural
+    requires_diff: false
 
+  - name: orphan-directory-detector
+    version: v1
+    path: skills/orphan-directory-detector/v1
+    domain: structural
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: structural
+    requires_diff: false
+
+  - name: forbidden-top-level-detector
+    version: v1
+    path: skills/forbidden-top-level-detector/v1
+    domain: structural
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: structural
+    requires_diff: false
+
+  - name: required-directory-detector
+    version: v1
+    path: skills/required-directory-detector/v1
+    domain: structural
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: structural
+    requires_diff: false
+
+  - name: module-name-collision-detector
+    version: v1
+    path: skills/module-name-collision-detector/v1
+    domain: structural
+    cost: cheap
+    mode: heuristic
+    mandatory: false
+    trigger: structural
+    requires_diff: false
+
+  # =========================
+  # II. ARCHITECTURAL BOUNDARIES
+  # =========================
   - name: dependency-layer-violation
     version: v1
     path: skills/dependency-layer-violation/v1
+    domain: architecture
     cost: moderate
+    mode: deterministic
     mandatory: false
+    trigger: architecture
 
-  - name: responsibility-duplication-detector
+  - name: cross-module-coupling-detector
     version: v1
-    path: skills/responsibility-duplication-detector/v1
-    cost: heavy
+    path: skills/cross-module-coupling-detector/v1
+    domain: architecture
+    cost: moderate
+    mode: heuristic
     mandatory: false
+    trigger: architecture
+
+  - name: circular-dependency-detector
+    version: v1
+    path: skills/circular-dependency-detector/v1
+    domain: architecture
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: architecture
+
+  - name: boundary-leak-detector
+    version: v1
+    path: skills/boundary-leak-detector/v1
+    domain: architecture
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: architecture
+
+  - name: inversion-of-control-violation
+    version: v1
+    path: skills/inversion-of-control-violation/v1
+    domain: architecture
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: architecture
+
+  - name: internal-package-exposure-detector
+    version: v1
+    path: skills/internal-package-exposure-detector/v1
+    domain: architecture
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: architecture
+
+  - name: forbidden-import-pattern-detector
+    version: v1
+    path: skills/forbidden-import-pattern-detector/v1
+    domain: architecture
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: architecture
+
+  # =========================
+  # III. DEPENDENCY GRAPH INTEGRITY
+  # =========================
+  - name: unstable-dependency-detector
+    version: v1
+    path: skills/unstable-dependency-detector/v1
+    domain: depgraph
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: excessive-fan-in-detector
+    version: v1
+    path: skills/excessive-fan-in-detector/v1
+    domain: depgraph
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: excessive-fan-out-detector
+    version: v1
+    path: skills/excessive-fan-out-detector/v1
+    domain: depgraph
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: god-module-detector
+    version: v1
+    path: skills/god-module-detector/v1
+    domain: depgraph
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+    requires_diff: false
+
+  - name: module-cohesion-anomaly-detector
+    version: v1
+    path: skills/module-cohesion-anomaly-detector/v1
+    domain: depgraph
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+    requires_diff: false
+
+  # =========================
+  # IV. API & CONTRACT STABILITY
+  # =========================
+  - name: api-surface-drift
+    version: v1
+    path: skills/api-surface-drift/v1
+    domain: contract
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: api
+
+  - name: serialization-contract-drift
+    version: v1
+    path: skills/serialization-contract-drift/v1
+    domain: contract
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: api
+
+  - name: config-contract-drift
+    version: v1
+    path: skills/config-contract-drift/v1
+    domain: contract
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: api
+
+  - name: cli-contract-drift
+    version: v1
+    path: skills/cli-contract-drift/v1
+    domain: contract
+    cost: moderate
+    mode: deterministic
+    mandatory: false
+    trigger: api
+
+  - name: backward-compatibility-violation-detector
+    version: v1
+    path: skills/backward-compatibility-violation-detector/v1
+    domain: contract
+    cost: heavy
+    mode: semantic
+    mandatory: false
+    trigger: heavy
+
+  # =========================
+  # V. CHANGE DISCIPLINE (SURGERY CONTROL)
+  # =========================
+  - name: scope-violation-detector
+    version: v1
+    path: skills/scope-violation-detector/v1
+    domain: discipline
+    cost: cheap
+    mode: deterministic
+    mandatory: true
+    trigger: patch
+
+  - name: unexpected-file-creation-detector
+    version: v1
+    path: skills/unexpected-file-creation-detector/v1
+    domain: discipline
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: patch
+
+  - name: refactor-without-declaration-detector
+    version: v1
+    path: skills/refactor-without-declaration-detector/v1
+    domain: discipline
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: patch
 
   - name: large-diff-anomaly-detector
     version: v1
     path: skills/large-diff-anomaly-detector/v1
+    domain: discipline
     cost: cheap
+    mode: deterministic
     mandatory: false
+    trigger: always
+
+  - name: semantic-drift-detector
+    version: v1
+    path: skills/semantic-drift-detector/v1
+    domain: discipline
+    cost: heavy
+    mode: semantic
+    mandatory: false
+    trigger: heavy
+
+  # =========================
+  # VI. ENTROPY & COMPLEXITY CONTROL
+  # =========================
+  - name: responsibility-duplication-detector
+    version: v1
+    path: skills/responsibility-duplication-detector/v1
+    domain: entropy
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: structural
+    requires_diff: false
+
+  - name: near-duplicate-file-detector
+    version: v1
+    path: skills/near-duplicate-file-detector/v1
+    domain: entropy
+    cost: heavy
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+    requires_diff: false
+
+  - name: abstraction-leak-detector
+    version: v1
+    path: skills/abstraction-leak-detector/v1
+    domain: entropy
+    cost: heavy
+    mode: semantic
+    mandatory: false
+    trigger: heavy
+
+  - name: unused-public-symbol-detector
+    version: v1
+    path: skills/unused-public-symbol-detector/v1
+    domain: entropy
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: dead-module-detector
+    version: v1
+    path: skills/dead-module-detector/v1
+    domain: entropy
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: orphan-test-detector
+    version: v1
+    path: skills/orphan-test-detector/v1
+    domain: entropy
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+    requires_diff: false
+
+  - name: test-coverage-regression-detector
+    version: v1
+    path: skills/test-coverage-regression-detector/v1
+    domain: entropy
+    cost: heavy
+    mode: deterministic
+    mandatory: false
+    trigger: heavy
+
+  # =========================
+  # VII. REPO HYGIENE & OPERATIONAL SAFETY
+  # =========================
+  - name: unsafe-config-pattern-detector
+    version: v1
+    path: skills/unsafe-config-pattern-detector/v1
+    domain: hygiene
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: always
+
+  - name: environment-variable-leak-detector
+    version: v1
+    path: skills/environment-variable-leak-detector/v1
+    domain: hygiene
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: always
+
+  - name: hardcoded-secret-pattern-detector
+    version: v1
+    path: skills/hardcoded-secret-pattern-detector/v1
+    domain: hygiene
+    cost: cheap
+    mode: deterministic
+    mandatory: false
+    trigger: always
+
+  - name: unbounded-error-swallow-detector
+    version: v1
+    path: skills/unbounded-error-swallow-detector/v1
+    domain: hygiene
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: unlogged-error-detector
+    version: v1
+    path: skills/unlogged-error-detector/v1
+    domain: hygiene
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: inconsistent-error-propagation-detector
+    version: v1
+    path: skills/inconsistent-error-propagation-detector/v1
+    domain: hygiene
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+  - name: panic-or-exit-misuse-detector
+    version: v1
+    path: skills/panic-or-exit-misuse-detector/v1
+    domain: hygiene
+    cost: moderate
+    mode: heuristic
+    mandatory: false
+    trigger: heavy
+
+# =========================
+# BUNDLES (DISCIPLINED + EXHAUSTIVE)
+# =========================
+# Notes:
+# - ai-check should run bundle skills in listed order (then cost_order tie-break if needed)
+# - "audit-full" exists for full-spectrum runs; not default
+# - "default" is strict but not maximal; "heavy" is maximal day-to-day; "audit-full" is everything.
 
 bundles:
+  # Surgical edits only (must be fast, strict, scoped)
+  patch:
+    - scope-violation-detector
+    - unexpected-file-creation-detector
+    - refactor-without-declaration-detector
+    - large-diff-anomaly-detector
+    - repo-convention-enforcer
+    - hardcoded-secret-pattern-detector
+    - environment-variable-leak-detector
+
+  # Normal work (high signal, broad coverage, still reasonable)
   default:
     - repo-convention-enforcer
     - arch-index-alignment
+    - forbidden-top-level-detector
+    - required-directory-detector
+    - orphan-directory-detector
+    - module-name-collision-detector
+    - dependency-layer-violation
+    - circular-dependency-detector
+    - internal-package-exposure-detector
+    - forbidden-import-pattern-detector
+    - api-surface-drift
     - large-diff-anomaly-detector
+    - unsafe-config-pattern-detector
+    - hardcoded-secret-pattern-detector
+    - environment-variable-leak-detector
 
-  patch:
-    - scope-violation-detector
+  # When changing module structure / directories / boundaries
+  structural-change:
     - repo-convention-enforcer
-    - large-diff-anomaly-detector
+    - arch-index-alignment
+    - undocumented-module-detector
+    - orphan-directory-detector
+    - forbidden-top-level-detector
+    - required-directory-detector
+    - module-name-collision-detector
+    - dependency-layer-violation
+    - circular-dependency-detector
+    - cross-module-coupling-detector
+    - boundary-leak-detector
+    - internal-package-exposure-detector
+    - forbidden-import-pattern-detector
+    - responsibility-duplication-detector
+    - dead-module-detector
+    - unsafe-config-pattern-detector
+    - hardcoded-secret-pattern-detector
 
+  # When touching public API, SDK, CLI, serialization/config contracts
   api-change:
     - repo-convention-enforcer
     - arch-index-alignment
     - api-surface-drift
+    - cli-contract-drift
+    - config-contract-drift
+    - serialization-contract-drift
+    - backward-compatibility-violation-detector
     - dependency-layer-violation
+    - boundary-leak-detector
+    - internal-package-exposure-detector
+    - large-diff-anomaly-detector
+    - hardcoded-secret-pattern-detector
+    - environment-variable-leak-detector
 
-  structural-change:
-    - repo-convention-enforcer
-    - arch-index-alignment
-    - dependency-layer-violation
-    - responsibility-duplication-detector
-
+  # Large features/refactors (maximal daily driver)
   heavy:
     - repo-convention-enforcer
     - arch-index-alignment
-    - api-surface-drift
+    - undocumented-module-detector
+    - orphan-directory-detector
+    - forbidden-top-level-detector
+    - required-directory-detector
+    - module-name-collision-detector
     - dependency-layer-violation
-    - responsibility-duplication-detector
+    - circular-dependency-detector
+    - cross-module-coupling-detector
+    - boundary-leak-detector
+    - inversion-of-control-violation
+    - internal-package-exposure-detector
+    - forbidden-import-pattern-detector
+    - unstable-dependency-detector
+    - excessive-fan-in-detector
+    - excessive-fan-out-detector
+    - god-module-detector
+    - module-cohesion-anomaly-detector
+    - api-surface-drift
+    - cli-contract-drift
+    - config-contract-drift
+    - serialization-contract-drift
+    - backward-compatibility-violation-detector
+    - scope-violation-detector
+    - unexpected-file-creation-detector
+    - refactor-without-declaration-detector
     - large-diff-anomaly-detector
+    - semantic-drift-detector
+    - responsibility-duplication-detector
+    - near-duplicate-file-detector
+    - abstraction-leak-detector
+    - unused-public-symbol-detector
+    - dead-module-detector
+    - orphan-test-detector
+    - test-coverage-regression-detector
+    - unsafe-config-pattern-detector
+    - environment-variable-leak-detector
+    - hardcoded-secret-pattern-detector
+    - unbounded-error-swallow-detector
+    - unlogged-error-detector
+    - inconsistent-error-propagation-detector
+    - panic-or-exit-misuse-detector
+
+  # Full-spectrum audit (all skills; slow; run when you want absolute coverage)
+  audit-full:
+    - repo-convention-enforcer
+    - arch-index-alignment
+    - undocumented-module-detector
+    - orphan-directory-detector
+    - forbidden-top-level-detector
+    - required-directory-detector
+    - module-name-collision-detector
+    - dependency-layer-violation
+    - cross-module-coupling-detector
+    - circular-dependency-detector
+    - boundary-leak-detector
+    - inversion-of-control-violation
+    - internal-package-exposure-detector
+    - forbidden-import-pattern-detector
+    - unstable-dependency-detector
+    - excessive-fan-in-detector
+    - excessive-fan-out-detector
+    - god-module-detector
+    - module-cohesion-anomaly-detector
+    - api-surface-drift
+    - serialization-contract-drift
+    - config-contract-drift
+    - cli-contract-drift
+    - backward-compatibility-violation-detector
+    - scope-violation-detector
+    - unexpected-file-creation-detector
+    - refactor-without-declaration-detector
+    - large-diff-anomaly-detector
+    - semantic-drift-detector
+    - responsibility-duplication-detector
+    - near-duplicate-file-detector
+    - abstraction-leak-detector
+    - unused-public-symbol-detector
+    - dead-module-detector
+    - orphan-test-detector
+    - test-coverage-regression-detector
+    - unsafe-config-pattern-detector
+    - environment-variable-leak-detector
+    - hardcoded-secret-pattern-detector
+    - unbounded-error-swallow-detector
+    - unlogged-error-detector
+    - inconsistent-error-propagation-detector
+    - panic-or-exit-misuse-detector

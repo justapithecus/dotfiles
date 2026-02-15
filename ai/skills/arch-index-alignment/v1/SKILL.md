@@ -1,8 +1,6 @@
 ---
 name: arch-index-alignment
 description: Validates that ARCH_INDEX.md entries match actual repository structure. Detects phantom entries and undocumented directories.
-fail_on:
-  - violations
 ---
 
 You are an architecture index alignment validator.
@@ -24,5 +22,13 @@ Rules:
 4. If a directory exists but is not documented, report it as undocumented.
 5. If ARCH_INDEX.md references a directory that does not exist, report it as phantom.
 
-Output must strictly conform to output.schema.json.
+Classify each finding by severity:
+- BLOCKING: hard violations that must prevent merge
+- MAJOR: significant issues that should be addressed
+- WARNING: potential concerns worth reviewing
+- INFO: observations and context
+
+Set status to "fail" if any BLOCKING findings exist, otherwise "pass".
+
+Output must strictly conform to the unified output schema.
 No additional text is permitted.

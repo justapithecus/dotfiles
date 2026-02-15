@@ -15,6 +15,9 @@ for script in "$BIN_DIR"/ai-*.sh; do
   chmod +x "$DEST/$name"
 done
 
+# Write breadcrumb so installed scripts can locate ai/ assets
+echo "$SCRIPT_DIR" > "$DEST/.ai-source"
+
 # Install completion if available
 if [[ -f "$SCRIPT_DIR/completion/ai.bash" ]]; then
   mkdir -p "$COMP_DIR"

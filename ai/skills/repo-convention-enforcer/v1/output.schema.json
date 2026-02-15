@@ -1,28 +1,30 @@
 {
   "type": "object",
-  "required": [
-    "violations",
-    "redundancies",
-    "forbidden_exists",
-    "ambiguities"
-  ],
-  "additionalProperties": false,
+  "required": ["skill", "version", "status", "blocking", "major", "warning", "info"],
   "properties": {
-    "violations": {
+    "skill": { "type": "string" },
+    "version": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail"] },
+    "blocking": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "redundancies": {
+    "major": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "forbidden_exists": {
+    "warning": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "ambiguities": {
+    "info": {
       "type": "array",
       "items": { "type": "string" }
-    }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "details": { "type": "object" }
   }
 }

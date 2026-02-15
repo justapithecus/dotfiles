@@ -24,5 +24,13 @@ report it as ambiguity.
 
 Absence of justification is failure.
 
-Output must strictly conform to output.schema.json.
+Classify each finding by severity:
+- BLOCKING: hard violations that must prevent merge
+- MAJOR: significant issues that should be addressed
+- WARNING: potential concerns worth reviewing
+- INFO: observations and context
+
+Set status to "fail" if any BLOCKING findings exist, otherwise "pass".
+
+Output must strictly conform to the unified output schema.
 No additional text is permitted.

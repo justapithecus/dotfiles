@@ -91,6 +91,12 @@ These constraints apply in ALL modes, unconditionally.
     Never pass global flags (e.g., `--global`, `-g`) unless explicitly
     approved. If a tool is not available in the repo environment, ask
     before installing.
+12. **Always use git worktrees for implementation work.** Never work
+    directly in the main worktree. Create a worktree named
+    `${repo-name}-${suffix}` as a sibling of the repo root (e.g.,
+    `../myrepo-feature-auth`). The suffix should be a short descriptor
+    of the work. The main worktree must remain on `main` and clean.
+    This prevents branch-switching interference between concurrent sessions.
 
 ---
 

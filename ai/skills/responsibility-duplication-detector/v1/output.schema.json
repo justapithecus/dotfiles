@@ -1,28 +1,30 @@
 {
   "type": "object",
-  "required": [
-    "violations",
-    "duplicated_names",
-    "similar_files",
-    "warnings"
-  ],
-  "additionalProperties": false,
+  "required": ["skill", "version", "status", "blocking", "major", "warning", "info"],
   "properties": {
-    "violations": {
+    "skill": { "type": "string" },
+    "version": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail"] },
+    "blocking": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "duplicated_names": {
+    "major": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "similar_files": {
+    "warning": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "warnings": {
+    "info": {
       "type": "array",
       "items": { "type": "string" }
-    }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "details": { "type": "object" }
   }
 }

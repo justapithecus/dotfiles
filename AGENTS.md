@@ -20,6 +20,11 @@ Guidelines for agents:
 - Treat subdirectories as largely independent
 - Prefer explanation and planning over code generation
 
+Git workflow:
+- Always use git worktrees for implementation work, never work in the
+  main checkout directly
+- Worktree naming: `${repo-name}-${suffix}` as a sibling directory
+
 When unsure:
 - Ask for clarification rather than guessing
 
