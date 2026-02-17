@@ -193,12 +193,12 @@ EOF
 # ==========================================================
 # ai: tooling
 # ==========================================================
-alias aic="ai-chat"
-alias aip="ai-plan"
-alias air="ai-review"
-alias aii="ai-implement"
-alias aih="ai-help"
-alias aik="ai-check"
-alias ais="ai-skill"
-alias ail="ai-list"
-alias aix="ai-patch"
+alias aic="bonsai chat"
+alias aip="bonsai plan"
+alias air="bonsai review"
+alias aii="bonsai implement"
+alias aih="bonsai help"
+alias aik="bonsai check"
+alias ais="bonsai skill"
+alias ail="bonsai list"
+alias aix="bonsai patch"
