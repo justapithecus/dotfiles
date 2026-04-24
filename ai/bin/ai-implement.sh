@@ -288,16 +288,6 @@ build_system_prompt() {
     cat "$REPO_ROOT/AGENTS.md"
   fi
 
-  # Check both root and docs/ for ARCH_INDEX.md
-  for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
-    if [[ -f "$_arch_path" ]]; then
-      echo
-      echo "Repository architecture index:"
-      cat "$_arch_path"
-      break
-    fi
-  done
-
   if [[ -n "$extra_context" ]]; then
     echo
     echo "═══ Previous governance findings (fix these) ═══"

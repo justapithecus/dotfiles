@@ -45,7 +45,7 @@ Commands:
   ai-list                           List skills, bundles, and roles
   ai-help [command|workflows]       This help
   ai-install-hooks                  Install pre-push git hook
-  ai-migrate [/path/to/repo]        Migrate repo (Phases A-F)
+  ai-migrate [/path/to/repo]        Migrate repo (Phases A-E)
 
 Guides:
   ai/docs/quickstart.md             First-time setup
@@ -321,16 +321,15 @@ show_command_help() {
     migrate)
       echo "ai-migrate [/path/to/repo]"
       echo
-      echo "  Six-phase migration scaffolder for onboarding repos."
+      echo "  Five-phase migration scaffolder for onboarding repos."
       echo "  Defaults to current directory if no path given."
       echo
       echo "  Phases:"
       echo "    A. Scan        Detect directories, languages, existing docs"
-      echo "    B. ARCH_INDEX  Create or review docs/ARCH_INDEX.md"
-      echo "    C. CLAUDE.md   Copy constitution template"
-      echo "    D. Scaffolds   Create ai/skills/, ai/baselines/, ai/out/"
-      echo "    E. Baselines   Optional directory/metrics snapshots"
-      echo "    F. Validate    Run ai-check --bundle default"
+      echo "    B. CLAUDE.md   Copy constitution template"
+      echo "    C. Scaffolds   Create ai/skills/, ai/baselines/, ai/out/"
+      echo "    D. Baselines   Optional directory/metrics snapshots"
+      echo "    E. Validate    Run ai-check --bundle default"
       echo
       echo "  Examples:"
       echo "    ai-migrate                 # current directory"

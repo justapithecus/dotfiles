@@ -242,7 +242,6 @@ Each entrypoint script builds a system prompt in this order:
 3. Optional context layers from `context/*.md` (sorted).
 4. The role prompt from `roles/`.
 5. Repository `AGENTS.md` content (if present at repo root).
-6. Repository `ARCH_INDEX.md` content (checks root and `docs/`).
 
 Scripts resolve paths via a portable symlink-following loop so they
 work correctly when installed to `~/.local/bin` as copies.

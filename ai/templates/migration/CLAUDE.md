@@ -5,7 +5,11 @@
 1. Global dotfiles CLAUDE.md (sovereign)
 2. This repository CLAUDE.md
 3. AGENTS.md (behavioral expectations)
-4. docs/ARCH_INDEX.md (structural ontology)
+
+<!-- If this repo maintains its own structural/orientation sources
+     (e.g. an architecture index, contract files, module declarations),
+     list them here with their chosen paths. The global constitution
+     does not prescribe a layout — this is the place to declare one. -->
 
 ## 2. Role of AGENTS.md
 
@@ -19,19 +23,7 @@ AGENTS.md does NOT:
 - Define enforcement policy
 - Weaken global prohibitions
 
-## 3. Role of docs/ARCH_INDEX.md
-
-ARCH_INDEX.md defines:
-- Repository ontology
-- Module responsibilities
-- Intended structural layout
-
-ARCH_INDEX.md is authoritative for:
-- Top-level module declarations
-- Directory semantics
-- Architectural boundaries
-
-## 4. Structural Invariants
+## 3. Structural Invariants
 
 <!-- Declare only high-confidence invariants for this repository.
      Examples below — replace with actual top-level directories. -->
@@ -40,5 +32,4 @@ Required top-level directories:
 - (list your major directories here)
 
 Forbidden patterns:
-- No orphan top-level directories without ARCH_INDEX entry
 - No duplicate module responsibilities across directories

@@ -74,8 +74,6 @@ EXISTING_DOCS=""
 [[ -f "$TARGET/README.md" ]] && EXISTING_DOCS="${EXISTING_DOCS}README.md "
 [[ -f "$TARGET/CLAUDE.md" ]] && EXISTING_DOCS="${EXISTING_DOCS}CLAUDE.md "
 [[ -f "$TARGET/AGENTS.md" ]] && EXISTING_DOCS="${EXISTING_DOCS}AGENTS.md "
-[[ -f "$TARGET/docs/ARCH_INDEX.md" ]] && EXISTING_DOCS="${EXISTING_DOCS}docs/ARCH_INDEX.md "
-[[ -f "$TARGET/ARCH_INDEX.md" ]] && EXISTING_DOCS="${EXISTING_DOCS}ARCH_INDEX.md "
 
 if [[ -n "$EXISTING_DOCS" ]]; then
   echo "  Existing docs: $EXISTING_DOCS"
@@ -85,80 +83,10 @@ fi
 echo
 
 # ==========================================================================
-# Phase B — ARCH_INDEX Hardening (interactive)
+# Phase B — Repo CLAUDE.md
 # ==========================================================================
 
-echo "▶ Phase B: ARCH_INDEX.md"
-
-ARCH_CANDIDATES=("$TARGET/docs/ARCH_INDEX.md" "$TARGET/ARCH_INDEX.md")
-ARCH_FILE=""
-for candidate in "${ARCH_CANDIDATES[@]}"; do
-  if [[ -f "$candidate" ]]; then
-    ARCH_FILE="$candidate"
-    break
-  fi
-done
-
-if [[ -z "$ARCH_FILE" ]]; then
-  echo "  ⚠ No ARCH_INDEX.md found"
-  echo
-  printf "  Create ARCH_INDEX.md interactively with Claude? [Y/n] "
-  read -r REPLY </dev/tty || REPLY="y"
-  if [[ "$REPLY" != "n" ]] && [[ "$REPLY" != "N" ]]; then
-    # Launch Claude in architect mode to create ARCH_INDEX
-    if command -v claude >/dev/null 2>&1; then
-      echo "  Launching architect session to create ARCH_INDEX.md..."
-      echo
-      ARCH_PROMPT="You are an architect assistant. Examine the repository at $TARGET and create a docs/ARCH_INDEX.md file. The file should be a fast lookup table for agents, summarizing what exists and where."
-      mkdir -p "$TARGET/docs"
-      claude --system-prompt "$ARCH_PROMPT" -p "Create docs/ARCH_INDEX.md for this repository. Examine the directory structure and create a navigation index." || true
-    else
-      echo "  ⚠ claude not available — scaffolding minimal ARCH_INDEX.md"
-      mkdir -p "$TARGET/docs"
-      cat > "$TARGET/docs/ARCH_INDEX.md" << 'ARCH'
-# ARCH_INDEX.md — Architecture Index
-
-This file is a fast lookup table for agents opening this repository.
-It summarizes what exists and where, not how things are implemented.
-
----
-
-## Root
-
-- `ARCH_INDEX.md` — this file (or `docs/ARCH_INDEX.md`)
-- `README.md` — repository overview
-- `CLAUDE.md` — repository constitution
-
----
-
-<!-- Add sections for each top-level directory -->
-ARCH
-      echo "  ✔ Scaffolded minimal docs/ARCH_INDEX.md"
-    fi
-  else
-    echo "  ⚠ Skipping ARCH_INDEX.md creation"
-    echo "  WARNING: repository will lack agent orientation without this file"
-  fi
-else
-  echo "  ✔ Found: $ARCH_FILE"
-  echo
-  printf "  Review/upgrade ARCH_INDEX.md? [y/N] "
-  read -r REPLY </dev/tty || REPLY="n"
-  if [[ "$REPLY" == "y" ]] || [[ "$REPLY" == "Y" ]]; then
-    if command -v claude >/dev/null 2>&1; then
-      echo "  Launching architect session to review ARCH_INDEX.md..."
-      ARCH_PROMPT="You are an architect assistant. Review the ARCH_INDEX.md at $ARCH_FILE against the actual repository structure at $TARGET. Suggest improvements."
-      claude --system-prompt "$ARCH_PROMPT" -p "Review and suggest improvements to ARCH_INDEX.md" || true
-    fi
-  fi
-fi
-echo
-
-# ==========================================================================
-# Phase C — Repo CLAUDE.md
-# ==========================================================================
-
-echo "▶ Phase C: Repository CLAUDE.md"
+echo "▶ Phase B: Repository CLAUDE.md"
 
 CLAUDE_DST="$TARGET/CLAUDE.md"
 if [[ -f "$CLAUDE_DST" ]]; then
@@ -184,10 +112,10 @@ fi
 echo
 
 # ==========================================================================
-# Phase D — Scaffolds
+# Phase C — Scaffolds
 # ==========================================================================
 
-echo "▶ Phase D: Directory scaffolds"
+echo "▶ Phase C: Directory scaffolds"
 
 # Create ai/ directories
 for dir in ai/skills ai/baselines ai/out; do
@@ -235,10 +163,10 @@ fi
 echo
 
 # ==========================================================================
-# Phase E — Baselines (optional)
+# Phase D — Baselines (optional)
 # ==========================================================================
 
-echo "▶ Phase E: Baselines"
+echo "▶ Phase D: Baselines"
 printf "  Generate baseline snapshots? [y/N] "
 read -r REPLY </dev/tty || REPLY="n"
 if [[ "$REPLY" == "y" ]] || [[ "$REPLY" == "Y" ]]; then
@@ -261,10 +189,10 @@ fi
 echo
 
 # ==========================================================================
-# Phase F — Validate
+# Phase E — Validate
 # ==========================================================================
 
-echo "▶ Phase F: Validation"
+echo "▶ Phase E: Validation"
 echo
 
 cd "$TARGET"
@@ -284,8 +212,7 @@ echo "═══ Migration Complete ═══"
 echo
 echo "Next steps:"
 echo "  1. Review and customize CLAUDE.md"
-echo "  2. Review and customize ARCH_INDEX.md"
-echo "  3. Review the repo-convention-enforcer skill"
-echo "  4. Run: ai-check --mode NORMAL"
-echo "  5. Fix any violations reported"
-echo "  6. Commit governance artifacts"
+echo "  2. Review the repo-convention-enforcer skill"
+echo "  3. Run: ai-check --mode NORMAL"
+echo "  4. Fix any violations reported"
+echo "  5. Commit governance artifacts"

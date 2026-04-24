@@ -203,18 +203,9 @@ if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
   AGENTS_MD="$(cat "$REPO_ROOT/AGENTS.md")"
 fi
 
-# Optional ARCH_INDEX.md (structural ontology — skills need contents, not just path)
-# Check both root and docs/ locations
-ARCH_INDEX=""
-for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
-  if [[ -f "$_arch_path" ]]; then
-    ARCH_INDEX="$(cat "$_arch_path")"
-    break
-  fi
-done
-
 # --- Build prompts --------------------------------------------------------
-# Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → ARCH_INDEX → SKILL.md
+# Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → SKILL.md
+# (Repos declare any additional orientation/contract sources via AGENTS.md.)
 
 SYSTEM_PROMPT="You are operating in VALIDATOR mode.
 
@@ -234,14 +225,6 @@ if [[ -n "$AGENTS_MD" ]]; then
 Repo-local constraints (AGENTS.md):
 
 ${AGENTS_MD}"
-fi
-
-if [[ -n "$ARCH_INDEX" ]]; then
-  SYSTEM_PROMPT="${SYSTEM_PROMPT}
-
-Architecture index (docs/ARCH_INDEX.md):
-
-${ARCH_INDEX}"
 fi
 
 SYSTEM_PROMPT="${SYSTEM_PROMPT}
