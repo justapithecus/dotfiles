@@ -78,11 +78,11 @@ ai-chat implementer          # implementation guidance
 Onboard an existing repository to the governance framework.
 
 ```sh
-ai-migrate /path/to/repo     # six-phase scaffolder
+ai-migrate /path/to/repo     # five-phase scaffolder
 ai-migrate                   # defaults to current directory
 ```
 
-Phases: Scan, ARCH_INDEX, CLAUDE.md, Scaffolds, Baselines, Validate.
+Phases: Scan, CLAUDE.md, Scaffolds, Baselines, Validate.
 
 ## Troubleshooting
 

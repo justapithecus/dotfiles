@@ -26,7 +26,7 @@ ai/
 │   ├── ai-list.sh         # Registry listing
 │   ├── ai-help.sh         # Help and usage reference
 │   ├── ai-install-hooks.sh # Git hook installer
-│   └── ai-migrate.sh     # Repo migration scaffolder (Phase A-F)
+│   └── ai-migrate.sh     # Repo migration scaffolder (Phase A-E)
 ├── roles/                 # Cognitive role definitions
 ├── skills/                # Skill definitions (43 skills across 7 domains)
 ├── docs/                  # Explanatory guides (quickstart, workflows)
@@ -89,7 +89,7 @@ ai-check --bundle heavy             # backward-compat bundle routing
 ai-skill repo-convention-enforcer   # run a single skill
 ai-list                             # list skills, bundles, and roles
 ai-install-hooks                    # install pre-push hook
-ai-migrate /path/to/repo            # Phase A-F repo migration
+ai-migrate /path/to/repo            # Phase A-E repo migration
 ```
 
 Help:
@@ -242,7 +242,8 @@ Each entrypoint script builds a system prompt in this order:
 3. Optional context layers from `context/*.md` (sorted).
 4. The role prompt from `roles/`.
 5. Repository `AGENTS.md` content (if present at repo root).
-6. Repository `ARCH_INDEX.md` content (checks root and `docs/`).
+6. Repo-declared context layers from `$REPO_ROOT/.ai/context/*.md`
+   (sorted) — the repo's own spine declaration.
 
 Scripts resolve paths via a portable symlink-following loop so they
 work correctly when installed to `~/.local/bin` as copies.

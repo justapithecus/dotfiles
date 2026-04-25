@@ -106,28 +106,49 @@ These constraints apply in ALL modes, unconditionally.
 
 When working in any repository:
 
-1. Read `AGENTS.md` first for constraints and guardrails.
-2. Read `docs/ARCH_INDEX.md` for subsystem orientation and boundaries.
-3. Read relevant `docs/CONTRACT_*.md` files for normative behavior.
-4. Read code only after the above.
+1. Read `AGENTS.md` first for constraints, guardrails, and any pointers
+   to the repository's own normative and orientation sources.
+2. Follow those pointers to the repo's own authoritative sources
+   (contracts, orientation indexes, convention declarations) wherever
+   the repo locates them.
+3. Read code only after the above.
 
-If `AGENTS.md` or `docs/ARCH_INDEX.md` do not exist:
-- Do not assume architecture or boundaries.
-- Do not infer structure beyond the files explicitly provided.
-- Ask before proceeding with design or refactors.
+The repository decides its own spine. Do not assume a fixed directory
+layout for orientation, contracts, or conventions. If `AGENTS.md` is
+absent or points nowhere, do not infer structure — ask before proceeding
+with design or refactors.
 
-Interpretation rules:
-- `docs/ARCH_INDEX.md` answers **where things live** (navigation only).
-- `CONTRACT_*.md` define **what must be true** (authoritative).
+Interpretation rules (by kind, not by path):
+- **Orientation sources** answer **where things live** (navigation only).
+- **Contract sources** define **what must be true** (authoritative).
 - Code defines **how it is implemented**.
 
-Conflict resolution:
-- If `docs/ARCH_INDEX.md` conflicts with code, trust code.
-- If code conflicts with contracts, trust contracts.
+Conflict resolution (see §7 for precedence across kinds):
+- If an orientation source conflicts with code, trust code.
+- If code conflicts with a contract source, trust the contract.
 
-Do not restate or inline `docs/ARCH_INDEX.md` contents in conversational prompts.
-Entrypoint scripts may inline it to enforce required reads.
-Refer to it by path and read it when orientation is needed.
+Do not restate or inline the repository's orientation contents into
+conversational prompts. Refer to sources by the path the repo declares
+and read them when orientation is needed.
+
+### Repo-declared context channel
+
+For non-interactive flows that cannot read files at runtime
+(notably skill validators run via `ai-skill` / `ai-check`), the
+repository declares which contents must be inlined into the
+system prompt by populating:
+
+```
+$REPO_ROOT/.ai/context/*.md
+```
+
+Every `.md` file in that directory is loaded verbatim, sorted by
+filename, after `AGENTS.md`. The repo decides what goes there
+(architecture index, contract excerpts, convention sheets, etc.)
+and which filenames to use. The entrypoints make no assumption
+about contents or naming. Interactive entrypoints
+(`ai-chat` / `ai-plan` / `ai-implement` / `ai-review`) load the
+same channel for parity.
 
 ### Version Authority & Pinning
 
@@ -154,11 +175,9 @@ Repositories follow a strict authority hierarchy based on role, not audience.
    - Files named in ALL_CAPS.md are authoritative.
    - These define law, contracts, guarantees, and constraints.
    - They are written to be machine-legible and must be treated as true.
-   - `CONTRACT_*.md` files must live in `docs/contracts/`.
-   - Other normative ALL_CAPS.md files (e.g. `IMPLEMENTATION_PLAN.md`) may live at `docs/` top-level.
 
 2. Explanatory sources (non-binding):
-   - normal_case.md files (typically under docs/) explain, motivate, or teach.
+   - normal_case.md files explain, motivate, or teach.
    - These may not introduce new guarantees or supported behavior.
    - In case of conflict, they are always subordinate to ALL_CAPS.md and examples/.
 
@@ -336,8 +355,8 @@ defined in `CLAUDE.md`.
 
 ### Structural conflict resolution
 
-- `docs/ARCH_INDEX.md` vs code: trust code.
-- Code vs contracts (`CONTRACT_*.md`): trust contracts.
+- Orientation source vs code: trust code.
+- Code vs contract source: trust the contract.
 - ALL_CAPS.md vs normal_case.md: trust ALL_CAPS.md.
 - ALL_CAPS.md > examples/ > normal_case.md > README.md
 

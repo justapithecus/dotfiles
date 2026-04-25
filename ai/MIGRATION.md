@@ -25,26 +25,13 @@ Detect repository characteristics:
 - Top-level directories
 - Languages (via `go.mod`, `package.json`, `pyproject.toml`,
   `Cargo.toml`, `pom.xml`, `Gemfile`)
-- Existing governance documents (`CLAUDE.md`, `AGENTS.md`,
-  `ARCH_INDEX.md`)
+- Existing governance documents (`CLAUDE.md`, `AGENTS.md`)
 
 Output: summary printed to terminal. No files modified.
 
 ---
 
-## Phase B — ARCH_INDEX Hardening
-
-If `ARCH_INDEX.md` is absent:
-- Offer interactive creation with Claude architect role
-- Fall back to scaffolding a minimal template if declined
-
-If `ARCH_INDEX.md` is present:
-- Print current contents summary
-- Offer review / upgrade via Claude architect
-
----
-
-## Phase C — Repo CLAUDE.md
+## Phase B — Repo CLAUDE.md
 
 If `CLAUDE.md` is absent:
 - Scaffold from `ai/templates/migration/CLAUDE.md`
@@ -55,7 +42,7 @@ If `CLAUDE.md` is present:
 
 ---
 
-## Phase D — Directory Scaffolds
+## Phase C — Directory Scaffolds
 
 Create governance directories:
 
@@ -65,18 +52,28 @@ repo-root/
 │   ├── skills/
 │   ├── baselines/
 │   └── out/          (.gitignored)
+└── .ai/
+    └── context/      (repo-declared context channel)
 ```
 
 Scaffold initial skill:
 - `ai/skills/repo-convention-enforcer/v1/` from
   `ai/templates/migration/skill/`
 
+Seed the repo-declared context channel:
+- `.ai/context/` is created with a brief `README.md` explaining the channel
+- Validators (`ai-skill`, `ai-check`) cannot read files at runtime, so
+  any orientation/contract source they must see has to be mirrored here
+- Entrypoints inject every `.md` file in the directory verbatim, sorted
+  by filename, after `AGENTS.md`
+- Filenames and contents are the repo's choice; the loader is agnostic
+
 Update `.gitignore`:
 - Add `ai/out/` if not present
 
 ---
 
-## Phase E — Baselines (Optional)
+## Phase D — Baselines (Optional)
 
 Capture initial repository state:
 
@@ -87,7 +84,7 @@ Stored in `ai/baselines/` for future drift detection.
 
 ---
 
-## Phase F — Validate
+## Phase E — Validate
 
 Run governance check:
 
@@ -104,9 +101,9 @@ Review output. Fix any blocking violations before proceeding.
 
 ## Expected Order Per Repo
 
-1. Run `ai-migrate /path/to/repo` (Phases A–F)
+1. Run `ai-migrate /path/to/repo` (Phases A–E)
 2. Review and customize generated files
-3. Fix any violations reported in Phase F
+3. Fix any violations reported in Phase E
 4. Stabilize (re-run `ai-check` until clean)
 5. Enable enforcement workflows
 6. (Later) automate
@@ -119,7 +116,6 @@ Repeat for each repo before designing new-repo bootstrap.
 ## Acceptance Criteria (Per Repo)
 
 - Repo-local `CLAUDE.md` exists and is authoritative
-- `ARCH_INDEX.md` exists and reflects actual structure
 - Structural skill runs without false positives
 - No major structural drift exists
 - Codex review flow unchanged
@@ -131,7 +127,6 @@ Repeat for each repo before designing new-repo bootstrap.
 ## Non-Goals
 
 - Rewrite AGENTS.md into CLAUDE.md
-- Delete ARCH_INDEX
 - Introduce new skills beyond structural baseline
 - Automate gating prematurely
 - Change developer ergonomics during migration

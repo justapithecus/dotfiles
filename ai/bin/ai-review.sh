@@ -59,10 +59,10 @@ PROMPT="$(
   cat "$CLAUDE_FILE"
   echo
 
-  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+  while IFS= read -r -d '' f; do
     cat "$f"
     echo
-  done
+  done < <(find "$CTX_DIR" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
 
   cat "$ROLE_FILE"
 
@@ -78,15 +78,13 @@ PROMPT="$(
     cat "$REPO_ROOT/AGENTS.md"
   fi
 
-  # Check both root and docs/ for ARCH_INDEX.md
-  for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
-    if [[ -f "$_arch_path" ]]; then
-      echo
-      echo "Repository architecture index:"
-      cat "$_arch_path"
-      break
-    fi
-  done
+  # Repo-declared context layers (orientation, contracts, etc.).
+  # The repo populates .ai/context/*.md to declare its own spine.
+  while IFS= read -r -d '' f; do
+    echo
+    echo "Repo-declared context ($(basename "$f")):"
+    cat "$f"
+  done < <(find "$REPO_ROOT/.ai/context" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
 )"
 
 codex "$PROMPT"

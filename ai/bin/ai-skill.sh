@@ -203,18 +203,27 @@ if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
   AGENTS_MD="$(cat "$REPO_ROOT/AGENTS.md")"
 fi
 
-# Optional ARCH_INDEX.md (structural ontology — skills need contents, not just path)
-# Check both root and docs/ locations
-ARCH_INDEX=""
-for _arch_path in "$REPO_ROOT/ARCH_INDEX.md" "$REPO_ROOT/docs/ARCH_INDEX.md"; do
-  if [[ -f "$_arch_path" ]]; then
-    ARCH_INDEX="$(cat "$_arch_path")"
-    break
-  fi
-done
+# Repo-declared context layers (orientation, contracts, conventions, etc.).
+# The repo populates .ai/context/*.md to declare its own spine. Skills that
+# need orientation contents inlined into the prompt read them from here.
+REPO_CONTEXT=""
+if [[ -d "$REPO_ROOT/.ai/context" ]]; then
+  while IFS= read -r -d '' _ctx_file; do
+    REPO_CONTEXT="${REPO_CONTEXT}
+
+Repo-declared context ($(basename "$_ctx_file")):
+
+$(cat "$_ctx_file")"
+  done < <(find "$REPO_ROOT/.ai/context" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
+fi
 
 # --- Build prompts --------------------------------------------------------
-# Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → ARCH_INDEX → SKILL.md
+# Injection order:
+#   Global CLAUDE.md
+#   → Repo CLAUDE.md
+#   → AGENTS.md
+#   → Repo-declared context (.ai/context/*.md)
+#   → SKILL.md
 
 SYSTEM_PROMPT="You are operating in VALIDATOR mode.
 
@@ -236,12 +245,8 @@ Repo-local constraints (AGENTS.md):
 ${AGENTS_MD}"
 fi
 
-if [[ -n "$ARCH_INDEX" ]]; then
-  SYSTEM_PROMPT="${SYSTEM_PROMPT}
-
-Architecture index (docs/ARCH_INDEX.md):
-
-${ARCH_INDEX}"
+if [[ -n "$REPO_CONTEXT" ]]; then
+  SYSTEM_PROMPT="${SYSTEM_PROMPT}${REPO_CONTEXT}"
 fi
 
 SYSTEM_PROMPT="${SYSTEM_PROMPT}
