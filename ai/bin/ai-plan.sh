@@ -64,6 +64,14 @@ SYSTEM_PROMPT="$(
     echo "Repository context:"
     cat "$REPO_ROOT/AGENTS.md"
   fi
+
+  # Repo-declared context layers (orientation, contracts, etc.).
+  # The repo populates .ai/context/*.md to declare its own spine.
+  for f in $(ls "$REPO_ROOT/.ai/context"/*.md 2>/dev/null | LC_ALL=C sort); do
+    echo
+    echo "Repo-declared context ($(basename "$f")):"
+    cat "$f"
+  done
 )"
 
 OUT_DIR="$AI_DIR/out"

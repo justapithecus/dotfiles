@@ -131,6 +131,25 @@ Do not restate or inline the repository's orientation contents into
 conversational prompts. Refer to sources by the path the repo declares
 and read them when orientation is needed.
 
+### Repo-declared context channel
+
+For non-interactive flows that cannot read files at runtime
+(notably skill validators run via `ai-skill` / `ai-check`), the
+repository declares which contents must be inlined into the
+system prompt by populating:
+
+```
+$REPO_ROOT/.ai/context/*.md
+```
+
+Every `.md` file in that directory is loaded verbatim, sorted by
+filename, after `AGENTS.md`. The repo decides what goes there
+(architecture index, contract excerpts, convention sheets, etc.)
+and which filenames to use. The entrypoints make no assumption
+about contents or naming. Interactive entrypoints
+(`ai-chat` / `ai-plan` / `ai-implement` / `ai-review`) load the
+same channel for parity.
+
 ### Version Authority & Pinning
 
 Repo-pinned tooling/runtime versions are authoritative.

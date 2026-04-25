@@ -203,9 +203,27 @@ if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
   AGENTS_MD="$(cat "$REPO_ROOT/AGENTS.md")"
 fi
 
+# Repo-declared context layers (orientation, contracts, conventions, etc.).
+# The repo populates .ai/context/*.md to declare its own spine. Skills that
+# need orientation contents inlined into the prompt read them from here.
+REPO_CONTEXT=""
+if [[ -d "$REPO_ROOT/.ai/context" ]]; then
+  for _ctx_file in $(ls "$REPO_ROOT/.ai/context"/*.md 2>/dev/null | LC_ALL=C sort); do
+    REPO_CONTEXT="${REPO_CONTEXT}
+
+Repo-declared context ($(basename "$_ctx_file")):
+
+$(cat "$_ctx_file")"
+  done
+fi
+
 # --- Build prompts --------------------------------------------------------
-# Injection order: Global CLAUDE.md → Repo CLAUDE.md → AGENTS.md → SKILL.md
-# (Repos declare any additional orientation/contract sources via AGENTS.md.)
+# Injection order:
+#   Global CLAUDE.md
+#   → Repo CLAUDE.md
+#   → AGENTS.md
+#   → Repo-declared context (.ai/context/*.md)
+#   → SKILL.md
 
 SYSTEM_PROMPT="You are operating in VALIDATOR mode.
 
@@ -225,6 +243,10 @@ if [[ -n "$AGENTS_MD" ]]; then
 Repo-local constraints (AGENTS.md):
 
 ${AGENTS_MD}"
+fi
+
+if [[ -n "$REPO_CONTEXT" ]]; then
+  SYSTEM_PROMPT="${SYSTEM_PROMPT}${REPO_CONTEXT}"
 fi
 
 SYSTEM_PROMPT="${SYSTEM_PROMPT}
