@@ -208,13 +208,13 @@ fi
 # need orientation contents inlined into the prompt read them from here.
 REPO_CONTEXT=""
 if [[ -d "$REPO_ROOT/.ai/context" ]]; then
-  for _ctx_file in $(ls "$REPO_ROOT/.ai/context"/*.md 2>/dev/null | LC_ALL=C sort); do
+  while IFS= read -r -d '' _ctx_file; do
     REPO_CONTEXT="${REPO_CONTEXT}
 
 Repo-declared context ($(basename "$_ctx_file")):
 
 $(cat "$_ctx_file")"
-  done
+  done < <(find "$REPO_ROOT/.ai/context" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
 fi
 
 # --- Build prompts --------------------------------------------------------

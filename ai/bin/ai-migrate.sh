@@ -128,6 +128,33 @@ for dir in ai/skills ai/baselines ai/out; do
   fi
 done
 
+# Create repo-declared context channel (.ai/context/)
+# Validators run by ai-skill / ai-check cannot read files at runtime, so the
+# repository must mirror any orientation/contract sources it wants those
+# validators to see into this directory. Entrypoints inject every *.md here
+# verbatim after AGENTS.md.
+CTX_DST="$TARGET/.ai/context"
+if [[ -d "$CTX_DST" ]]; then
+  echo "  ✔ .ai/context/ exists"
+else
+  mkdir -p "$CTX_DST"
+  cat > "$CTX_DST/README.md" << 'CTX'
+# Repo-declared context channel
+
+Files in this directory are loaded verbatim (sorted by filename) into the
+system prompt of every `ai/bin/ai-*` entrypoint, after `AGENTS.md`.
+
+Use this channel to declare the repository's spine to non-interactive
+validators (`ai-skill`, `ai-check`) that cannot read files at runtime.
+Typical contents: an architecture index, contract excerpts, convention
+sheets, module ownership maps, etc. The repo decides filenames and
+contents — the loader makes no assumptions.
+
+Delete this README once you populate the directory; it is informational.
+CTX
+  echo "  ✔ Created .ai/context/ with README"
+fi
+
 # Create repo-local skill scaffold
 SKILL_DST="$TARGET/ai/skills/repo-convention-enforcer/v1"
 if [[ -d "$SKILL_DST" ]]; then
@@ -212,7 +239,9 @@ echo "═══ Migration Complete ═══"
 echo
 echo "Next steps:"
 echo "  1. Review and customize CLAUDE.md"
-echo "  2. Review the repo-convention-enforcer skill"
-echo "  3. Run: ai-check --mode NORMAL"
-echo "  4. Fix any violations reported"
-echo "  5. Commit governance artifacts"
+echo "  2. Populate .ai/context/ with any orientation/contract sources"
+echo "     that validators (ai-skill / ai-check) must see inlined."
+echo "  3. Review the repo-convention-enforcer skill"
+echo "  4. Run: ai-check --mode NORMAL"
+echo "  5. Fix any violations reported"
+echo "  6. Commit governance artifacts"

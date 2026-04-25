@@ -81,10 +81,10 @@ ARCHITECT_PROMPT="$(
   cat "$CLAUDE_FILE"
   echo
 
-  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+  while IFS= read -r -d '' f; do
     cat "$f"
     echo
-  done
+  done < <(find "$CTX_DIR" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
 
   cat "$ARCHITECT_ROLE"
 
@@ -137,10 +137,10 @@ PATCHER_PROMPT="$(
   cat "$CLAUDE_FILE"
   echo
 
-  for f in $(ls "$CTX_DIR"/*.md 2>/dev/null | LC_ALL=C sort); do
+  while IFS= read -r -d '' f; do
     cat "$f"
     echo
-  done
+  done < <(find "$CTX_DIR" -maxdepth 1 -type f -name '*.md' -print0 2>/dev/null | LC_ALL=C sort -z)
 
   cat "$PATCHER_ROLE"
 

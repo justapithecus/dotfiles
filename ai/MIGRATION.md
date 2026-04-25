@@ -52,11 +52,21 @@ repo-root/
 │   ├── skills/
 │   ├── baselines/
 │   └── out/          (.gitignored)
+└── .ai/
+    └── context/      (repo-declared context channel)
 ```
 
 Scaffold initial skill:
 - `ai/skills/repo-convention-enforcer/v1/` from
   `ai/templates/migration/skill/`
+
+Seed the repo-declared context channel:
+- `.ai/context/` is created with a brief `README.md` explaining the channel
+- Validators (`ai-skill`, `ai-check`) cannot read files at runtime, so
+  any orientation/contract source they must see has to be mirrored here
+- Entrypoints inject every `.md` file in the directory verbatim, sorted
+  by filename, after `AGENTS.md`
+- Filenames and contents are the repo's choice; the loader is agnostic
 
 Update `.gitignore`:
 - Add `ai/out/` if not present

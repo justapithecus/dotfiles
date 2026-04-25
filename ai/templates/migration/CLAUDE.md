@@ -9,7 +9,12 @@
 <!-- If this repo maintains its own structural/orientation sources
      (e.g. an architecture index, contract files, module declarations),
      list them here with their chosen paths. The global constitution
-     does not prescribe a layout — this is the place to declare one. -->
+     does not prescribe a layout — this is the place to declare one.
+
+     For non-interactive validators (`ai-skill`, `ai-check`) that
+     cannot read files at runtime, mirror any source whose contents
+     must be in the prompt into `.ai/context/*.md`. Every file there
+     is injected verbatim, sorted by filename, after `AGENTS.md`. -->
 
 ## 2. Role of AGENTS.md
 
