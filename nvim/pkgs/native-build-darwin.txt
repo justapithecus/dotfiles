@@ -1,0 +1,6 @@
+gcc
+make
+cmake
+ninja
+pkgconf
+rust

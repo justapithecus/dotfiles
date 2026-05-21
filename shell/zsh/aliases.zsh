@@ -48,8 +48,12 @@ alias ....='cd ../../..'
 # ==========================================================
 alias df='df -h'                             # disk usage
 alias du='du -h'                             # directory size
-alias free='free -h'                         # memory usage
 alias ff='fastfetch'                         # system information
+
+# Linux-only: free(1) does not exist on macOS
+if [[ "$(uname -s)" == "Linux" ]]; then
+  alias free='free -h'                       # memory usage
+fi
 
 
 # ==========================================================
