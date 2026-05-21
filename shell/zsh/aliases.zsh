@@ -48,7 +48,9 @@ alias ....='cd ../../..'
 # ==========================================================
 alias df='df -h'                             # disk usage
 alias du='du -h'                             # directory size
-alias ff='fastfetch'                         # system information
+if command -v fastfetch &>/dev/null; then
+  alias ff='fastfetch'                       # system information
+fi
 
 # Linux-only: free(1) does not exist on macOS
 if [[ "$(uname -s)" == "Linux" ]]; then

@@ -6,7 +6,7 @@ LazyVim-based Neovim configuration with local customizations.
 
 - `install.sh`: Clones LazyVim starter, applies overlay, and syncs plugins.
 - `overlay/`: Local configuration merged on top of the LazyVim starter.
-- `pkgs/`: Package lists for zypper (base and native-build).
+- `pkgs/`: Per-platform package lists (`base-linux.txt`, `base-darwin.txt`, `native-build-linux.txt`, `native-build-darwin.txt`).
 - `starter.ref`: Reference branch for the upstream starter repo.
 
 ## Install
