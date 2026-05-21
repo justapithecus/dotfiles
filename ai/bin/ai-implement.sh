@@ -42,23 +42,6 @@ fi
 # Preflight
 # ==========================================================================
 
-# Hard-fail if on main/master
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
-if [[ "$CURRENT_BRANCH" == "main" ]] || [[ "$CURRENT_BRANCH" == "master" ]]; then
-  echo "✖ error: refusing to implement on '$CURRENT_BRANCH'" >&2
-  echo "  hint: create a worktree first:" >&2
-  echo "    git worktree add -b <branch> ../<repo>-<suffix> $CURRENT_BRANCH" >&2
-  exit 1
-fi
-
-# Warn if in main worktree (not a git worktree)
-if ! git rev-parse --git-common-dir >/dev/null 2>&1 || \
-   [[ "$(git rev-parse --git-common-dir 2>/dev/null)" == "$(git rev-parse --git-dir 2>/dev/null)" ]]; then
-  echo "⚠ warning: working in main worktree, not a git worktree" >&2
-  echo "  hint: git worktree add -b $CURRENT_BRANCH ../<repo>-<suffix> main" >&2
-  echo
-fi
-
 # Detect merge base: main → master → origin/main → origin/master
 MERGE_BASE=""
 for candidate in main master origin/main origin/master; do
