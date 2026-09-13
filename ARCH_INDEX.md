@@ -90,6 +90,9 @@ Editor configuration (Neovim, Helix, etc.).
 
 Terminal emulator configuration.
 
+Contents:
+- `konsole/session/` — save/restore Konsole windows, tabs, and the agent conversations in them across restarts (openSUSE Tumbleweed + KDE Plasma 6 only; installed separately)
+
 ---
 
 ## fonts/

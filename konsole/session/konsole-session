@@ -1,0 +1,584 @@
+#!/usr/bin/python3
+"""konsole-session — save and restore Konsole windows, tabs, and the agent conversations running in them.
+
+Platform: openSUSE Tumbleweed, KDE Plasma 6 (X11 or Wayland) with its systemd-managed session.
+
+Usage:
+  konsole-session save [SNAPSHOT]
+      Record every Konsole window (virtual desktop, screen, geometry) and its tabs (order, title, color,
+      profile, working directory, active tab) plus what each tab is running. Claude Code and Codex tabs are
+      recorded as a resume of the conversation they hold.
+
+  konsole-session restore [SNAPSHOT] [--stagger SECONDS]
+      Rebuild the windows, then archive the snapshot. Tabs open at once; the commands inside them start one
+      every SECONDS (default %(stagger)d), most recently active conversation first. Ctrl-C in a tab during its
+      countdown skips that tab's command.
+
+SNAPSHOT defaults to %(snapshot)s.
+konsole-session-restore.service runs `restore` once at login whenever that file exists.
+"""
+import glob
+import json
+import os
+import pwd
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import uuid
+
+STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"), "konsole-session")
+DEFAULT_SNAPSHOT = os.path.join(STATE, "snapshot.json")
+STAGGER_SECONDS = 20
+QDBUS = shutil.which("qdbus6") or "/usr/lib64/qt6/bin/qdbus"
+CODEX_SESSIONS = os.path.join(os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex"), "sessions")
+PRIVILEGED = {"sudo", "doas", "pkexec", "su", "run0"}
+LAUNCHER_SHELLS = {"bash", "zsh", "ksh", "sh", "dash"}
+UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+KONSOLE_SVC_RE = re.compile(r"org\.kde\.konsole-(\d+)")
+
+__doc__ %= {"stagger": STAGGER_SECONDS, "snapshot": DEFAULT_SNAPSHOT.replace(os.path.expanduser("~"), "~", 1)}
+
+
+def log(msg):
+    print(f"konsole-session: {msg}", file=sys.stderr, flush=True)
+
+
+def run(*args, check=True):
+    return subprocess.run(list(map(str, args)), capture_output=True, text=True, check=check).stdout.rstrip("\n")
+
+
+def qdbus(*args, check=True):
+    return run(QDBUS, *args, check=check)
+
+
+def wait_for(predicate, timeout, interval=0.2):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        value = predicate()
+        if value:
+            return value
+        time.sleep(interval)
+    return None
+
+
+# --- /proc -------------------------------------------------------------------
+
+def pids():
+    return [int(entry) for entry in os.listdir("/proc") if entry.isdigit()]
+
+
+def proc_argv(pid):
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            return [a.decode(errors="surrogateescape") for a in f.read().split(b"\0")[:-1]]
+    except OSError:
+        return []
+
+
+def proc_cwd(pid):
+    try:
+        return os.readlink(f"/proc/{pid}/cwd")
+    except OSError:
+        return None
+
+
+def proc_comm(pid):
+    try:
+        with open(f"/proc/{pid}/comm") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def proc_start_ticks(pid):
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return int(f.read().rsplit(")", 1)[1].split()[19])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def proc_age(pid):
+    start_ticks = proc_start_ticks(pid)
+    try:
+        with open("/proc/uptime") as f:
+            return float(f.read().split()[0]) - start_ticks / os.sysconf("SC_CLK_TCK")
+    except (OSError, TypeError, ValueError):
+        return float("inf")
+
+
+def proc_descendants(pid):
+    out, stack = [], [pid]
+    while stack:
+        parent = stack.pop()
+        try:
+            tasks = os.listdir(f"/proc/{parent}/task")
+        except OSError:
+            continue
+        for task in tasks:
+            try:
+                with open(f"/proc/{parent}/task/{task}/children") as f:
+                    children = [int(c) for c in f.read().split()]
+            except OSError:
+                children = []
+            out += children
+            stack += children
+    return out
+
+
+# --- KWin --------------------------------------------------------------------
+
+def kwin_run_script(js):
+    name = f"konsole-session-{uuid.uuid4().hex[:8]}"
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as f:
+        f.write(js)
+        path = f.name
+    try:
+        script_id = int(qdbus("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.loadScript", path, name))
+        if script_id < 0:
+            raise RuntimeError("KWin refused to load script")
+        qdbus("org.kde.KWin", f"/Scripting/Script{script_id}", "org.kde.kwin.Script.run")
+        time.sleep(0.3)
+        qdbus("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.unloadScript", name, check=False)
+    finally:
+        os.unlink(path)
+
+
+def kwin_konsole_windows():
+    """Konsole windows as KWin sees them. KWin scripts can only report back through print(), i.e. the journal."""
+    token = f"KSESSION-{uuid.uuid4().hex}"
+    since = f"@{int(time.time()) - 1}"
+    # Konsole's window class is "konsole" on X11 and "org.kde.konsole" on Wayland.
+    kwin_run_script("""
+const out = [];
+for (const w of workspace.windowList()) {
+  if (!String(w.resourceClass).endsWith("konsole") || !w.normalWindow) continue;
+  const g = w.frameGeometry, m = workspace.clientArea(KWin.MaximizeArea, w);
+  out.push({pid: w.pid, caption: w.caption, desktops: w.desktops.map(d => d.x11DesktopNumber),
+    onAllDesktops: w.onAllDesktops, geometry: [g.x, g.y, g.width, g.height],
+    maximized: g.x == m.x && g.y == m.y && g.width == m.width && g.height == m.height,
+    minimized: w.minimized, fullScreen: w.fullScreen, output: w.output.name});
+}
+print("%s " + JSON.stringify(out));
+""" % token)
+    for _ in range(50):
+        for line in run("journalctl", "--user", "--since", since, "--no-pager", "-o", "cat", check=False).splitlines():
+            if token in line and "print(" not in line:
+                return json.loads(line[line.index(token) + len(token):])
+        time.sleep(0.1)
+    raise RuntimeError("could not read window list from KWin")
+
+
+def kwin_place_windows(plan):
+    kwin_run_script("""
+const plan = %s;
+for (const w of workspace.windowList()) {
+  const p = plan[w.pid];
+  if (!p || !String(w.resourceClass).endsWith("konsole")) continue;
+  const screen = workspace.screens.find(s => s.name == p.output);
+  if (screen) workspace.sendClientToScreen(w, screen);
+  if (p.onAllDesktops) w.onAllDesktops = true;
+  else {
+    const desks = workspace.desktops.filter(d => p.desktops.includes(d.x11DesktopNumber));
+    if (desks.length) w.desktops = desks;
+  }
+  if (p.maximized) {
+    // On Wayland setMaximize alone leaves a freshly mapped window at its initial size.
+    const a = workspace.clientArea(KWin.MaximizeArea, w);
+    w.frameGeometry = {x: a.x, y: a.y, width: a.width, height: a.height};
+    try { w.setMaximize(true, true); } catch (e) {}
+  } else {
+    const [x, y, width, height] = p.geometry;
+    w.frameGeometry = {x, y, width, height};
+  }
+  if (p.fullScreen) w.fullScreen = true;
+  if (p.minimized) w.minimized = true;
+}
+""" % json.dumps(plan))
+
+
+# --- what a tab is running -----------------------------------------------------
+
+def strip_resume_flags(argv):
+    out, i = [argv[0]], 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg in ("--continue", "-c", "--fork-session"):
+            i += 1
+        elif arg in ("--resume", "-r", "--session-id"):
+            nxt = argv[i + 1] if i + 1 < len(argv) else ""
+            i += 2 if nxt and (UUID_RE.fullmatch(nxt) or not nxt.startswith("-")) else 1
+        elif arg.startswith(("--resume=", "--session-id=")):
+            i += 1
+        else:
+            out.append(arg)
+            i += 1
+    return out
+
+
+def claude_config_dir(program):
+    """`claude` honours $CLAUDE_CONFIG_DIR; wrappers around Claude Code keep their state in ~/.<wrapper name>."""
+    if program == "claude":
+        return os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
+    return os.path.expanduser(f"~/.{program}")
+
+
+def newest_claude_transcript(projects_dir, cwd, since):
+    """(session id, mtime) of the transcript written most recently since `since`, preferring cwd's project."""
+    for project in (re.sub(r"[^A-Za-z0-9]", "-", cwd), "*"):
+        transcripts = [t for t in glob.glob(os.path.join(projects_dir, project, "*.jsonl")) if os.path.getmtime(t) >= since]
+        if transcripts:
+            newest = max(transcripts, key=os.path.getmtime)
+            name = os.path.basename(newest)[:-len(".jsonl")]
+            if UUID_RE.fullmatch(name):
+                return name, os.path.getmtime(newest)
+    return None, None
+
+
+def codex_rollout(pid):
+    """(conversation id, mtime) of the newest rollout file a codex process holds open.
+    Codex moves a long conversation on to a new rollout file, so the id it was started with can be stale."""
+    rollouts = set()
+    try:
+        fds = os.listdir(f"/proc/{pid}/fd")
+    except OSError:
+        return None, None
+    for fd in fds:
+        try:
+            target = os.readlink(f"/proc/{pid}/fd/{fd}")
+        except OSError:
+            continue
+        if target.startswith(CODEX_SESSIONS + "/") and os.path.basename(target).startswith("rollout-"):
+            rollouts.add(target)
+    rollouts = [r for r in rollouts if os.path.exists(r)]
+    if not rollouts:
+        return None, None
+    newest = max(rollouts, key=os.path.getmtime)
+    ids = UUID_RE.findall(os.path.basename(newest))
+    return (ids[-1], os.path.getmtime(newest)) if ids else (None, None)
+
+
+def tab_command(shell_pid, fg_pid, shell_cwd):
+    """(command, cwd, last active epoch) that brings a tab back to what it runs now; all None for an idle shell."""
+    if fg_pid <= 0 or fg_pid == shell_pid:
+        return None, None, None
+    argv = proc_argv(fg_pid)
+    program = os.path.basename(argv[0]) if argv else ""
+    if not argv or program in PRIVILEGED:
+        return None, None, None
+    cwd = proc_cwd(fg_pid) or shell_cwd
+
+    if program.startswith("claude"):
+        config = claude_config_dir(program)
+        try:
+            with open(os.path.join(config, "sessions", f"{fg_pid}.json")) as f:
+                info = json.load(f)
+            session_cwd = info.get("cwd") if os.path.isdir(info.get("cwd") or "") else cwd
+            return strip_resume_flags(argv) + ["--resume", info["sessionId"]], session_cwd, info.get("updatedAt", 0) / 1000
+        except (OSError, KeyError, ValueError):
+            pass
+        # No pid registry (e.g. a wrapper running Claude Code in its own pid namespace). /clear moves a session to a
+        # new id without restarting, so take the transcript written last — only if no sibling could have written it.
+        siblings = [p for p in pids() if proc_argv(p)[:1] and os.path.basename(proc_argv(p)[0]) == program and proc_cwd(p) == cwd]
+        if len(siblings) <= 1:
+            session, written = newest_claude_transcript(os.path.join(config, "projects"), cwd, time.time() - proc_age(fg_pid))
+            if session:
+                return strip_resume_flags(argv) + ["--resume", session], cwd, written
+
+    for pid in [fg_pid] + proc_descendants(fg_pid):
+        if proc_comm(pid) == "codex":
+            rollout, written = codex_rollout(pid)
+            if rollout:
+                return ["codex", "resume", rollout], proc_cwd(pid) or shell_cwd, written
+
+    return argv, cwd, time.time()
+
+
+# --- save --------------------------------------------------------------------
+
+def save(path):
+    kwin = kwin_konsole_windows()
+    windows = []
+    for svc in sorted({m.group(0) for m in KONSOLE_SVC_RE.finditer(qdbus())}):
+        konsole_pid = int(svc.rsplit("-", 1)[1])
+        win_paths = sorted((p for p in qdbus(svc).splitlines() if re.fullmatch(r"/Windows/\d+", p)),
+                           key=lambda p: int(p.split("/")[-1]))
+        kwin_windows = [w for w in kwin if w["pid"] == konsole_pid]
+        for win_path in win_paths:
+            session_ids = [int(s) for s in qdbus(svc, win_path, "org.kde.konsole.Window.sessionList").split()]
+            if not session_ids:
+                continue
+            current = int(qdbus(svc, win_path, "currentSession"))
+            tabs = []
+            for sid in session_ids:
+                sp = f"/Sessions/{sid}"
+                shell_pid = int(qdbus(svc, sp, "processId"))
+                cwd = proc_cwd(shell_pid) or os.path.expanduser("~")
+                command, command_cwd, last_active = tab_command(shell_pid, int(qdbus(svc, sp, "foregroundProcessId")), cwd)
+                tabs.append({
+                    "title": qdbus(svc, sp, "title", 1),
+                    "localTitleFormat": qdbus(svc, sp, "tabTitleFormat", 0),
+                    "remoteTitleFormat": qdbus(svc, sp, "tabTitleFormat", 1),
+                    "tabColor": qdbus(svc, sp, "tabColor"),
+                    "profile": qdbus(svc, sp, "profile"),
+                    "cwd": cwd,
+                    "command": command,
+                    "commandCwd": command_cwd,
+                    "lastActive": last_active,
+                })
+            active = session_ids.index(current) if current in session_ids else 0
+            if len(kwin_windows) == 1:
+                placement = kwin_windows[0]
+            else:  # several windows in one process: the caption is the active tab's title
+                placement = next((w for w in kwin_windows if w["caption"].startswith(tabs[active]["title"])), None)
+            windows.append({
+                "activeTab": active,
+                "splits": any(len(re.findall(r"\d+", line)) > 2 for line in qdbus(svc, win_path, "viewHierarchy").splitlines()),
+                "placement": placement,
+                "tabs": tabs,
+            })
+
+    windows.sort(key=lambda w: (w["placement"] or {}).get("desktops") or [99])
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w") as f:
+        json.dump({"savedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "windows": windows}, f, indent=2)
+    os.replace(path + ".tmp", path)
+
+    for i, window in enumerate(windows, 1):
+        placement = window["placement"] or {}
+        split_note = " (split views are restored as plain tabs)" if window["splits"] else ""
+        print(f"window {i}: desktop {placement.get('desktops')}, {len(window['tabs'])} tabs{split_note}")
+        for j, tab in enumerate(window["tabs"], 1):
+            command = " ".join(tab["command"])[:90].replace("\n", " ") if tab["command"] else "(shell)"
+            print(f"  {j:>2}. {tab['title'][:28]:<28} {command}")
+    print(f"saved {sum(len(w['tabs']) for w in windows)} tabs in {len(windows)} windows to {path}")
+
+
+# --- restore -----------------------------------------------------------------
+
+def plasma_restoring_konsoles():
+    """How many Konsole windows Plasma's own session restore brings back at this login."""
+    mode = run("kreadconfig6", "--file", "ksmserverrc", "--group", "General", "--key", "loginMode", check=False)
+    if mode == "emptySession":
+        return 0
+    section = "[Session: saved by user]" if mode == "restoreSavedSession" else "[Session: saved at previous logout]"
+    try:
+        with open(os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ksmserverrc")) as f:
+            text = f.read()
+    except OSError:
+        return 0
+    body = text.split(section, 1)[1].split("\n[", 1)[0] if section in text else ""
+    return len(re.findall(r"^program\d+=\S*/konsole$", body, re.M))
+
+
+def close_session_restored_konsoles():
+    """Plasma's own session restore brings Konsole back without the programs that were running; drop those."""
+    logging_in = any(proc_age(p) < 600 for p in pids() if proc_comm(p) in ("ksmserver", "plasmashell"))
+    expected = plasma_restoring_konsoles() if logging_in else 0
+    closed = set()
+    deadline = time.time() + 45
+    while True:
+        for pid in pids():
+            if pid in closed or proc_age(pid) > 600:
+                continue
+            argv = proc_argv(pid)
+            if argv and os.path.basename(argv[0]) == "konsole" and "-session" in argv:
+                log(f"closing session-restored konsole {pid}")
+                closed.add(pid)
+                try:
+                    os.kill(pid, 15)
+                except OSError:
+                    pass
+        if len(closed) >= expected or time.time() > deadline:
+            return
+        time.sleep(0.5)
+
+
+def live_conversation_ids():
+    """Conversation ids some running process already holds; resuming one a second time would fork its transcript."""
+    ids = set()
+    for pid in pids():
+        ids.update(UUID_RE.findall(" ".join(proc_argv(pid))))
+    for registry in glob.glob(os.path.expanduser("~/.claude*/sessions/*.json")):
+        try:
+            with open(registry) as f:
+                info = json.load(f)
+            # Registry files outlive their process and pids get reused, so match the process start time too.
+            if proc_start_ticks(int(info["pid"])) == int(info["procStart"]):
+                ids.add(info["sessionId"])
+        except (OSError, KeyError, ValueError, TypeError):
+            pass
+    return ids
+
+
+def stagger_schedule(windows, stagger):
+    """Start delay per commanded tab: most recently active first, one every `stagger` seconds."""
+    commanded = [tab for window in windows for tab in window["tabs"] if tab["command"]]
+    order = sorted(range(len(commanded)), key=lambda i: (-(commanded[i].get("lastActive") or 0), i))
+    return {id(commanded[i]): int(round(rank * stagger)) for rank, i in enumerate(order)}
+
+
+def login_shell():
+    return os.environ.get("SHELL") or pwd.getpwuid(os.getuid()).pw_shell or "/bin/bash"
+
+
+def write_tab_launcher(path, tab, delay):
+    """Konsole's D-Bus runCommand/sendText are disabled by default, so a tab that had something running opens with
+    this script instead of a bare shell: an interactive shell (rc files loaded) counts down to the tab's slot,
+    runs the command, then hands over to a normal interactive shell."""
+    shell = login_shell()
+    script_shell = shell if os.path.basename(shell) in LAUNCHER_SHELLS else "/bin/bash"
+    command = " ".join(shlex.quote(a) for a in tab["command"])
+    if tab["commandCwd"] and tab["commandCwd"] != tab["cwd"]:
+        command = f"(cd -- {shlex.quote(tab['commandCwd'])} && exec {command})"
+    label = " ".join(tab["command"][:3]).replace("\n", " ")[:60]
+    skipped = f"konsole-session: skipped {label}; to run it now: KONSOLE_SESSION_DELAY=0 {path}"
+    lines = [
+        f"#!{script_shell} -i",
+        f"# {tab['title']}".replace("\n", " "),
+        "skip=",
+        "trap 'skip=1' INT",
+        f"left=${{KONSOLE_SESSION_DELAY:-{delay}}}",
+        'while [ "$left" -gt 0 ]; do',
+        f"  printf '\\rkonsole-session: %s starts in %ss (Ctrl-C to skip)\\033[K' {shlex.quote(label)} \"$left\"",
+        "  sleep 1 || { skip=1; break; }",
+        '  [ -n "$skip" ] && break',
+        "  left=$((left - 1))",
+        "done",
+        "trap - INT",
+        "printf '\\r\\033[K'",
+        'if [ -z "$skip" ]; then',
+        f"  {command}",
+        "else",
+        f"  printf '%s\\n' {shlex.quote(skipped)}",
+        "fi",
+        f"exec {shlex.quote(shell)} -i",
+    ]
+    with open(path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    os.chmod(path, 0o755)
+
+
+def launch_window(index, window, tab_dir, delays):
+    tabs = window["tabs"]
+    lines = []
+    for n, tab in enumerate(tabs, 1):
+        fields = [f"title: {tab['title']}", f"workdir: {tab['cwd']}", f"profile: {tab['profile']}"]
+        if tab["command"]:
+            launcher = os.path.join(tab_dir, f"window{index}-tab{n}")
+            write_tab_launcher(launcher, tab, delays[id(tab)])
+            fields.append(f"command: {launcher}")  # Konsole splits this on spaces, hence a script path
+        lines.append(";; ".join(field.replace(";;", ";") for field in fields))
+    tabs_file = os.path.join(tab_dir, f"window{index}.tabs")
+    with open(tabs_file, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    # Its own transient unit, so the window outlives this oneshot service.
+    unit = f"app-konsole-session-restore-{index}-{uuid.uuid4().hex[:6]}"
+    run("systemd-run", "--user", "--quiet", "--collect", "--slice=app.slice", f"--unit={unit}",
+        "konsole", "--separate", "--tabs-from-file", tabs_file)
+    pid = wait_for(lambda: int(run("systemctl", "--user", "show", "-p", "MainPID", "--value", unit, check=False) or 0), 15)
+    if not pid:
+        raise RuntimeError(f"konsole for window {index} did not start")
+    svc = f"org.kde.konsole-{pid}"
+
+    def sessions():
+        found = [int(s) for s in qdbus(svc, "/Windows/1", "org.kde.konsole.Window.sessionList", check=False).split()]
+        return found if len(found) >= len(tabs) else None
+
+    if not wait_for(sessions, 30):
+        raise RuntimeError(f"konsole {pid} never opened its tabs")
+    time.sleep(0.5)
+    opened = sessions()
+
+    # Konsole adds its default tab next to the ones from --tabs-from-file; ours still carry the file's title.
+    session_ids, extra = [], []
+    for sid in opened:
+        want = tabs[len(session_ids)]["title"].replace(";;", ";") if len(session_ids) < len(tabs) else None
+        (session_ids if qdbus(svc, f"/Sessions/{sid}", "tabTitleFormat", 0, check=False) == want else extra).append(sid)
+    if len(session_ids) != len(tabs):
+        log(f"window {index}: could not match tabs by title, using tab order")
+        session_ids, extra = opened[:len(tabs)], opened[len(tabs):]
+    for sid in extra:
+        shell_pid = int(qdbus(svc, f"/Sessions/{sid}", "processId", check=False) or 0)
+        if shell_pid > 0:
+            os.kill(shell_pid, 1)
+
+    for sid, tab in zip(session_ids, tabs):
+        sp = f"/Sessions/{sid}"
+        qdbus(svc, sp, "setProfile", tab["profile"], check=False)  # --tabs-from-file clones the profile
+        qdbus(svc, sp, "setTabTitleFormat", 0, tab["localTitleFormat"], check=False)
+        qdbus(svc, sp, "setTabTitleFormat", 1, tab["remoteTitleFormat"], check=False)
+        if tab["tabColor"] and tab["tabColor"] != "#000000":  # #000000 is Konsole's "no color"
+            qdbus(svc, sp, "setTabColor", tab["tabColor"], check=False)
+    qdbus(svc, "/Windows/1", "setCurrentSession", session_ids[min(window["activeTab"], len(session_ids) - 1)], check=False)
+    return pid
+
+
+def restore(path, stagger):
+    with open(path) as f:
+        snapshot = json.load(f)
+    wait_for(lambda: qdbus("org.kde.KWin", "/Scripting", check=False), 60, 0.5)
+    close_session_restored_konsoles()
+
+    live = live_conversation_ids()
+    for window in snapshot["windows"]:
+        for tab in window["tabs"]:
+            if tab["command"] and live & set(UUID_RE.findall(" ".join(tab["command"]))):
+                log(f"'{tab['title']}' is already running elsewhere; opening a plain shell instead")
+                tab["command"] = tab["commandCwd"] = None
+    delays = stagger_schedule(snapshot["windows"], stagger)
+
+    archive = os.path.join(STATE, "restored-" + time.strftime("%Y%m%d-%H%M%S"))
+    tab_dir = os.path.join(archive, "tabs")
+    os.makedirs(tab_dir)
+
+    plan, launched = {}, 0
+    for i, window in enumerate(snapshot["windows"], 1):
+        try:
+            pid = launch_window(i, window, tab_dir, delays)
+            launched += 1
+            if window.get("placement"):
+                plan[pid] = window["placement"]
+        except Exception as e:  # one bad window must not cost the others
+            log(f"window {i}: {e}")
+
+    def placed():
+        kwin_place_windows(plan)
+        time.sleep(0.5)
+        now = {w["pid"]: w for w in kwin_konsole_windows()}
+        return all(pid in now and (p["onAllDesktops"] or now[pid]["desktops"] == p["desktops"]) for pid, p in plan.items())
+
+    if plan and not wait_for(placed, 20, 1):
+        log("some windows could not be moved to their saved desktop")
+
+    shutil.move(path, os.path.join(archive, "snapshot.json"))
+    log(f"restored {launched} windows; {len(delays)} commands start over {max(delays.values(), default=0)}s; archived in {archive}")
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        print(__doc__)
+        return 0
+    action, args, stagger = argv[0], argv[1:], STAGGER_SECONDS
+    if "--stagger" in args:
+        i = args.index("--stagger")
+        stagger = float(args[i + 1])
+        del args[i:i + 2]
+    path = os.path.abspath(args[0]) if args else DEFAULT_SNAPSHOT
+    if action == "save":
+        save(path)
+    elif action == "restore":
+        restore(path, stagger)
+    else:
+        print(__doc__, file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
