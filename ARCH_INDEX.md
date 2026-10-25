@@ -111,19 +111,6 @@ Contents:
 
 ---
 
-## tools/
-
-Standalone tooling that lives outside the AI substrate.
-
-Contents:
-- `gastown/` — installer and env wiring for [Gas Town](https://github.com/steveyegge/gastown) multi-agent workspace manager
-
-Rules:
-- Installation is explicit and user-controlled
-- Each tool manages its own install script and env integration
-
----
-
 ## Architectural Notes
 
 - This repository is a **personal computing substrate**, not a product
