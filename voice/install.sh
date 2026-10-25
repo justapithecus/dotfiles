@@ -60,6 +60,7 @@ install_macos() {
   esac
 
   MNT="$TMP/mnt"
+  mkdir -p "$MNT"
   hdiutil attach -nobrowse -readonly -mountpoint "$MNT" "$dmg" >/dev/null
   trap 'hdiutil detach "$MNT" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
 

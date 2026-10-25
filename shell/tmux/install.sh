@@ -8,6 +8,12 @@ TMUX_DEST="$HOME/.config/tmux"
 echo "  → Installing tmux config"
 mkdir -p "$TMUX_DEST"
 
+# Keep a backup of any existing config that isn't already the managed one.
+if [[ -f "$TMUX_DEST/tmux.conf" ]] && ! cmp -s "$SCRIPT_DIR/tmux.conf" "$TMUX_DEST/tmux.conf"; then
+  backup="$TMUX_DEST/tmux.conf.bak.$(date +%Y%m%d_%H%M%S)"
+  mv "$TMUX_DEST/tmux.conf" "$backup"
+  echo "  → Backed up existing tmux.conf to $backup (move custom settings to tmux.local.conf)"
+fi
 rm -f "$TMUX_DEST/tmux.conf"
 cp -f "$SCRIPT_DIR/tmux.conf" "$TMUX_DEST/tmux.conf"
 
