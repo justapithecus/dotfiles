@@ -88,7 +88,14 @@ Editor configuration (Neovim, Helix, etc.).
 
 ## terminal/
 
-Terminal emulator configuration.
+Terminal emulator configuration. Each terminal lives in its own top-level
+directory with a standalone `install.sh`:
+- `ghostty/` — macOS default
+- `kitty/` — macOS alternative
+- `konsole/` — Linux default
+
+Root `install.sh` picks one via `--terminal=` / `DOTFILES_TERMINAL`,
+otherwise auto-detects.
 
 ---
 

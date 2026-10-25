@@ -1,5 +1,5 @@
+# mise tool names (git is installed by the top-level install.sh)
 neovim
-git
 ripgrep
 fd
 fzf
