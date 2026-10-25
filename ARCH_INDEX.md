@@ -98,6 +98,19 @@ Font assets used by terminal or editor configurations.
 
 ---
 
+## voice/
+
+Speech-to-text input via [Handy](https://github.com/cjpais/Handy)
+(offline, cross-platform, pastes into the focused app).
+
+Contents:
+- `install.sh` — installs the latest signed/checksummed Handy release
+  (macOS `.dmg`, Linux `.rpm`)
+- `kde/` — KDE global shortcut for `handy --toggle-transcription`
+  (Wayland apps can't register their own)
+
+---
+
 ## tools/
 
 Standalone tooling that lives outside the AI substrate.

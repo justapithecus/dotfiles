@@ -40,7 +40,6 @@ copy() { rm -f "$2"; cp -f "$1" "$2"; }
 for filename in \
   keybindings.zsh \
   word-jump.zsh \
-  voice-bindings.zsh \
   env.zsh \
   aliases.zsh \
   completions.zsh \
@@ -51,6 +50,3 @@ do
 done
 
 copy "$DOTFILES_DIR/shell/starship.toml"       "$HOME/.config/starship.toml"
-
-# ── tmux ────────────────────────────────────────────────────────
-"$script_dir/tmux/install.sh"

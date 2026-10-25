@@ -1,83 +1,125 @@
 #!/usr/bin/env bash
-# voice/install.sh — install voice input tooling
+# voice/install.sh — install Handy, offline push-to-talk speech-to-text
+# https://github.com/cjpais/Handy
+#
+# Handy records, transcribes locally (Parakeet/Whisper/Moonshine via its own
+# engine) and pastes into the focused app, so no whisper.cpp, recorder, or
+# shell/tmux keybindings are needed. Always installs the latest release.
 set -euo pipefail
 
-sudo -v
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+REPO="cjpais/Handy"
 
-if [[ -d "$REPO_ROOT/dotfiles/voice" ]]; then
-  DOTFILES_DIR="$REPO_ROOT/dotfiles"
+# Developer ID team that signs Handy for macOS; refuse anything else.
+HANDY_TEAM_ID="UWFLB4GC25"
+
+command -v yq >/dev/null 2>&1 || { echo "✖ yq required (installed by the top-level install.sh)" >&2; exit 1; }
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" -o "$TMP/release.json"
+VERSION="$(yq -p json -o yaml '.tag_name' "$TMP/release.json")"
+VERSION="${VERSION#v}"
+
+# Download the release asset whose name matches $1 and verify it against the
+# SHA-256 digest GitHub publishes for it. Prints the downloaded path.
+fetch_asset() {
+  local pattern="$1" name url digest file actual
+  name="$(yq -p json -o yaml ".assets[] | select(.name | test(\"$pattern\")) | .name" "$TMP/release.json" | head -1)"
+  [[ -n "$name" ]] || { echo "✖ No Handy $VERSION asset matching $pattern" >&2; exit 1; }
+  url="$(yq -p json -o yaml ".assets[] | select(.name == \"$name\") | .browser_download_url" "$TMP/release.json")"
+  digest="$(yq -p json -o yaml ".assets[] | select(.name == \"$name\") | .digest" "$TMP/release.json")"
+  file="$TMP/$name"
+  curl -fsSL "$url" -o "$file"
+  if command -v sha256sum >/dev/null 2>&1; then
+    actual="sha256:$(sha256sum "$file" | cut -d' ' -f1)"
+  else
+    actual="sha256:$(shasum -a 256 "$file" | cut -d' ' -f1)"
+  fi
+  [[ "$actual" == "$digest" ]] || { echo "✖ Checksum mismatch for $name" >&2; exit 1; }
+  echo "$file"
+}
+
+install_macos() {
+  local app="/Applications/Handy.app" current="" dmg
+  if [[ -d "$app" ]]; then
+    current="$(defaults read "$app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || true)"
+  fi
+  if [[ "$current" == "$VERSION" ]]; then
+    echo "  ✔ Handy $VERSION already installed"
+    return
+  fi
+
+  case "$ARCH" in
+    arm64)  dmg="$(fetch_asset '_aarch64\.dmg$')" ;;
+    x86_64) dmg="$(fetch_asset '_x64\.dmg$')" ;;
+    *) echo "✖ Unsupported macOS arch: $ARCH" >&2; exit 1 ;;
+  esac
+
+  MNT="$TMP/mnt"
+  hdiutil attach -nobrowse -readonly -mountpoint "$MNT" "$dmg" >/dev/null
+  trap 'hdiutil detach "$MNT" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
+
+  # Signature must be valid, notarized, and from Handy's own developer team.
+  codesign --verify --deep --strict "$MNT/Handy.app"
+  spctl --assess --type execute "$MNT/Handy.app"
+  local sig
+  sig="$(codesign -dv "$MNT/Handy.app" 2>&1)"
+  [[ $'\n'"$sig"$'\n' == *$'\n'"TeamIdentifier=$HANDY_TEAM_ID"$'\n'* ]] \
+    || { echo "✖ Handy.app is not signed by team $HANDY_TEAM_ID" >&2; exit 1; }
+
+  osascript -e 'quit app "Handy"' >/dev/null 2>&1 || true
+  rm -rf "$app"
+  ditto "$MNT/Handy.app" "$app"
+  echo "  ✔ Handy $VERSION installed to $app"
+}
+
+install_linux() {
+  local rpm
+  case "$ARCH" in
+    x86_64)  rpm="$(fetch_asset 'x86_64\.rpm$')" ;;
+    aarch64) rpm="$(fetch_asset 'aarch64\.rpm$')" ;;
+    *) echo "✖ Unsupported Linux arch: $ARCH" >&2; exit 1 ;;
+  esac
+
+  # The RPM itself is unsigned; its checksum was verified above.
+  sudo zypper -n install --allow-unsigned-rpm "$rpm"
+
+  # Runtime library Handy links against, plus a Wayland text-input helper.
+  sudo zypper -n install libgtk-layer-shell0 \
+    || sudo zypper -n install gtk-layer-shell \
+    || echo "⚠ Could not install gtk-layer-shell; Handy may fail to start"
+  sudo zypper -n install wtype \
+    || echo "⚠ Could not install wtype; Handy will fall back to its built-in input"
+
+  # Handy can't register global shortcuts on Wayland, so bind one in KDE.
+  local kde_dir="$HOME/.local/share/kglobalaccel"
+  mkdir -p "$kde_dir"
+  cp -f "$SCRIPT_DIR/kde/handy-toggle.desktop" "$kde_dir/handy-toggle.desktop"
+  echo "  ✔ Handy $VERSION installed (KDE shortcut: Meta+Shift+V)"
+}
+
+case "$OS" in
+  Darwin) install_macos ;;
+  Linux)  install_linux ;;
+  *) echo "✖ Unsupported OS: $OS" >&2; exit 1 ;;
+esac
+
+cat <<'EOF'
+  → First launch: pick the "Parakeet V2" model (English) or "Parakeet V3"
+    (multilingual) when Handy asks.
+EOF
+if [[ "$OS" == "Darwin" ]]; then
+  cat <<'EOF'
+  → Grant Microphone and Accessibility access when prompted
+    (System Settings → Privacy & Security). Default shortcut: Option+Space.
+EOF
 else
-  DOTFILES_DIR="$REPO_ROOT"
+  cat <<'EOF'
+  → In Handy's settings, set the paste shortcut to Ctrl+Shift+V so it
+    works in terminals, and set the overlay position to None on Wayland.
+EOF
 fi
-
-VOICE_SRC="$DOTFILES_DIR/voice"
-ZDOTDIR_PATH="${ZDOTDIR:-$HOME/.config/zsh}"
-WHISPER_DIR="$HOME/.local/src/whisper.cpp"
-WHISPER_BIN="$HOME/.local/bin/whisper-cli"
-MODEL_DIR="$HOME/.local/share/whisper"
-MODEL_FILE="$MODEL_DIR/ggml-tiny.en.bin"
-
-copy() { rm -f "$2"; cp -f "$1" "$2"; }
-
-# ── Voice scripts ────────────────────────────────────────────────
-echo "  → Installing voice scripts"
-mkdir -p "$HOME/.local/bin"
-for cmd in voice-record voice-paste; do
-  copy "$VOICE_SRC/bin/$cmd" "$HOME/.local/bin/$cmd"
-  chmod +x "$HOME/.local/bin/$cmd"
-done
-
-# ── Config ───────────────────────────────────────────────────────
-echo "  → Installing voice config"
-mkdir -p "$HOME/.config/voice" "$HOME/.config/voice/state"
-copy "$VOICE_SRC/config/config.env" "$HOME/.config/voice/config.env"
-
-# ── Zsh bindings ─────────────────────────────────────────────────
-echo "  → Installing zsh voice bindings"
-mkdir -p "$ZDOTDIR_PATH"
-copy "$DOTFILES_DIR/shell/zsh/voice-bindings.zsh" "$ZDOTDIR_PATH/voice-bindings.zsh"
-
-# ── KDE global shortcuts ────────────────────────────────────────
-KDE_SHORTCUT_DIR="$HOME/.local/share/kglobalaccel"
-echo "  → Installing KDE global shortcuts"
-mkdir -p "$KDE_SHORTCUT_DIR"
-for desktop_file in "$VOICE_SRC/kde"/*.desktop; do
-  [[ -f "$desktop_file" ]] || continue
-  sed "s|PLACEHOLDER_VOICE_RECORD|$HOME/.local/bin/voice-record|g" \
-    "$desktop_file" > "$KDE_SHORTCUT_DIR/$(basename "$desktop_file")"
-done
-
-# ── System dependencies ─────────────────────────────────────────
-echo "  → Installing build and runtime dependencies"
-sudo zypper -n install cmake gcc-c++ make git alsa-utils wl-clipboard vulkan-devel shaderc
-
-# ── Build whisper.cpp ────────────────────────────────────────────
-echo "  → Building whisper.cpp from source"
-if [[ -d "$WHISPER_DIR" ]]; then
-  git -C "$WHISPER_DIR" pull --ff-only 2>/dev/null || true
-else
-  mkdir -p "$(dirname "$WHISPER_DIR")"
-  git clone https://github.com/ggml-org/whisper.cpp.git "$WHISPER_DIR"
-fi
-
-echo "  → Building with Vulkan GPU acceleration"
-rm -rf "$WHISPER_DIR/build"
-cmake -B "$WHISPER_DIR/build" -S "$WHISPER_DIR" \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DGGML_VULKAN=ON
-cmake --build "$WHISPER_DIR/build" -j"$(nproc)" --config Release
-
-cp -f "$WHISPER_DIR/build/bin/whisper-cli" "$WHISPER_BIN"
-chmod +x "$WHISPER_BIN"
-echo "  ✔ whisper-cli installed to $WHISPER_BIN"
-
-# ── Download model ───────────────────────────────────────────────
-echo "  → Downloading whisper tiny.en model"
-mkdir -p "$MODEL_DIR"
-curl -L -o "$MODEL_FILE" \
-  "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin"
-
-echo "  ✔ Voice input installation complete"
