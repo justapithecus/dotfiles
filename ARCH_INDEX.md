@@ -88,7 +88,14 @@ Editor configuration (Neovim, Helix, etc.).
 
 ## terminal/
 
-Terminal emulator configuration.
+Terminal emulator configuration. Each terminal lives in its own top-level
+directory with a standalone `install.sh`:
+- `ghostty/` — macOS default
+- `kitty/` — macOS alternative
+- `konsole/` — Linux default
+
+Root `install.sh` picks one via `--terminal=` / `DOTFILES_TERMINAL`,
+otherwise auto-detects.
 
 Contents:
 - `konsole/session/` — save/restore Konsole windows, tabs, and the agent conversations in them across restarts (openSUSE Tumbleweed + KDE Plasma 6 only; installed separately)
@@ -98,6 +105,19 @@ Contents:
 ## fonts/
 
 Font assets used by terminal or editor configurations.
+
+---
+
+## voice/
+
+Speech-to-text input via [Handy](https://github.com/cjpais/Handy)
+(offline, cross-platform, pastes into the focused app).
+
+Contents:
+- `install.sh` — installs the latest signed/checksummed Handy release
+  (macOS `.dmg`, Linux `.rpm`)
+- `kde/` — KDE global shortcut for `handy --toggle-transcription`
+  (Wayland apps can't register their own)
 
 ---
 

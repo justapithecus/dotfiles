@@ -1,0 +1,85 @@
+# Ghostty config — ported from kitty/kitty.conf
+# Reference: https://ghostty.org/docs/config/reference
+
+# ----------------------------
+# Font
+# ----------------------------
+font-family = DMMono Nerd Font
+font-size   = 16
+
+# ----------------------------
+# Shell
+# ----------------------------
+command = /bin/zsh
+
+# ----------------------------
+# Scrollback
+# Ghostty limits scrollback in bytes, not lines. ~100 MB is roughly
+# kitty's 200000 lines at 120 columns.
+# ----------------------------
+scrollback-limit = 100000000
+
+# ----------------------------
+# Cursor
+# Ghostty has no blink-interval setting; this only toggles blinking.
+# ----------------------------
+cursor-style-blink = true
+
+# ----------------------------
+# Terminal
+# Ghostty defaults to xterm-ghostty, which many remote hosts lack.
+# Match kitty and advertise xterm-256color.
+# ----------------------------
+term = xterm-256color
+
+# ----------------------------
+# Window
+# ----------------------------
+window-save-state = never
+window-width      = 120
+window-height     = 40
+bold-is-bright    = true
+
+# ----------------------------
+# Tabs (no powerline tab bar in Ghostty; use native macOS tabs)
+# ----------------------------
+macos-titlebar-style = tabs
+
+# ----------------------------
+# Color scheme — High Contrast Dark
+# (ported from konsole/colorschemes/HighContrastDark.colorscheme)
+# ----------------------------
+background = #000000
+foreground = #e6e6e6
+
+# black
+palette = 0=#000000
+palette = 8=#787878
+
+# red
+palette = 1=#ff5555
+palette = 9=#ff6e6e
+
+# green
+palette = 2=#50fa7b
+palette = 10=#64ffa0
+
+# yellow
+palette = 3=#f1fa8c
+palette = 11=#ffffa0
+
+# blue
+palette = 4=#8be9fd
+palette = 12=#a0dcff
+
+# magenta
+palette = 5=#ff79c6
+palette = 13=#ffa0dc
+
+# cyan
+palette = 6=#8be9fd
+palette = 14=#a0ffff
+
+# white
+palette = 7=#e6e6e6
+palette = 15=#ffffff
