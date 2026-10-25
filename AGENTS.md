@@ -19,6 +19,12 @@ Guidelines for agents:
 - Do not assume an application life-cycle
 - Treat subdirectories as largely independent
 - Prefer explanation and planning over code generation
+- Never create symlinks (copies only — symlinks break on branch switch)
+
+Git workflow:
+- Always use git worktrees for implementation work, never work in the
+  main checkout directly
+- Worktree naming: `${repo-name}-${suffix}` as a sibling directory
 
 When unsure:
 - Ask for clarification rather than guessing

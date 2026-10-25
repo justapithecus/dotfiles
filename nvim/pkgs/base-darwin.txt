@@ -1,0 +1,5 @@
+neovim
+git
+ripgrep
+fd
+fzf

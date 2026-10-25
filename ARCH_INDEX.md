@@ -18,6 +18,8 @@ Maintenance rule:
 ## Root
 
 - `ARCH_INDEX.md` — architectural navigation index (this file)
+- `CLAUDE.md` — repo-local constitution (dotfiles-specific)
+- `AGENTS.md` — behavioral expectations (also read by Codex)
 - `README.md` — repository overview and navigational entrypoint
 - `.gitignore` — git exclusions
 - miscellaneous dotfiles — tool- or editor-specific entrypoints
@@ -38,12 +40,17 @@ Purpose:
 Agents should treat this directory as authoritative.
 
 Contents:
-- `AGENTS.md` — global agent constraints and behavioral rules (when present)
+- `CLAUDE.md` — single constitutional authority for all AI sessions
+- `GOVERNANCE.md` — agentic governance model specification
+- `bin/` — executable entrypoint scripts (ai-chat, ai-implement, ai-plan, ai-check, ai-migrate, etc.)
 - `roles/` — cognitive role definitions (planner, implementer, reviewer, etc.)
-- `context/` — persistent anchors and long‑lived invariants
-- `prompts/` — reusable prompt fragments and compositions
-- `tools/` — agent-built tools that improve agent leverage
-- `ai-*.sh` — shell entrypoints binding prompts + tools
+- `skills/` — skill definitions with SKILL.md + schema contracts (43 skills across 7 domains)
+- `skills.yaml` — skill + bundle + mode registry (43 skills, 6 bundles, 6 modes)
+- `docs/` — explanatory guides (quickstart, workflows)
+- `completion/` — shell completion scripts
+- `out/` — runtime artifacts: ai-check results, plan.json, last.patch, last.report.json (gitignored)
+- `context/` — optional context layers for supplementary prompt content
+- `templates/` — migration scaffolds for onboarding new repos
 
 Stability:
 - Intentionally unstable

@@ -48,8 +48,14 @@ alias ....='cd ../../..'
 # ==========================================================
 alias df='df -h'                             # disk usage
 alias du='du -h'                             # directory size
-alias free='free -h'                         # memory usage
-alias ff='fastfetch'                         # system information
+if command -v fastfetch &>/dev/null; then
+  alias ff='fastfetch'                       # system information
+fi
+
+# Linux-only: free(1) does not exist on macOS
+if [[ "$(uname -s)" == "Linux" ]]; then
+  alias free='free -h'                       # memory usage
+fi
 
 
 # ==========================================================
@@ -193,7 +199,12 @@ EOF
 # ==========================================================
 # ai: tooling
 # ==========================================================
-alias aic="$HOME/.config/ai/ai-chat.sh"
-alias aip="$HOME/.config/ai/ai-plan.sh"
-alias air="$HOME/.config/ai/ai-review.sh"
-alias aii="$HOME/.config/ai/ai-implement.sh"
+alias aic="ai-chat"
+alias aip="ai-plan"
+alias air="ai-review"
+alias aii="ai-implement"
+alias aih="ai-help"
+alias aik="ai-check"
+alias ais="ai-skill"
+alias ail="ai-list"
+alias aix="ai-patch"

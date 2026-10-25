@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "required": ["skill", "version", "status", "blocking", "major", "warning", "info"],
+  "properties": {
+    "skill": { "type": "string" },
+    "version": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail"] },
+    "blocking": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "major": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warning": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "info": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "details": { "type": "object" }
+  }
+}

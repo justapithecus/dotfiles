@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "required": [
+    "violations",
+    "redundancies",
+    "forbidden_exists",
+    "ambiguities"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "violations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "redundancies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "forbidden_exists": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

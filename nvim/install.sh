@@ -34,16 +34,42 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-mapfile -t BASE_PKGS < <(grep -vE '^\s*$|^\s*#' "$ROOT/pkgs/base.txt" || true)
-PKGS=("${BASE_PKGS[@]}")
+# --- Bash 3.2-compatible package-file reader ---
+read_pkg_file() {
+  local _file="$1"
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    echo "$line"
+  done < "$_file"
+}
+
+OS="$(uname -s)"
+case "$OS" in
+  Linux)  PLATFORM="linux" ;;
+  Darwin) PLATFORM="darwin" ;;
+  *) echo "✖ Unsupported OS: $OS" >&2; exit 1 ;;
+esac
+
+PKGS=()
+while IFS= read -r pkg; do
+  PKGS+=("$pkg")
+done < <(read_pkg_file "$ROOT/pkgs/base-${PLATFORM}.txt")
 
 if [ $NATIVE -eq 1 ]; then
-  mapfile -t NATIVE_PKGS < <(grep -vE '^\s*$|^\s*#' "$ROOT/pkgs/native-build.txt" || true)
-  PKGS+=("${NATIVE_PKGS[@]}")
+  while IFS= read -r pkg; do
+    PKGS+=("$pkg")
+  done < <(read_pkg_file "$ROOT/pkgs/native-build-${PLATFORM}.txt")
 fi
 
-sudo zypper -n refresh
-sudo zypper -n in "${PKGS[@]}"
+case "$PLATFORM" in
+  linux)
+    sudo zypper -n refresh
+    sudo zypper -n in "${PKGS[@]}"
+    ;;
+  darwin)
+    brew install "${PKGS[@]}"
+    ;;
+esac
 
 if [ -e "$CONFIG_DIR" ] || [ -L "$CONFIG_DIR" ]; then
   if [ "$MODE" = "backup" ]; then

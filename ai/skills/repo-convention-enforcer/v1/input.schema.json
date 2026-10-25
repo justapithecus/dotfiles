@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "required": ["repo_tree", "claude_md"],
+  "additionalProperties": false,
+  "properties": {
+    "repo_tree": { "type": "string" },
+    "claude_md": { "type": "string" },
+    "agents_md": {
+      "type": ["string", "null"]
+    },
+    "scope": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
