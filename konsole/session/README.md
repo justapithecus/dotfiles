@@ -23,7 +23,11 @@ konsole-session save     # right before restarting
 ```
 
 The next login restores everything once, then archives the snapshot under
-`~/.local/state/konsole-session/restored-*`. A snapshot can also be restored by hand:
+`~/.local/state/konsole-session/restored-*`. If some windows fail to open (e.g. Konsole's D-Bus service
+wasn't ready), only those stay in `snapshot.json` and the unit exits non-zero, so the next login retries
+just them. Snapshots and launchers hold full command lines and are created user-only (`0600`/`0700`).
+
+A snapshot can also be restored by hand:
 
 ```sh
 konsole-session restore [SNAPSHOT] [--stagger SECONDS]
@@ -38,8 +42,13 @@ konsole-session restore [SNAPSHOT] [--stagger SECONDS]
 | Claude Code tab | `claude … --resume <id>` with the original flags, in the directory the session was in |
 | Claude Code wrapper tab (`claude-<name>`, state in `~/.claude-<name>`) | `<wrapper> … --resume <id>` of the transcript it wrote last |
 | Codex tab (direct or via a wrapper script) | `codex resume <id>` of the rollout file it was writing |
-| Any other running program | Same command line |
-| `sudo`/`su`/`doas`/`pkexec`/`run0` | Plain shell — privileged commands are never replayed |
+| Claude Code / Codex whose conversation can't be identified | Started fresh |
+| Viewer or editor on the replay allowlist (`nvim`, `vim`, `vi`, `hx`, `less`, `man`, `htop`, `btop`, `top`, `lazygit`, `tig`) | Same command line, after the resumed conversations |
+| Anything else (builds, deploys, `ssh`, scripts, …) | Plain shell that prints the command it was running — never replayed unattended |
+| `sudo`/`su`/`doas`/`pkexec`/`run0` | Same: plain shell, command shown, never replayed |
+
+Extend the allowlist with `KONSOLE_SESSION_REPLAY=prog1:prog2 konsole-session save` (it is applied when
+saving).
 
 Not restored: scrollback, split views (restored as tabs), replies that were mid-flight (the conversation
 resumes at its last saved message), and background tasks an agent had running.
@@ -47,7 +56,8 @@ resumes at its last saved message), and background tasks an agent had running.
 ## Staggered start
 
 Tabs open immediately, but the commands inside them start one every `--stagger` seconds (default 20), most
-recently active conversation first, so a restore doesn't start every agent at once. Each waiting tab shows a
+recently active conversation first, so a restore doesn't start every agent at once. Slots are measured from
+one shared start time, so a slow window doesn't push its tabs behind later ones. Each waiting tab shows a
 countdown; Ctrl-C skips that tab's command and prints how to start it by hand.
 
 A conversation that is already running somewhere else is not resumed a second time; its tab opens as a

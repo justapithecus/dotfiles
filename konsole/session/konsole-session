@@ -7,7 +7,9 @@ Usage:
   konsole-session save [SNAPSHOT]
       Record every Konsole window (virtual desktop, screen, geometry) and its tabs (order, title, color,
       profile, working directory, active tab) plus what each tab is running. Claude Code and Codex tabs are
-      recorded as a resume of the conversation they hold.
+      recorded as a resume of the conversation they hold. Other programs are replayed only if they are on the
+      replay allowlist (%(replay)s, plus any in $KONSOLE_SESSION_REPLAY, colon-separated); anything else
+      reopens as a plain shell that prints the command it was running.
 
   konsole-session restore [SNAPSHOT] [--stagger SECONDS]
       Rebuild the windows, then archive the snapshot. Tabs open at once; the commands inside them start one
@@ -36,11 +38,15 @@ STAGGER_SECONDS = 20
 QDBUS = shutil.which("qdbus6") or "/usr/lib64/qt6/bin/qdbus"
 CODEX_SESSIONS = os.path.join(os.environ.get("CODEX_HOME") or os.path.expanduser("~/.codex"), "sessions")
 PRIVILEGED = {"sudo", "doas", "pkexec", "su", "run0"}
+# Programs that are safe to start again unattended at login: viewers and editors, nothing with side effects.
+REPLAY_ALLOWLIST = {"nvim", "vim", "vi", "hx", "less", "man", "htop", "btop", "top", "lazygit", "tig"}
+REPLAY_ALLOWLIST |= {p for p in os.environ.get("KONSOLE_SESSION_REPLAY", "").split(":") if p}
 LAUNCHER_SHELLS = {"bash", "zsh", "ksh", "sh", "dash"}
 UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 KONSOLE_SVC_RE = re.compile(r"org\.kde\.konsole-(\d+)")
 
-__doc__ %= {"stagger": STAGGER_SECONDS, "snapshot": DEFAULT_SNAPSHOT.replace(os.path.expanduser("~"), "~", 1)}
+__doc__ %= {"stagger": STAGGER_SECONDS, "snapshot": DEFAULT_SNAPSHOT.replace(os.path.expanduser("~"), "~", 1),
+            "replay": ", ".join(sorted(REPLAY_ALLOWLIST))}
 
 
 def log(msg):
@@ -263,13 +269,18 @@ def codex_rollout(pid):
 
 
 def tab_command(shell_pid, fg_pid, shell_cwd):
-    """(command, cwd, last active epoch) that brings a tab back to what it runs now; all None for an idle shell."""
+    """(command, cwd, last active epoch, note) that brings a tab back to what it runs now.
+
+    command is None for an idle shell and for anything not safe to replay unattended; for the latter, note holds
+    the command line so the restored shell can show what was running."""
     if fg_pid <= 0 or fg_pid == shell_pid:
-        return None, None, None
+        return None, None, None, None
     argv = proc_argv(fg_pid)
     program = os.path.basename(argv[0]) if argv else ""
-    if not argv or program in PRIVILEGED:
-        return None, None, None
+    if not argv:
+        return None, None, None, None
+    if program in PRIVILEGED:
+        return None, None, None, shlex.join(argv)
     cwd = proc_cwd(fg_pid) or shell_cwd
 
     if program.startswith("claude"):
@@ -278,7 +289,8 @@ def tab_command(shell_pid, fg_pid, shell_cwd):
             with open(os.path.join(config, "sessions", f"{fg_pid}.json")) as f:
                 info = json.load(f)
             session_cwd = info.get("cwd") if os.path.isdir(info.get("cwd") or "") else cwd
-            return strip_resume_flags(argv) + ["--resume", info["sessionId"]], session_cwd, info.get("updatedAt", 0) / 1000
+            return (strip_resume_flags(argv) + ["--resume", info["sessionId"]], session_cwd,
+                    info.get("updatedAt", 0) / 1000, None)
         except (OSError, KeyError, ValueError):
             pass
         # No pid registry (e.g. a wrapper running Claude Code in its own pid namespace). /clear moves a session to a
@@ -287,18 +299,43 @@ def tab_command(shell_pid, fg_pid, shell_cwd):
         if len(siblings) <= 1:
             session, written = newest_claude_transcript(os.path.join(config, "projects"), cwd, time.time() - proc_age(fg_pid))
             if session:
-                return strip_resume_flags(argv) + ["--resume", session], cwd, written
+                return strip_resume_flags(argv) + ["--resume", session], cwd, written, None
 
     for pid in [fg_pid] + proc_descendants(fg_pid):
         if proc_comm(pid) == "codex":
             rollout, written = codex_rollout(pid)
             if rollout:
-                return ["codex", "resume", rollout], proc_cwd(pid) or shell_cwd, written
+                return ["codex", "resume", rollout], proc_cwd(pid) or shell_cwd, written, None
 
-    return argv, cwd, time.time()
+    # An agent whose conversation couldn't be identified starts fresh; viewers and editors on the allowlist are
+    # replayed as-is. Neither has a recent activity time, so they start after the resumed conversations.
+    if program.startswith("claude") or program == "codex" or program in REPLAY_ALLOWLIST:
+        return strip_resume_flags(argv), cwd, 0, None
+    return None, None, None, shlex.join(argv)
 
 
 # --- save --------------------------------------------------------------------
+
+def make_private_dir(path):
+    """Snapshots and launchers hold full command lines, which can carry tokens: keep them user-only."""
+    os.makedirs(path, mode=0o700, exist_ok=True)
+    os.chmod(path, 0o700)
+
+
+def claim_kwin_window(unclaimed, active_title):
+    """Pop the KWin window whose caption shows `active_title` (Konsole captions read "<active tab title> — Konsole").
+
+    An exact caption beats a prefix match ("a" vs "ab"), and a claimed window can't be matched again, so windows
+    whose active tabs share a title each get their own placement instead of all copying the first one."""
+    if len(unclaimed) == 1:
+        return unclaimed.pop()
+    exact = [w for w in unclaimed if w["caption"] == active_title or w["caption"].startswith(active_title + " — ")]
+    prefix = [w for w in unclaimed if w["caption"].startswith(active_title)]
+    match = (exact or prefix or [None])[0]
+    if match is not None:
+        unclaimed.remove(match)
+    return match
+
 
 def save(path):
     kwin = kwin_konsole_windows()
@@ -307,7 +344,8 @@ def save(path):
         konsole_pid = int(svc.rsplit("-", 1)[1])
         win_paths = sorted((p for p in qdbus(svc).splitlines() if re.fullmatch(r"/Windows/\d+", p)),
                            key=lambda p: int(p.split("/")[-1]))
-        kwin_windows = [w for w in kwin if w["pid"] == konsole_pid]
+        # KWin windows of this process not yet matched to a Konsole window; each is claimed at most once.
+        unclaimed = [w for w in kwin if w["pid"] == konsole_pid]
         for win_path in win_paths:
             session_ids = [int(s) for s in qdbus(svc, win_path, "org.kde.konsole.Window.sessionList").split()]
             if not session_ids:
@@ -318,7 +356,8 @@ def save(path):
                 sp = f"/Sessions/{sid}"
                 shell_pid = int(qdbus(svc, sp, "processId"))
                 cwd = proc_cwd(shell_pid) or os.path.expanduser("~")
-                command, command_cwd, last_active = tab_command(shell_pid, int(qdbus(svc, sp, "foregroundProcessId")), cwd)
+                command, command_cwd, last_active, note = tab_command(
+                    shell_pid, int(qdbus(svc, sp, "foregroundProcessId")), cwd)
                 tabs.append({
                     "title": qdbus(svc, sp, "title", 1),
                     "localTitleFormat": qdbus(svc, sp, "tabTitleFormat", 0),
@@ -329,12 +368,10 @@ def save(path):
                     "command": command,
                     "commandCwd": command_cwd,
                     "lastActive": last_active,
+                    "note": note,
                 })
             active = session_ids.index(current) if current in session_ids else 0
-            if len(kwin_windows) == 1:
-                placement = kwin_windows[0]
-            else:  # several windows in one process: the caption is the active tab's title
-                placement = next((w for w in kwin_windows if w["caption"].startswith(tabs[active]["title"])), None)
+            placement = claim_kwin_window(unclaimed, tabs[active]["title"])
             windows.append({
                 "activeTab": active,
                 "splits": any(len(re.findall(r"\d+", line)) > 2 for line in qdbus(svc, win_path, "viewHierarchy").splitlines()),
@@ -343,7 +380,7 @@ def save(path):
             })
 
     windows.sort(key=lambda w: (w["placement"] or {}).get("desktops") or [99])
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    make_private_dir(os.path.dirname(path))
     with open(path + ".tmp", "w") as f:
         json.dump({"savedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "windows": windows}, f, indent=2)
     os.replace(path + ".tmp", path)
@@ -353,7 +390,12 @@ def save(path):
         split_note = " (split views are restored as plain tabs)" if window["splits"] else ""
         print(f"window {i}: desktop {placement.get('desktops')}, {len(window['tabs'])} tabs{split_note}")
         for j, tab in enumerate(window["tabs"], 1):
-            command = " ".join(tab["command"])[:90].replace("\n", " ") if tab["command"] else "(shell)"
+            if tab["command"]:
+                command = " ".join(tab["command"])[:90].replace("\n", " ")
+            elif tab["note"]:
+                command = f"(shell; not replayed: {tab['note'][:60]})".replace("\n", " ")
+            else:
+                command = "(shell)"
             print(f"  {j:>2}. {tab['title'][:28]:<28} {command}")
     print(f"saved {sum(len(w['tabs']) for w in windows)} tabs in {len(windows)} windows to {path}")
 
@@ -403,6 +445,11 @@ def live_conversation_ids():
     ids = set()
     for pid in pids():
         ids.update(UUID_RE.findall(" ".join(proc_argv(pid))))
+        # A plain `codex` carries no id in its argv; the rollout file it holds open names its conversation.
+        if proc_comm(pid) == "codex":
+            rollout, _ = codex_rollout(pid)
+            if rollout:
+                ids.add(rollout)
     for registry in glob.glob(os.path.expanduser("~/.claude*/sessions/*.json")):
         try:
             with open(registry) as f:
@@ -426,28 +473,46 @@ def login_shell():
     return os.environ.get("SHELL") or pwd.getpwuid(os.getuid()).pw_shell or "/bin/bash"
 
 
-def write_tab_launcher(path, tab, delay):
+def write_launcher(path, lines):
+    with open(path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    os.chmod(path, 0o700)  # carries the command line; see make_private_dir
+
+
+def launcher_shells():
+    shell = login_shell()
+    return shell, (shell if os.path.basename(shell) in LAUNCHER_SHELLS else "/bin/bash")
+
+
+def write_tab_launcher(path, tab, deadline):
     """Konsole's D-Bus runCommand/sendText are disabled by default, so a tab that had something running opens with
     this script instead of a bare shell: an interactive shell (rc files loaded) counts down to the tab's slot,
-    runs the command, then hands over to a normal interactive shell."""
-    shell = login_shell()
-    script_shell = shell if os.path.basename(shell) in LAUNCHER_SHELLS else "/bin/bash"
+    runs the command, then hands over to a normal interactive shell.
+
+    `deadline` is an absolute epoch shared by every window of the restore, so tabs keep their global order and
+    spacing however long earlier windows took to open."""
+    shell, script_shell = launcher_shells()
     command = " ".join(shlex.quote(a) for a in tab["command"])
     if tab["commandCwd"] and tab["commandCwd"] != tab["cwd"]:
         command = f"(cd -- {shlex.quote(tab['commandCwd'])} && exec {command})"
     label = " ".join(tab["command"][:3]).replace("\n", " ")[:60]
     skipped = f"konsole-session: skipped {label}; to run it now: KONSOLE_SESSION_DELAY=0 {path}"
-    lines = [
+    write_launcher(path, [
         f"#!{script_shell} -i",
         f"# {tab['title']}".replace("\n", " "),
         "skip=",
         "trap 'skip=1' INT",
-        f"left=${{KONSOLE_SESSION_DELAY:-{delay}}}",
-        'while [ "$left" -gt 0 ]; do',
+        'if [ -n "${KONSOLE_SESSION_DELAY+x}" ]; then',
+        '  deadline=$(( $(date +%s) + KONSOLE_SESSION_DELAY ))',
+        "else",
+        f"  deadline={int(deadline)}",
+        "fi",
+        "while :; do",
+        '  left=$(( deadline - $(date +%s) ))',
+        '  [ "$left" -gt 0 ] || break',
         f"  printf '\\rkonsole-session: %s starts in %ss (Ctrl-C to skip)\\033[K' {shlex.quote(label)} \"$left\"",
         "  sleep 1 || { skip=1; break; }",
         '  [ -n "$skip" ] && break',
-        "  left=$((left - 1))",
         "done",
         "trap - INT",
         "printf '\\r\\033[K'",
@@ -457,21 +522,33 @@ def write_tab_launcher(path, tab, delay):
         f"  printf '%s\\n' {shlex.quote(skipped)}",
         "fi",
         f"exec {shlex.quote(shell)} -i",
-    ]
-    with open(path, "w") as f:
-        f.write("\n".join(lines) + "\n")
-    os.chmod(path, 0o755)
+    ])
 
 
-def launch_window(index, window, tab_dir, delays):
+def write_note_launcher(path, tab):
+    """A tab whose program isn't safe to replay opens as a plain shell that shows what it was running."""
+    shell, script_shell = launcher_shells()
+    note = f"konsole-session: this tab was running (not replayed): {tab['note']}".replace("\n", " ")
+    write_launcher(path, [
+        f"#!{script_shell} -i",
+        f"# {tab['title']}".replace("\n", " "),
+        f"printf '%s\\n' {shlex.quote(note)}",
+        f"exec {shlex.quote(shell)} -i",
+    ])
+
+
+def launch_window(index, window, tab_dir, deadlines):
     tabs = window["tabs"]
     lines = []
     for n, tab in enumerate(tabs, 1):
         fields = [f"title: {tab['title']}", f"workdir: {tab['cwd']}", f"profile: {tab['profile']}"]
+        launcher = os.path.join(tab_dir, f"window{index}-tab{n}")
         if tab["command"]:
-            launcher = os.path.join(tab_dir, f"window{index}-tab{n}")
-            write_tab_launcher(launcher, tab, delays[id(tab)])
+            write_tab_launcher(launcher, tab, deadlines[id(tab)])
             fields.append(f"command: {launcher}")  # Konsole splits this on spaces, hence a script path
+        elif tab.get("note"):
+            write_note_launcher(launcher, tab)
+            fields.append(f"command: {launcher}")
         lines.append(";; ".join(field.replace(";;", ";") for field in fields))
     tabs_file = os.path.join(tab_dir, f"window{index}.tabs")
     with open(tabs_file, "w") as f:
@@ -481,6 +558,16 @@ def launch_window(index, window, tab_dir, delays):
     unit = f"app-konsole-session-restore-{index}-{uuid.uuid4().hex[:6]}"
     run("systemd-run", "--user", "--quiet", "--collect", "--slice=app.slice", f"--unit={unit}",
         "konsole", "--separate", "--tabs-from-file", tabs_file)
+    try:
+        return finish_window(index, window, unit)
+    except Exception:
+        # Close a half-built window so retrying this one at the next login doesn't duplicate it.
+        run("systemctl", "--user", "stop", unit, check=False)
+        raise
+
+
+def finish_window(index, window, unit):
+    tabs = window["tabs"]
     pid = wait_for(lambda: int(run("systemctl", "--user", "show", "-p", "MainPID", "--value", unit, check=False) or 0), 15)
     if not pid:
         raise RuntimeError(f"konsole for window {index} did not start")
@@ -532,20 +619,25 @@ def restore(path, stagger):
                 log(f"'{tab['title']}' is already running elsewhere; opening a plain shell instead")
                 tab["command"] = tab["commandCwd"] = None
     delays = stagger_schedule(snapshot["windows"], stagger)
+    start = time.time()
+    deadlines = {key: start + delay for key, delay in delays.items()}
 
     archive = os.path.join(STATE, "restored-" + time.strftime("%Y%m%d-%H%M%S"))
     tab_dir = os.path.join(archive, "tabs")
-    os.makedirs(tab_dir)
+    make_private_dir(STATE)
+    make_private_dir(archive)
+    make_private_dir(tab_dir)
 
-    plan, launched = {}, 0
+    plan, launched, failed = {}, 0, []
     for i, window in enumerate(snapshot["windows"], 1):
         try:
-            pid = launch_window(i, window, tab_dir, delays)
+            pid = launch_window(i, window, tab_dir, deadlines)
             launched += 1
             if window.get("placement"):
                 plan[pid] = window["placement"]
         except Exception as e:  # one bad window must not cost the others
             log(f"window {i}: {e}")
+            failed.append(window)
 
     def placed():
         kwin_place_windows(plan)
@@ -558,9 +650,19 @@ def restore(path, stagger):
 
     shutil.move(path, os.path.join(archive, "snapshot.json"))
     log(f"restored {launched} windows; {len(delays)} commands start over {max(delays.values(), default=0)}s; archived in {archive}")
+    if failed:
+        # Leave only the windows that didn't open, so the next login (or a manual restore) retries just those
+        # without duplicating the ones that did.
+        with open(path + ".tmp", "w") as f:
+            json.dump(dict(snapshot, windows=failed), f, indent=2)
+        os.replace(path + ".tmp", path)
+        log(f"{len(failed)} windows failed; kept them in {path} to retry")
+        return 1
+    return 0
 
 
 def main(argv):
+    os.umask(0o077)  # snapshots, launchers, and tab files hold command lines
     if not argv or argv[0] in ("-h", "--help", "help"):
         print(__doc__)
         return 0
@@ -573,7 +675,7 @@ def main(argv):
     if action == "save":
         save(path)
     elif action == "restore":
-        restore(path, stagger)
+        return restore(path, stagger)
     else:
         print(__doc__, file=sys.stderr)
         return 2
