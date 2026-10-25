@@ -1,6 +1,5 @@
-# mise tool names
+# mise tool names (git is installed by the top-level install.sh)
 neovim
-conda:git
 ripgrep
 fd
 fzf

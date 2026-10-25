@@ -40,16 +40,8 @@ case "$OS" in
     fi
     ;;
   Darwin)
-    # No Homebrew: every tool comes from mise (prebuilt binaries in $HOME).
-    # The Xcode Command Line Tools are still required for the one thing
-    # mise can't supply: the macOS SDK and system C toolchain (clang, ld,
-    # headers) that Rust and Neovim plugin builds link against.
-    if ! xcode-select -p >/dev/null 2>&1; then
-      echo "✖ Xcode Command Line Tools not found — opening installer."
-      echo "  Re-run this script once it finishes."
-      xcode-select --install || true
-      exit 1
-    fi
+    # No Homebrew, Xcode Command Line Tools, or conda: every tool comes
+    # from mise as a prebuilt binary in $HOME. Nothing here compiles code.
     PM="mise"
     ;;
   *)
@@ -92,12 +84,23 @@ install_packages() {
         echo "▶ Installing mise to ~/.local/bin"
         curl -fsSL https://mise.run | sh
       fi
+      # git: GitHub Desktop's relocatable build (links only macOS system
+      # libraries). It must be told where its helpers live, so point
+      # GIT_EXEC_PATH at mise's "latest" link; mise applies [env] to shims.
+      case "$(uname -m)" in
+        arm64)  GIT_ASSET="*-macOS-arm64.tar.gz" ;;
+        x86_64) GIT_ASSET="*-macOS-x64.tar.gz" ;;
+      esac
+      GIT_DIR_MISE="${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/github-desktop-dugite-native/latest"
+
       # Writes ~/.config/mise/config.toml so the tools are global.
-      # git/make/pkg-config have no aqua builds; conda-forge has them prebuilt.
       mise use -g -y \
         starship fzf bat eza ripgrep zoxide \
         node tmux yq gh \
-        conda:git conda:make conda:pkg-config
+        "github:desktop/dugite-native[asset_pattern=$GIT_ASSET,bin_path=bin]"
+      mise set -g \
+        GIT_EXEC_PATH="$GIT_DIR_MISE/libexec/git-core" \
+        GIT_TEMPLATE_DIR="$GIT_DIR_MISE/share/git-core/templates"
       # Re-runs bump every tool to its newest release.
       mise upgrade -y
       ;;

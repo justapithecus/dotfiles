@@ -74,12 +74,27 @@ e.g. `bash kitty/install.sh`.
 
 ## macOS without Homebrew
 
-On macOS the installer does not use Homebrew. Every tool, git included,
-is installed with [mise](https://mise.jdx.dev) into your home directory
-(`~/.config/mise/config.toml` lists the global tools), and re-running the
-installer bumps them all to their latest releases. The Xcode Command Line
-Tools are still required for the macOS SDK and C compiler, which nothing
-else can provide. (They also supply the git used for the first clone.)
+On macOS the installer uses no Homebrew, Xcode Command Line Tools, or
+conda. Every tool is a prebuilt binary installed with
+[mise](https://mise.jdx.dev) into your home directory
+(`~/.config/mise/config.toml` lists them), and re-running the installer
+bumps them all to their latest releases.
+
+git is GitHub Desktop's relocatable build
+([dugite-native](https://github.com/desktop/dugite-native)). Nothing in
+this repo compiles code on macOS, so no C toolchain is installed.
+
+A fresh Mac has no git (`/usr/bin/git` only offers to install the Xcode
+tools), so bootstrap from a tarball, then switch to a real clone:
+
+```sh
+curl -fsSL https://github.com/justapithecus/dotfiles/archive/main.tar.gz | tar xz
+./dotfiles-main/install.sh
+# new shell: git now comes from mise
+git clone git@github.com:justapithecus/dotfiles ~/workspace/justapithecus/dotfiles
+~/workspace/justapithecus/dotfiles/install.sh   # re-point AI tooling at the clone
+rm -rf dotfiles-main
+```
 
 ---
 

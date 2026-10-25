@@ -67,12 +67,8 @@ case "$PLATFORM" in
     sudo zypper -n in "${PKGS[@]}"
     ;;
   darwin)
-    # No Homebrew on macOS: every tool comes from mise. Only the system
-    # C compiler and SDK come from the Xcode Command Line Tools.
-    if ! xcode-select -p >/dev/null 2>&1; then
-      echo "✖ Xcode Command Line Tools required for the C compiler (run: xcode-select --install)" >&2
-      exit 1
-    fi
+    # No Homebrew or Xcode Command Line Tools on macOS: every tool comes
+    # from mise (git is installed by the top-level install.sh).
     export PATH="$HOME/.local/bin:$PATH"
     if ! command -v mise >/dev/null 2>&1; then
       echo "✖ mise not found; run the top-level install.sh first" >&2

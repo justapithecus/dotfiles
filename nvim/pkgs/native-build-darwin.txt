@@ -1,6 +1,5 @@
-# mise tool names (the C compiler itself comes from Xcode Command Line Tools)
-conda:make
-conda:pkg-config
-cmake
-ninja
-rust
+# mise tool names for native plugin builds.
+# Intentionally empty on macOS: lua/plugins/no-compile.lua disables the
+# only plugins that compile (nvim-treesitter, telescope-fzf-native), and
+# blink.cmp downloads a prebuilt binary. If you re-enable them, `zig`
+# from mise works as a C compiler without the Xcode Command Line Tools.
