@@ -109,8 +109,8 @@ case "$OS" in
 esac
 
 cat <<'EOF'
-  → First launch: pick the "Parakeet V2" model (English) or "Parakeet V3"
-    (multilingual) when Handy asks.
+  → First launch: pick "Parakeet TDT 0.6B v2" (English) or
+    "Parakeet TDT 0.6B v3" (multilingual) when Handy asks.
 EOF
 if [[ "$OS" == "Darwin" ]]; then
   cat <<'EOF'

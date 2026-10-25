@@ -21,8 +21,17 @@ when a newer release exists.
 
 ## First run
 
-1. Pick a model when Handy asks. **Parakeet V2** (English) or **Parakeet V3**
-   (25 European languages) — accurate, fast, CPU-only.
+1. Pick a model when Handy asks:
+
+   | Model | Use it for |
+   |---|---|
+   | **Parakeet TDT 0.6B v2** (recommended) | English push-to-talk: fastest, near-top accuracy |
+   | Parakeet Unified EN 0.6B | English with live text while you speak (Handy's default pick; slightly slower) |
+   | Parakeet TDT 0.6B v3 | 25 European languages, auto-detected |
+
+   All are NVIDIA Parakeet models (~730 MB), run on the CPU, and write
+   numbers as words ("three", not "3"). Handy's docs call the TDT models
+   "Parakeet V2/V3".
 2. Shortcut: Option+Space on macOS by default; Meta+Shift+V on KDE (installed
    by this script, since Wayland apps can't register global shortcuts).
 
