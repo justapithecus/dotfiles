@@ -629,8 +629,16 @@ def restore(path, stagger):
 
     archive = os.path.join(STATE, "restored-" + time.strftime("%Y%m%d-%H%M%S"))
     tab_dir = os.path.join(archive, "tabs")
+    if " " in tab_dir:
+        # Konsole splits a tabs file's `command:` on every space with no quoting, so a launcher path must not
+        # contain one; fall back to the (user-only, space-free) runtime dir.
+        runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+        tab_dir = os.path.join(runtime, "konsole-session", os.path.basename(archive))
+        if " " in tab_dir:
+            raise RuntimeError(f"no space-free directory for tab launchers ({tab_dir})")
     make_private_dir(STATE)
     make_private_dir(archive)
+    make_private_dir(os.path.dirname(tab_dir))
     make_private_dir(tab_dir)
 
     plan, launched, failed = {}, 0, []
