@@ -1,5 +1,6 @@
-# mise tool names (git comes from Xcode Command Line Tools)
+# mise tool names
 neovim
+conda:git
 ripgrep
 fd
 fzf

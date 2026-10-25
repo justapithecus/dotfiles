@@ -74,10 +74,12 @@ e.g. `bash kitty/install.sh`.
 
 ## macOS without Homebrew
 
-On macOS the installer does not use Homebrew. It needs the Xcode Command
-Line Tools (git, compilers) and installs everything else with
-[mise](https://mise.jdx.dev) into your home directory
-(`~/.config/mise/config.toml` lists the global tools).
+On macOS the installer does not use Homebrew. Every tool, git included,
+is installed with [mise](https://mise.jdx.dev) into your home directory
+(`~/.config/mise/config.toml` lists the global tools), and re-running the
+installer bumps them all to their latest releases. The Xcode Command Line
+Tools are still required for the macOS SDK and C compiler, which nothing
+else can provide. (They also supply the git used for the first clone.)
 
 ---
 

@@ -1,4 +1,6 @@
-# mise tool names (gcc/make come from Xcode Command Line Tools)
+# mise tool names (the C compiler itself comes from Xcode Command Line Tools)
+conda:make
+conda:pkg-config
 cmake
 ninja
 rust

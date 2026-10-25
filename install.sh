@@ -40,8 +40,10 @@ case "$OS" in
     fi
     ;;
   Darwin)
-    # No Homebrew: git and compilers come from the Xcode Command Line
-    # Tools, everything else from mise (prebuilt binaries in $HOME).
+    # No Homebrew: every tool comes from mise (prebuilt binaries in $HOME).
+    # The Xcode Command Line Tools are still required for the one thing
+    # mise can't supply: the macOS SDK and system C toolchain (clang, ld,
+    # headers) that Rust and Neovim plugin builds link against.
     if ! xcode-select -p >/dev/null 2>&1; then
       echo "✖ Xcode Command Line Tools not found — opening installer."
       echo "  Re-run this script once it finishes."
@@ -91,9 +93,13 @@ install_packages() {
         curl -fsSL https://mise.run | sh
       fi
       # Writes ~/.config/mise/config.toml so the tools are global.
+      # git/make/pkg-config have no aqua builds; conda-forge has them prebuilt.
       mise use -g -y \
         starship fzf bat eza ripgrep zoxide \
-        node@lts tmux yq gh
+        node tmux yq gh \
+        conda:git conda:make conda:pkg-config
+      # Re-runs bump every tool to its newest release.
+      mise upgrade -y
       ;;
   esac
 }

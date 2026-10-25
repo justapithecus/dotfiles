@@ -15,13 +15,11 @@ for _dir in "$HOME/go/bin" "$HOME/.local/bin"; do
 done
 unset _dir
 
-# mise shims — so mise-installed tools (nvim, rg, ...) also resolve in
-# non-interactive shells, which skip `mise activate` in .zshrc
-_mise_shims="${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims"
-if [ -d "$_mise_shims" ]; then
-  export PATH="$_mise_shims:$PATH"
+# mise shims — in every zsh mode, so mise-installed tools (nvim, rg,
+# starship, ...) also resolve in non-interactive shells
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh --shims)"
 fi
-unset _mise_shims
 
 # npm user-local global binaries (for tools like codex reviewer)
 if [ -d "$HOME/.npm-global/bin" ]; then

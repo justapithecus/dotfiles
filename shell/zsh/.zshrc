@@ -25,9 +25,8 @@ fi
 # ------------------------------------------------------------------------------
 # Prompt & tool initialization (interactive only)
 # ------------------------------------------------------------------------------
+# (mise is activated in env.zsh, so mise-installed starship/zoxide resolve)
 if [[ -o interactive ]]; then
-  # mise first: on macOS starship and zoxide are installed through it
-  eval "$(mise activate zsh --shims)"
   eval "$(starship init zsh)"
   eval "$(zoxide init zsh)"
 fi

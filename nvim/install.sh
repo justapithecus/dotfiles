@@ -67,10 +67,10 @@ case "$PLATFORM" in
     sudo zypper -n in "${PKGS[@]}"
     ;;
   darwin)
-    # No Homebrew on macOS: tools come from mise, git and compilers
-    # (gcc/make) from the Xcode Command Line Tools.
+    # No Homebrew on macOS: every tool comes from mise. Only the system
+    # C compiler and SDK come from the Xcode Command Line Tools.
     if ! xcode-select -p >/dev/null 2>&1; then
-      echo "✖ Xcode Command Line Tools required (run: xcode-select --install)" >&2
+      echo "✖ Xcode Command Line Tools required for the C compiler (run: xcode-select --install)" >&2
       exit 1
     fi
     export PATH="$HOME/.local/bin:$PATH"
@@ -79,7 +79,7 @@ case "$PLATFORM" in
       exit 1
     fi
     mise use -g -y "${PKGS[@]}"
-    export PATH="${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:$PATH"
+    eval "$(mise activate bash --shims)"
     ;;
 esac
 
