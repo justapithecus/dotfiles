@@ -72,9 +72,16 @@ install_macos() {
   [[ $'\n'"$sig"$'\n' == *$'\n'"TeamIdentifier=$HANDY_TEAM_ID"$'\n'* ]] \
     || { echo "✖ Handy.app is not signed by team $HANDY_TEAM_ID" >&2; exit 1; }
 
+  # Copy next to the existing app first, so a failed copy leaves the old
+  # install untouched; then swap.
+  local staged="$app.new" old="$app.old"
+  rm -rf "$staged" "$old"
+  ditto "$MNT/Handy.app" "$staged"
+
   osascript -e 'quit app "Handy"' >/dev/null 2>&1 || true
-  rm -rf "$app"
-  ditto "$MNT/Handy.app" "$app"
+  if [[ -d "$app" ]]; then mv "$app" "$old"; fi
+  mv "$staged" "$app"
+  rm -rf "$old"
   echo "  ✔ Handy $VERSION installed to $app"
 }
 
