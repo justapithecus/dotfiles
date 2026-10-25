@@ -59,10 +59,25 @@ This directory is editor-specific and intentionally isolated from shell logic.
 Terminal emulator configuration.
 
 Typical contents:
-- Konsole profiles
+- Ghostty, Kitty, and Konsole configs (`ghostty/`, `kitty/`, `konsole/`)
 - terminal appearance and behavior settings
 
 This directory affects how terminals look and behave, not what they execute.
+
+`./install.sh` installs one terminal config. Choose it with
+`--terminal=ghostty|kitty|konsole|none` or `DOTFILES_TERMINAL=...`;
+otherwise it uses Konsole on Linux and, on macOS, Ghostty if installed,
+then Kitty. To switch later, run that terminal's installer directly,
+e.g. `bash kitty/install.sh`.
+
+---
+
+## macOS without Homebrew
+
+On macOS the installer does not use Homebrew. It needs the Xcode Command
+Line Tools (git, compilers) and installs everything else with
+[mise](https://mise.jdx.dev) into your home directory
+(`~/.config/mise/config.toml` lists the global tools).
 
 ---
 

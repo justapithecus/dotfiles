@@ -4,6 +4,27 @@ set -euo pipefail
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 
+usage() {
+  cat <<'USAGE'
+Usage: ./install.sh [--terminal=ghostty|kitty|konsole|none]
+
+  --terminal=NAME  Terminal config to install. Also settable with
+                   DOTFILES_TERMINAL=NAME. Default: auto-detect
+                   (Linux: konsole; macOS: ghostty, else kitty).
+USAGE
+}
+
+TERMINAL_CHOICE="${DOTFILES_TERMINAL:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --terminal=*) TERMINAL_CHOICE="${1#*=}" ;;
+    --terminal)   shift; TERMINAL_CHOICE="${1:-}" ;;
+    -h|--help)    usage; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
+  esac
+  shift
+done
+
 echo "▶ Dotfiles bootstrap starting..."
 
 # ----------------------------
@@ -19,12 +40,15 @@ case "$OS" in
     fi
     ;;
   Darwin)
-    if command -v brew >/dev/null 2>&1; then
-      PM="brew"
-    else
-      echo "✖ Homebrew not found — install from https://brew.sh"
+    # No Homebrew: git and compilers come from the Xcode Command Line
+    # Tools, everything else from mise (prebuilt binaries in $HOME).
+    if ! xcode-select -p >/dev/null 2>&1; then
+      echo "✖ Xcode Command Line Tools not found — opening installer."
+      echo "  Re-run this script once it finishes."
+      xcode-select --install || true
       exit 1
     fi
+    PM="mise"
     ;;
   *)
     echo "✖ Unsupported OS: $OS"
@@ -60,10 +84,16 @@ install_packages() {
         zsh starship fzf bat eza ripgrep zoxide git-core mise \
         nodejs tmux yq
       ;;
-    brew)
-      brew install \
-        starship fzf bat eza ripgrep zoxide git mise \
-        node tmux yq gh
+    mise)
+      export PATH="$HOME/.local/bin:$PATH"
+      if ! command -v mise >/dev/null 2>&1; then
+        echo "▶ Installing mise to ~/.local/bin"
+        curl -fsSL https://mise.run | sh
+      fi
+      # Writes ~/.config/mise/config.toml so the tools are global.
+      mise use -g -y \
+        starship fzf bat eza ripgrep zoxide \
+        node@lts tmux yq gh
       ;;
   esac
 }
@@ -111,13 +141,37 @@ bash "$DOTFILES_DIR/fonts/install.sh"
 # ----------------------------
 # Terminal (platform-specific)
 # ----------------------------
-if [[ "$OS" == "Linux" ]]; then
-  echo "▶ Installing Konsole Profile"
-  bash "$DOTFILES_DIR/konsole/install.sh"
-elif [[ "$OS" == "Darwin" ]]; then
-  echo "▶ Installing Kitty Config"
-  bash "$DOTFILES_DIR/kitty/install.sh"
-fi
+# Pick one with --terminal / DOTFILES_TERMINAL, or let it auto-detect.
+# To switch later, run that terminal's installer on its own,
+# e.g. `bash kitty/install.sh` or `bash ghostty/install.sh`.
+detect_terminal() {
+  if [[ "$OS" == "Linux" ]]; then
+    echo konsole
+  elif [[ -d /Applications/Ghostty.app || -d "$HOME/Applications/Ghostty.app" ]] \
+       || command -v ghostty >/dev/null 2>&1; then
+    echo ghostty
+  elif [[ -d /Applications/kitty.app || -d "$HOME/Applications/kitty.app" ]] \
+       || command -v kitty >/dev/null 2>&1; then
+    echo kitty
+  else
+    echo ghostty
+  fi
+}
+
+TERMINAL_CHOICE="${TERMINAL_CHOICE:-$(detect_terminal)}"
+case "$TERMINAL_CHOICE" in
+  ghostty|kitty|konsole)
+    echo "▶ Installing $TERMINAL_CHOICE config"
+    bash "$DOTFILES_DIR/$TERMINAL_CHOICE/install.sh"
+    ;;
+  none)
+    echo "▶ Skipping terminal config"
+    ;;
+  *)
+    echo "✖ Unknown terminal: $TERMINAL_CHOICE (expected ghostty, kitty, konsole, none)" >&2
+    exit 2
+    ;;
+esac
 
 # ----------------------------
 # Git Config defaults

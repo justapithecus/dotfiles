@@ -67,7 +67,19 @@ case "$PLATFORM" in
     sudo zypper -n in "${PKGS[@]}"
     ;;
   darwin)
-    brew install "${PKGS[@]}"
+    # No Homebrew on macOS: tools come from mise, git and compilers
+    # (gcc/make) from the Xcode Command Line Tools.
+    if ! xcode-select -p >/dev/null 2>&1; then
+      echo "✖ Xcode Command Line Tools required (run: xcode-select --install)" >&2
+      exit 1
+    fi
+    export PATH="$HOME/.local/bin:$PATH"
+    if ! command -v mise >/dev/null 2>&1; then
+      echo "✖ mise not found; run the top-level install.sh first" >&2
+      exit 1
+    fi
+    mise use -g -y "${PKGS[@]}"
+    export PATH="${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:$PATH"
     ;;
 esac
 

@@ -1,6 +1,4 @@
-gcc
-make
+# mise tool names (gcc/make come from Xcode Command Line Tools)
 cmake
 ninja
-pkgconf
 rust
