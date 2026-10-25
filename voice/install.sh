@@ -44,7 +44,13 @@ fetch_asset() {
 }
 
 install_macos() {
-  local app="/Applications/Handy.app" current="" dmg
+  # /Applications needs an admin account; fall back to ~/Applications.
+  local app_dir="/Applications" current="" dmg
+  if [[ ! -w "$app_dir" ]]; then
+    app_dir="$HOME/Applications"
+    mkdir -p "$app_dir"
+  fi
+  local app="$app_dir/Handy.app"
   if [[ -d "$app" ]]; then
     current="$(defaults read "$app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || true)"
   fi
