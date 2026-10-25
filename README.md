@@ -14,11 +14,10 @@ work with AI assistants.
 dotfiles/
 ├── ai/          # AI prompts, roles, and agent tooling
 ├── shell/       # Shell configuration and environment setup
-├── editor/      # Editor configuration (Neovim, Helix, etc.)
-├── terminal/    # Terminal emulator configuration
-├── scripts/     # Miscellaneous human-facing scripts
+├── editor/      # Editor configuration (nvim/)
+├── terminal/    # Terminal emulator configuration (ghostty/, kitty/, konsole/)
 ├── fonts/       # Font assets
-└── ...
+└── voice/       # Speech-to-text input
 ```
 
 Each top-level directory has a distinct responsibility. The intent is to keep
@@ -46,7 +45,7 @@ This directory defines how commands execute and how the environment behaves.
 Editor configuration.
 
 Typical contents:
-- Neovim or Helix configuration
+- Neovim configuration (`nvim/`, built on LazyVim)
 - editor-specific keybindings
 - editor plugins and settings
 
@@ -59,7 +58,7 @@ This directory is editor-specific and intentionally isolated from shell logic.
 Terminal emulator configuration.
 
 Typical contents:
-- Ghostty, Kitty, and Konsole configs (`ghostty/`, `kitty/`, `konsole/`)
+- Ghostty, Kitty, and Konsole configs (`terminal/ghostty/`, `terminal/kitty/`, `terminal/konsole/`)
 - terminal appearance and behavior settings
 
 This directory affects how terminals look and behave, not what they execute.
@@ -68,7 +67,7 @@ This directory affects how terminals look and behave, not what they execute.
 `--terminal=ghostty|kitty|konsole|none` or `DOTFILES_TERMINAL=...`;
 otherwise it uses Konsole on Linux and, on macOS, Ghostty if installed,
 then Kitty. To switch later, run that terminal's installer directly,
-e.g. `bash kitty/install.sh`.
+e.g. `bash terminal/kitty/install.sh`.
 
 ---
 
@@ -95,20 +94,6 @@ git clone git@github.com:justapithecus/dotfiles ~/workspace/justapithecus/dotfil
 ~/workspace/justapithecus/dotfiles/install.sh   # re-point AI tooling at the clone
 rm -rf dotfiles-main
 ```
-
----
-
-## `scripts/`
-
-Human-facing scripts and helpers.
-
-Typical contents:
-- ad-hoc workflow helpers
-- system utilities
-- personal glue scripts
-
-Scripts here are meant to be run directly by a human. Scripts that primarily
-exist to support AI workflows live under `ai/` instead.
 
 ---
 
