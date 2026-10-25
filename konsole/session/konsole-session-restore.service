@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore Konsole windows, tabs, and agent conversations saved by konsole-session
+# Pulled in by the autostart target, not plasma-workspace.target: plasma-restoresession.service is ordered after
+# plasma-workspace.target, so wanting this unit from there is an ordering cycle and systemd drops the job.
+After=plasma-restoresession.service app-org.kde.plasma\x2dfallback\x2dsession\x2drestore@autostart.service
+After=plasma-kwin_x11.service plasma-kwin_wayland.service plasma-plasmashell.service
+ConditionPathExists=%S/konsole-session/snapshot.json
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/konsole-session restore
+TimeoutStartSec=300
+
+[Install]
+WantedBy=xdg-desktop-autostart.target
