@@ -380,7 +380,12 @@ def save(path):
             })
 
     windows.sort(key=lambda w: (w["placement"] or {}).get("desktops") or [99])
-    make_private_dir(os.path.dirname(path))
+    # Only tighten our own state dir; a caller-chosen directory keeps its permissions (the file itself is still
+    # created 0600 by the umask set in main).
+    if os.path.dirname(path) == STATE:
+        make_private_dir(STATE)
+    else:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path + ".tmp", "w") as f:
         json.dump({"savedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "windows": windows}, f, indent=2)
     os.replace(path + ".tmp", path)
