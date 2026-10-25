@@ -121,6 +121,12 @@ mkdir -p ~/.config/{zsh,nvim,helix,starship}
 bash "$DOTFILES_DIR/shell/install.sh"
 
 # ----------------------------
+# Tmux
+# ----------------------------
+echo "▶ Installing Tmux config"
+bash "$DOTFILES_DIR/shell/tmux/install.sh"
+
+# ----------------------------
 # Set default shell (Linux only — macOS defaults to zsh)
 # ----------------------------
 if [[ "$OS" == "Linux" && "$SHELL" != *zsh ]]; then
@@ -198,6 +204,12 @@ bash "$DOTFILES_DIR/nvim/install.sh" --backup --native --yes
 # ----------------------------
 echo "▶ Installing AI Tooling"
 bash "$DOTFILES_DIR/ai/install.sh"
+
+# ----------------------------
+# Voice input
+# ----------------------------
+echo "▶ Installing Voice input"
+bash "$DOTFILES_DIR/voice/install.sh"
 
 # ----------------------------
 # Final message
