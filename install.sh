@@ -113,7 +113,7 @@ install_packages
 # Create config dirs
 # ----------------------------
 echo "▶ Creating config directories"
-mkdir -p ~/.config/{zsh,nvim,helix,starship}
+mkdir -p ~/.config/{zsh,nvim,starship}
 
 # ----------------------------
 # Zsh (ZDOTDIR-based layout)

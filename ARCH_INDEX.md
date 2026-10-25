@@ -22,7 +22,7 @@ Maintenance rule:
 - `AGENTS.md` — behavioral expectations (also read by Codex)
 - `README.md` — repository overview and navigational entrypoint
 - `.gitignore` — git exclusions
-- miscellaneous dotfiles — tool- or editor-specific entrypoints
+- `install.sh` — bootstrap installer; dispatches to each directory's `install.sh`
 
 ---
 
@@ -70,23 +70,13 @@ Rules:
 
 ---
 
-## scripts/
+## nvim/
 
-Human-facing utilities.
-
-Rule:
-If a script exists primarily to improve AI workflows or parse agent output,
-it belongs in `ai/tools/`, not here.
+Neovim configuration (LazyVim starter + overlay).
 
 ---
 
-## editor/
-
-Editor configuration (Neovim, Helix, etc.).
-
----
-
-## terminal/
+## ghostty/, kitty/, konsole/
 
 Terminal emulator configuration. Each terminal lives in its own top-level
 directory with a standalone `install.sh`:

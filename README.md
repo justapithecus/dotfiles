@@ -14,11 +14,12 @@ work with AI assistants.
 dotfiles/
 ├── ai/          # AI prompts, roles, and agent tooling
 ├── shell/       # Shell configuration and environment setup
-├── editor/      # Editor configuration (Neovim, Helix, etc.)
-├── terminal/    # Terminal emulator configuration
-├── scripts/     # Miscellaneous human-facing scripts
+├── nvim/        # Neovim (LazyVim) configuration
+├── ghostty/     # Terminal emulator configuration (one dir per terminal)
+├── kitty/
+├── konsole/
 ├── fonts/       # Font assets
-└── ...
+└── voice/       # Speech-to-text input
 ```
 
 Each top-level directory has a distinct responsibility. The intent is to keep
@@ -41,26 +42,25 @@ This directory defines how commands execute and how the environment behaves.
 
 ---
 
-## `editor/`
+## `nvim/`
 
-Editor configuration.
+Neovim configuration, built on LazyVim.
 
 Typical contents:
-- Neovim or Helix configuration
-- editor-specific keybindings
+- LazyVim starter overlay and keybindings
 - editor plugins and settings
 
 This directory is editor-specific and intentionally isolated from shell logic.
 
 ---
 
-## `terminal/`
+## `ghostty/`, `kitty/`, `konsole/`
 
-Terminal emulator configuration.
+Terminal emulator configuration, one top-level directory per terminal.
 
 Typical contents:
-- Ghostty, Kitty, and Konsole configs (`ghostty/`, `kitty/`, `konsole/`)
-- terminal appearance and behavior settings
+- terminal config and color schemes
+- a standalone `install.sh` per terminal
 
 This directory affects how terminals look and behave, not what they execute.
 
@@ -95,20 +95,6 @@ git clone git@github.com:justapithecus/dotfiles ~/workspace/justapithecus/dotfil
 ~/workspace/justapithecus/dotfiles/install.sh   # re-point AI tooling at the clone
 rm -rf dotfiles-main
 ```
-
----
-
-## `scripts/`
-
-Human-facing scripts and helpers.
-
-Typical contents:
-- ad-hoc workflow helpers
-- system utilities
-- personal glue scripts
-
-Scripts here are meant to be run directly by a human. Scripts that primarily
-exist to support AI workflows live under `ai/` instead.
 
 ---
 
