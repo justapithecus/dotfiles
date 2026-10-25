@@ -70,16 +70,19 @@ Rules:
 
 ---
 
-## nvim/
+## editor/
 
-Neovim configuration (LazyVim starter + overlay).
+Editor configuration.
+
+Contents:
+- `nvim/` — Neovim (LazyVim starter + overlay)
 
 ---
 
-## ghostty/, kitty/, konsole/
+## terminal/
 
-Terminal emulator configuration. Each terminal lives in its own top-level
-directory with a standalone `install.sh`:
+Terminal emulator configuration. Each terminal lives in its own
+subdirectory with a standalone `install.sh`:
 - `ghostty/` — macOS default
 - `kitty/` — macOS alternative
 - `konsole/` — Linux default

@@ -14,10 +14,8 @@ work with AI assistants.
 dotfiles/
 ├── ai/          # AI prompts, roles, and agent tooling
 ├── shell/       # Shell configuration and environment setup
-├── nvim/        # Neovim (LazyVim) configuration
-├── ghostty/     # Terminal emulator configuration (one dir per terminal)
-├── kitty/
-├── konsole/
+├── editor/      # Editor configuration (nvim/)
+├── terminal/    # Terminal emulator configuration (ghostty/, kitty/, konsole/)
 ├── fonts/       # Font assets
 └── voice/       # Speech-to-text input
 ```
@@ -42,25 +40,26 @@ This directory defines how commands execute and how the environment behaves.
 
 ---
 
-## `nvim/`
+## `editor/`
 
-Neovim configuration, built on LazyVim.
+Editor configuration.
 
 Typical contents:
-- LazyVim starter overlay and keybindings
+- Neovim configuration (`nvim/`, built on LazyVim)
+- editor-specific keybindings
 - editor plugins and settings
 
 This directory is editor-specific and intentionally isolated from shell logic.
 
 ---
 
-## `ghostty/`, `kitty/`, `konsole/`
+## `terminal/`
 
-Terminal emulator configuration, one top-level directory per terminal.
+Terminal emulator configuration.
 
 Typical contents:
-- terminal config and color schemes
-- a standalone `install.sh` per terminal
+- Ghostty, Kitty, and Konsole configs (`terminal/ghostty/`, `terminal/kitty/`, `terminal/konsole/`)
+- terminal appearance and behavior settings
 
 This directory affects how terminals look and behave, not what they execute.
 
@@ -68,7 +67,7 @@ This directory affects how terminals look and behave, not what they execute.
 `--terminal=ghostty|kitty|konsole|none` or `DOTFILES_TERMINAL=...`;
 otherwise it uses Konsole on Linux and, on macOS, Ghostty if installed,
 then Kitty. To switch later, run that terminal's installer directly,
-e.g. `bash kitty/install.sh`.
+e.g. `bash terminal/kitty/install.sh`.
 
 ---
 

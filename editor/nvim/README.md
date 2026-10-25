@@ -12,7 +12,7 @@ LazyVim-based Neovim configuration with local customizations.
 ## Install
 
 ```sh
-./nvim/install.sh --backup --yes
+./editor/nvim/install.sh --backup --yes
 ```
 
 Options:
