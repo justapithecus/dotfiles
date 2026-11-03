@@ -328,7 +328,7 @@ On squash merge, the PR body becomes the commit body.
 Required sections:
 - `## Summary` — 1–3 sentences explaining what and why
 - `## Highlights` — 3–6 bullets covering key changes (optional for small changes)
-- `## Test plan` — checkboxes for verification steps
+- `## Test Plan` — checkboxes for verification steps
 
 Optional sections (include only when applicable):
 - `## Breaking Changes`
