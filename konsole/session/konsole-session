@@ -86,10 +86,13 @@ def proc_argv(pid):
 
 
 def proc_cwd(pid):
+    """The process's working directory. Linux appends " (deleted)" to the link when the directory was removed
+    (a worktree cleaned up under a running agent), so that suffix is stripped to keep the real path."""
     try:
-        return os.readlink(f"/proc/{pid}/cwd")
+        cwd = os.readlink(f"/proc/{pid}/cwd")
     except OSError:
         return None
+    return cwd.removesuffix(" (deleted)") if not os.path.isdir(cwd) else cwd
 
 
 def proc_comm(pid):
@@ -288,7 +291,9 @@ def tab_command(shell_pid, fg_pid, shell_cwd):
         try:
             with open(os.path.join(config, "sessions", f"{fg_pid}.json")) as f:
                 info = json.load(f)
-            session_cwd = info.get("cwd") if os.path.isdir(info.get("cwd") or "") else cwd
+            # Claude Code files a conversation under the directory it started in, and `--resume` looks only there,
+            # so that directory is kept even when it no longer exists; the launcher recreates it.
+            session_cwd = info.get("cwd") or cwd
             return (strip_resume_flags(argv) + ["--resume", info["sessionId"]], session_cwd,
                     info.get("updatedAt", 0) / 1000, None)
         except (OSError, KeyError, ValueError):
@@ -498,7 +503,12 @@ def write_tab_launcher(path, tab, deadline):
     spacing however long earlier windows took to open."""
     shell, script_shell = launcher_shells()
     command = " ".join(shlex.quote(a) for a in tab["command"])
-    if tab["commandCwd"] and tab["commandCwd"] != tab["cwd"]:
+    run_dir = tab["commandCwd"] or tab["cwd"]
+    if os.path.basename(tab["command"][0]).startswith("claude"):
+        # `--resume` finds a conversation only from the directory it was filed under, and that directory may be
+        # gone (a worktree removed after its branch merged); recreate it empty so the conversation still resumes.
+        command = f"(mkdir -p -- {shlex.quote(run_dir)} && cd -- {shlex.quote(run_dir)} && exec {command})"
+    elif tab["commandCwd"] and tab["commandCwd"] != tab["cwd"]:
         command = f"(cd -- {shlex.quote(tab['commandCwd'])} && exec {command})"
     label = " ".join(tab["command"][:3]).replace("\n", " ")[:60]
     skipped = f"konsole-session: skipped {label}; to run it now: KONSOLE_SESSION_DELAY=0 {path}"
