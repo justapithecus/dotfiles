@@ -22,7 +22,7 @@ Maintenance rule:
 - `AGENTS.md` — behavioral expectations (also read by Codex)
 - `README.md` — repository overview and navigational entrypoint
 - `.gitignore` — git exclusions
-- miscellaneous dotfiles — tool- or editor-specific entrypoints
+- `install.sh` — bootstrap installer; dispatches to each directory's `install.sh`
 
 ---
 
@@ -70,26 +70,19 @@ Rules:
 
 ---
 
-## scripts/
-
-Human-facing utilities.
-
-Rule:
-If a script exists primarily to improve AI workflows or parse agent output,
-it belongs in `ai/tools/`, not here.
-
----
-
 ## editor/
 
-Editor configuration (Neovim, Helix, etc.).
+Editor configuration.
+
+Contents:
+- `nvim/` — Neovim (LazyVim starter + overlay)
 
 ---
 
 ## terminal/
 
-Terminal emulator configuration. Each terminal lives in its own top-level
-directory with a standalone `install.sh`:
+Terminal emulator configuration. Each terminal lives in its own
+subdirectory with a standalone `install.sh`:
 - `ghostty/` — macOS default
 - `kitty/` — macOS alternative
 - `konsole/` — Linux default
@@ -118,19 +111,6 @@ Contents:
   (macOS `.dmg`, Linux `.rpm`)
 - `kde/` — KDE global shortcut for `handy --toggle-transcription`
   (Wayland apps can't register their own)
-
----
-
-## tools/
-
-Standalone tooling that lives outside the AI substrate.
-
-Contents:
-- `gastown/` — installer and env wiring for [Gas Town](https://github.com/steveyegge/gastown) multi-agent workspace manager
-
-Rules:
-- Installation is explicit and user-controlled
-- Each tool manages its own install script and env integration
 
 ---
 

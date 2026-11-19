@@ -7,7 +7,7 @@ setopt autocd
 setopt correct
 setopt extendedglob
 
-# go binaries and local tools — gastown (gt), beads (bd), etc.
+# go binaries and local tools
 for _dir in "$HOME/go/bin" "$HOME/.local/bin"; do
   if [ -d "$_dir" ]; then
     export PATH="$_dir:$PATH"

@@ -113,7 +113,7 @@ install_packages
 # Create config dirs
 # ----------------------------
 echo "▶ Creating config directories"
-mkdir -p ~/.config/{zsh,nvim,helix,starship}
+mkdir -p ~/.config/{zsh,nvim,starship}
 
 # ----------------------------
 # Zsh (ZDOTDIR-based layout)
@@ -158,7 +158,7 @@ bash "$DOTFILES_DIR/fonts/install.sh"
 # ----------------------------
 # Pick one with --terminal / DOTFILES_TERMINAL, or let it auto-detect.
 # To switch later, run that terminal's installer on its own,
-# e.g. `bash kitty/install.sh` or `bash ghostty/install.sh`.
+# e.g. `bash terminal/kitty/install.sh` or `bash terminal/ghostty/install.sh`.
 detect_terminal() {
   if [[ "$OS" == "Linux" ]]; then
     echo konsole
@@ -177,7 +177,7 @@ TERMINAL_CHOICE="${TERMINAL_CHOICE:-$(detect_terminal)}"
 case "$TERMINAL_CHOICE" in
   ghostty|kitty|konsole)
     echo "▶ Installing $TERMINAL_CHOICE config"
-    bash "$DOTFILES_DIR/$TERMINAL_CHOICE/install.sh"
+    bash "$DOTFILES_DIR/terminal/$TERMINAL_CHOICE/install.sh"
     ;;
   none)
     echo "▶ Skipping terminal config"
@@ -197,7 +197,7 @@ git config --global push.autoSetupRemote true
 # Neovim (LazyVim)
 # ----------------------------
 echo "▶ Installing Neovim (LazyVim)"
-bash "$DOTFILES_DIR/nvim/install.sh" --backup --native --yes
+bash "$DOTFILES_DIR/editor/nvim/install.sh" --backup --native --yes
 
 # ----------------------------
 # AI Tooling
