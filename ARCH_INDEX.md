@@ -90,6 +90,9 @@ subdirectory with a standalone `install.sh`:
 Root `install.sh` picks one via `--terminal=` / `DOTFILES_TERMINAL`,
 otherwise auto-detects.
 
+Contents:
+- `konsole/session/` — save/restore Konsole windows, tabs, and the agent conversations in them across restarts (openSUSE Tumbleweed + KDE Plasma 6 only; installed separately)
+
 ---
 
 ## fonts/
