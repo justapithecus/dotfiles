@@ -229,6 +229,34 @@ def strip_resume_flags(argv):
     return out
 
 
+def has_saved_name(command):
+    """Whether the conversation `command` resumes already has a name. /rename and the resume picker name a
+    conversation without touching its arguments; Claude Code records every name as a custom-title transcript entry."""
+    i = command.index("--resume")
+    session_id = command[i + 1] if i + 1 < len(command) else ""
+    if not UUID_RE.fullmatch(session_id):
+        return False
+    projects = os.path.join(claude_config_dir(os.path.basename(command[0])), "projects")
+    for transcript in glob.glob(os.path.join(projects, "*", session_id + ".jsonl")):
+        with open(transcript, errors="replace") as fh:
+            if any('"type":"custom-title"' in line for line in fh):
+                return True
+    return False
+
+
+def with_session_name(command, title):
+    """Name a resumed Claude Code conversation after its tab, so it shows under that name in the /resume picker and
+    `claude --resume <name>` finds it if the tab ever fails to come back. A name the session already has is kept,
+    whether it came from --name, /rename or the resume picker."""
+    if not command or not os.path.basename(command[0]).startswith("claude") or "--resume" not in command:
+        return command
+    if any(a in ("-n", "--name") or a.startswith("--name=") for a in command) or has_saved_name(command):
+        return command
+    # Konsole leaves a title format's unexpanded %-placeholders in the title ("bosun (claude@%H)"); drop those words.
+    name = " ".join(w for w in title.split() if "%" not in w)
+    return command + ["--name", name] if name else command
+
+
 def claude_config_dir(program):
     """`claude` honours $CLAUDE_CONFIG_DIR; wrappers around Claude Code keep their state in ~/.<wrapper name>."""
     if program == "claude":
@@ -363,8 +391,10 @@ def save(path):
                 cwd = proc_cwd(shell_pid) or os.path.expanduser("~")
                 command, command_cwd, last_active, note = tab_command(
                     shell_pid, int(qdbus(svc, sp, "foregroundProcessId")), cwd)
+                title = qdbus(svc, sp, "title", 1)
+                command = with_session_name(command, title)
                 tabs.append({
-                    "title": qdbus(svc, sp, "title", 1),
+                    "title": title,
                     "localTitleFormat": qdbus(svc, sp, "tabTitleFormat", 0),
                     "remoteTitleFormat": qdbus(svc, sp, "tabTitleFormat", 1),
                     "tabColor": qdbus(svc, sp, "tabColor"),
