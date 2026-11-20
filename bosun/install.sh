@@ -17,7 +17,14 @@ if [[ -z "${GITHUB_TOKEN:-}${MISE_GITHUB_TOKEN:-}" ]] && command -v gh >/dev/nul
   GITHUB_TOKEN="$(gh auth token 2>/dev/null || true)"
   [[ -n "$GITHUB_TOKEN" ]] && export GITHUB_TOKEN
 fi
+if [[ -z "${GITHUB_TOKEN:-}${MISE_GITHUB_TOKEN:-}" ]]; then
+  echo "✖ No GitHub token: set GITHUB_TOKEN, or install gh and run 'gh auth login'" >&2
+  exit 1
+fi
 
+# Global on purpose: a repository mise.toml pin would make every clone of this
+# public repository fetch a private release, and Bosun's agent hooks run in
+# every repository, not just this one.
 echo "▶ Installing Bosun $BOSUN_VERSION via mise (global)"
 if ! mise use -g -y "github:pithecene/bosun@$BOSUN_VERSION"; then
   echo "✖ Could not install Bosun. The GitHub token must be able to read pithecene/bosun." >&2
