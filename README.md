@@ -3,16 +3,12 @@
 This repository contains my personal dotfiles: shell, editor, terminal, and
 supporting scripts used on my development machines.
 
-It also contains an `ai/` directory, which houses prompts and tooling I use to
-work with AI assistants.
-
 ---
 
 ## Repository Layout
 
 ```
 dotfiles/
-├── ai/          # AI prompts, roles, and agent tooling
 ├── shell/       # Shell configuration and environment setup
 ├── editor/      # Editor configuration (nvim/)
 ├── terminal/    # Terminal emulator configuration (ghostty/, kitty/, konsole/)
@@ -92,7 +88,6 @@ curl -fsSL https://github.com/justapithecus/dotfiles/archive/main.tar.gz | tar x
 ./dotfiles-main/install.sh
 # new shell: git now comes from mise
 git clone git@github.com:justapithecus/dotfiles ~/workspace/justapithecus/dotfiles
-~/workspace/justapithecus/dotfiles/install.sh   # re-point AI tooling at the clone
 rm -rf dotfiles-main
 ```
 
@@ -113,25 +108,9 @@ a repository's development process. Its releases are private, so
 
 ---
 
-## `ai/`
-
-AI-related prompts, roles, context, and tooling.
-
-This directory exists to support how I work with AI assistants. It contains:
-- prompt fragments
-- role definitions
-- persistent context files
-- small tools used alongside agents
-
-The internal structure of `ai/` is documented for agents in
-[`ARCH_INDEX.md`](./ARCH_INDEX.md).
-
----
-
 ## Notes
 
 - This repository is personal and opinionated.
 - It is not intended to be a reusable dotfiles template.
 - Structure matters more than polish.
-- Intent is to facilitate AI to continuously bootstrap and augment itself further.
 

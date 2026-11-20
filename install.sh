@@ -204,12 +204,6 @@ echo "▶ Installing Neovim (LazyVim)"
 bash "$DOTFILES_DIR/editor/nvim/install.sh" --backup --native --yes
 
 # ----------------------------
-# AI Tooling
-# ----------------------------
-echo "▶ Installing AI Tooling"
-bash "$DOTFILES_DIR/ai/install.sh"
-
-# ----------------------------
 # Bosun (opt-in: private releases)
 # ----------------------------
 if [[ "$WITH_BOSUN" == "1" ]]; then

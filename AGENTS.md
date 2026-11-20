@@ -3,7 +3,7 @@
 This repository is a dotfiles and tooling repository.
 
 Characteristics:
-- Multiple independent subtrees (shell, nvim, ai, scripts, etc.)
+- Multiple independent subtrees (shell, editor, terminal, fonts, voice, bosun)
 - Not a single application
 - Focus on developer environment, not runtime behavior
 - No deployment target
@@ -18,7 +18,6 @@ Guidelines for agents:
 - Do not assume a build system
 - Do not assume an application life-cycle
 - Treat subdirectories as largely independent
-- Prefer explanation and planning over code generation
 - Never create symlinks (copies only — symlinks break on branch switch)
 
 Git workflow:
@@ -30,7 +29,4 @@ Git workflow:
 Private tooling:
 - Bosun is optional; nothing may require it, and the default install never
   installs it (`--with-bosun` / `DOTFILES_BOSUN=1` opts in)
-
-When unsure:
-- Ask for clarification rather than guessing
 
