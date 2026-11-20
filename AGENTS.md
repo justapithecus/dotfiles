@@ -24,7 +24,12 @@ Guidelines for agents:
 Git workflow:
 - Always use git worktrees for implementation work, never work in the
   main checkout directly
-- Worktree naming: `${repo-name}-${suffix}` as a sibling directory
+- Worktree location: a sibling `${repo-name}-${suffix}` directory, or
+  `.claude/worktrees/` when started with `bosun worktree`
+
+Private tooling:
+- Bosun is optional; nothing may require it, and the default install never
+  installs it (`--with-bosun` / `DOTFILES_BOSUN=1` opts in)
 
 When unsure:
 - Ask for clarification rather than guessing
