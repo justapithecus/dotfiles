@@ -1,0 +1,8 @@
+# Bosun is optional here (see bosun/README.md). Without it, this file has no effect.
+version: 1
+branches:
+  pattern: "{user}/{type}/{scope}/{slug}"
+  worktrees: .claude/worktrees
+# Dotfiles prose predates the Pithecene prose contract.
+prose:
+  enabled: false

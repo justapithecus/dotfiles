@@ -208,3 +208,13 @@ alias aik="ai-check"
 alias ais="ai-skill"
 alias ail="ai-list"
 alias aix="ai-patch"
+
+# ==========================================================
+# bosun: development process (opt-in, see bosun/README.md)
+# ==========================================================
+if command -v bosun >/dev/null 2>&1; then
+  alias bow="bosun worktree"
+  alias bok="bosun check"
+  alias bor="bosun run"
+  alias bos="bosun submit"
+fi
