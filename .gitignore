@@ -1,2 +1,4 @@
 ai/out/
 __pycache__/
+.bosun/
+.claude/worktrees/

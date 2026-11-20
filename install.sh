@@ -6,19 +6,23 @@ OS="$(uname -s)"
 
 usage() {
   cat <<'USAGE'
-Usage: ./install.sh [--terminal=ghostty|kitty|konsole|none]
+Usage: ./install.sh [--terminal=ghostty|kitty|konsole|none] [--with-bosun]
 
   --terminal=NAME  Terminal config to install. Also settable with
                    DOTFILES_TERMINAL=NAME. Default: auto-detect
                    (Linux: konsole; macOS: ghostty, else kitty).
+  --with-bosun     Also install Bosun (private releases; opt-in).
+                   Also settable with DOTFILES_BOSUN=1.
 USAGE
 }
 
 TERMINAL_CHOICE="${DOTFILES_TERMINAL:-}"
+WITH_BOSUN="${DOTFILES_BOSUN:-0}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --terminal=*) TERMINAL_CHOICE="${1#*=}" ;;
     --terminal)   shift; TERMINAL_CHOICE="${1:-}" ;;
+    --with-bosun) WITH_BOSUN=1 ;;
     -h|--help)    usage; exit 0 ;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
   esac
@@ -204,6 +208,14 @@ bash "$DOTFILES_DIR/editor/nvim/install.sh" --backup --native --yes
 # ----------------------------
 echo "▶ Installing AI Tooling"
 bash "$DOTFILES_DIR/ai/install.sh"
+
+# ----------------------------
+# Bosun (opt-in: private releases)
+# ----------------------------
+if [[ "$WITH_BOSUN" == "1" ]]; then
+  echo "▶ Installing Bosun"
+  bash "$DOTFILES_DIR/bosun/install.sh"
+fi
 
 # ----------------------------
 # Voice input

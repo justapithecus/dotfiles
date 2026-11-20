@@ -17,7 +17,8 @@ dotfiles/
 ├── editor/      # Editor configuration (nvim/)
 ├── terminal/    # Terminal emulator configuration (ghostty/, kitty/, konsole/)
 ├── fonts/       # Font assets
-└── voice/       # Speech-to-text input
+├── voice/       # Speech-to-text input
+└── bosun/       # Opt-in Bosun installer (private releases)
 ```
 
 Each top-level directory has a distinct responsibility. The intent is to keep
@@ -100,6 +101,15 @@ rm -rf dotfiles-main
 ## `fonts/`
 
 Font assets used by the terminal and editor configurations.
+
+---
+
+## `bosun/`
+
+Opt-in installer for [Bosun](https://github.com/pithecene/bosun), which runs
+a repository's development process. Its releases are private, so
+`./install.sh` installs it only with `--with-bosun` or `DOTFILES_BOSUN=1`.
+`bosun.yaml` configures it for this repository and does nothing without it.
 
 ---
 
