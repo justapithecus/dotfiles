@@ -39,13 +39,17 @@ konsole-session restore [SNAPSHOT] [--stagger SECONDS]
 | --- | --- |
 | Window virtual desktop, screen, geometry, maximized | Placed through a KWin script |
 | Tab order, title, color, profile, working directory, active tab | Same |
-| Claude Code tab | `claude … --resume <id>` with the original flags, in the directory the session was in |
-| Claude Code wrapper tab (`claude-<name>`, state in `~/.claude-<name>`) | `<wrapper> … --resume <id>` of the transcript it wrote last |
+| Claude Code tab | `claude … --resume <id> --name <tab title>` with the original flags, in the directory the session was in |
+| Claude Code wrapper tab (`claude-<name>`, state in `~/.claude-<name>`) | `<wrapper> … --resume <id> --name <tab title>` of the transcript it wrote last |
 | Codex tab (direct or via a wrapper script) | `codex resume <id>` of the rollout file it was writing |
 | Claude Code / Codex whose conversation can't be identified | Started fresh |
 | Viewer or editor on the replay allowlist (`nvim`, `vim`, `vi`, `hx`, `less`, `man`, `htop`, `btop`, `top`, `lazygit`, `tig`) | Same command line, after the resumed conversations |
 | Anything else (builds, deploys, `ssh`, scripts, …) | Plain shell that prints the command it was running — never replayed unattended |
 | `sudo`/`su`/`doas`/`pkexec`/`run0` | Same: plain shell, command shown, never replayed |
+
+A resumed Claude Code conversation takes its tab's title as its name (`--name`), unless it already has one, so
+it appears under that name in the `/resume` picker, and if its tab fails to come back,
+`claude --resume <tab title>` from its directory finds it.
 
 Extend the allowlist with `KONSOLE_SESSION_REPLAY=prog1:prog2 konsole-session save` (it is applied when
 saving).
