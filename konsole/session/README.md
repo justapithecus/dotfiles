@@ -47,7 +47,7 @@ konsole-session restore [SNAPSHOT] [--stagger SECONDS]
 | Anything else (builds, deploys, `ssh`, scripts, …) | Plain shell that prints the command it was running — never replayed unattended |
 | `sudo`/`su`/`doas`/`pkexec`/`run0` | Same: plain shell, command shown, never replayed |
 
-A resumed Claude Code conversation takes its tab's title as its name (`--name`), unless it already has one, so
+A resumed Claude Code conversation takes its tab's title as its name (`--name`), unless it already has one (from `--name`, `/rename` or the resume picker), so
 it appears under that name in the `/resume` picker, and if its tab fails to come back,
 `claude --resume <tab title>` from its directory finds it.
 
