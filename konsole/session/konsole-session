@@ -647,7 +647,12 @@ def finish_window(index, window, unit):
         qdbus(svc, sp, "setTabTitleFormat", 1, tab["remoteTitleFormat"], check=False)
         if tab["tabColor"] and tab["tabColor"] != "#000000":  # #000000 is Konsole's "no color"
             qdbus(svc, sp, "setTabColor", tab["tabColor"], check=False)
-    qdbus(svc, "/Windows/1", "setCurrentSession", session_ids[min(window["activeTab"], len(session_ids) - 1)], check=False)
+    # Ctrl+Tab and Ctrl+Shift+Tab walk Konsole's last-used history, which a fresh window holds in the order its
+    # tabs took focus. Focusing them right to left, wrapping at the active tab, leaves the history in tab-bar order
+    # starting from the active tab, so cycling follows the tab bar until the tabs are used.
+    active = min(window["activeTab"], len(session_ids) - 1)
+    for sid in reversed(session_ids[active:] + session_ids[:active]):
+        qdbus(svc, "/Windows/1", "setCurrentSession", sid, check=False)
     return pid
 
 
