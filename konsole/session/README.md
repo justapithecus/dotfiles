@@ -51,6 +51,10 @@ A resumed Claude Code conversation takes its tab's title as its name (`--name`),
 it appears under that name in the `/resume` picker, and if its tab fails to come back,
 `claude --resume <tab title>` from its directory finds it.
 
+Ctrl+Tab and Ctrl+Shift+Tab cycle through Konsole's last-used tabs, so a restored window seeds that history in
+tab-bar order: holding Ctrl, Tab steps right from the active tab and Shift+Tab steps left, until using the tabs
+reorders it.
+
 Extend the allowlist with `KONSOLE_SESSION_REPLAY=prog1:prog2 konsole-session save` (it is applied when
 saving).
 
