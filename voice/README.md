@@ -54,9 +54,12 @@ The script does the first run itself, so there is nothing to pick:
   `ydotool` package needs `sudo`, and only when it is missing.
 - **Model**: Parakeet TDT 0.6B v2 downloads into the Hugging Face cache,
   checked against the SHA-256 in the release's model catalog, and is
-  selected. Onboarding is marked done, start and stop sounds are on, and the overlay is set to **None**,
-  since on Wayland it can take focus and send the paste to the wrong window.
-  Handy runs it on the GPU through Vulkan.
+  selected, and Handy runs it on the GPU through Vulkan. Onboarding is
+  marked done.
+- **Feedback**: the live overlay (the pill that shows text as you speak)
+  appears at the bottom, with start and stop sounds. Linux defaults it off
+  because some compositors give it focus; KDE does not, so pasting still
+  works.
 - **Shortcut**: Meta+Shift+V toggles recording (tap to start, tap to stop),
   registered at once, so no logout is needed. The old `voice-record`
   shortcut entries are moved to `~/.local/share/kglobalaccel.retired/`,
