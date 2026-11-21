@@ -92,28 +92,136 @@ install_macos() {
 }
 
 install_linux() {
-  local rpm
-  case "$ARCH" in
-    x86_64)  rpm="$(fetch_asset 'x86_64\.rpm$')" ;;
-    aarch64) rpm="$(fetch_asset 'aarch64\.rpm$')" ;;
-    *) echo "✖ Unsupported Linux arch: $ARCH" >&2; exit 1 ;;
-  esac
+  local bin="$HOME/.local/bin" stamp="$HOME/.local/share/handy-appimage-version" current=""
+  mkdir -p "$bin" "$(dirname "$stamp")"
+  [[ -f "$stamp" && -x "$bin/handy" ]] && current="$(cat "$stamp")"
 
-  # The RPM itself is unsigned; its checksum was verified above.
-  sudo zypper -n install --allow-unsigned-rpm "$rpm"
+  # The AppImage bundles gtk-layer-shell and runs from the home directory, so
+  # Handy itself needs no root. Copied, not linked (see AGENTS.md).
+  if [[ "$current" == "$VERSION" ]]; then
+    echo "  ✔ Handy $VERSION already installed"
+  else
+    local appimage
+    case "$ARCH" in
+      x86_64)  appimage="$(fetch_asset '_amd64\.AppImage$')" ;;
+      aarch64) appimage="$(fetch_asset '_aarch64\.AppImage$')" ;;
+      *) echo "✖ Unsupported Linux arch: $ARCH" >&2; exit 1 ;;
+    esac
+    stop_handy
+    install -m 0755 "$appimage" "$bin/handy"
+    echo "$VERSION" > "$stamp"
+    echo "  ✔ Handy $VERSION installed to $bin/handy"
+  fi
 
-  # Runtime library Handy links against, plus a Wayland text-input helper.
-  sudo zypper -n install libgtk-layer-shell0 \
-    || sudo zypper -n install gtk-layer-shell \
-    || echo "⚠ Could not install gtk-layer-shell; Handy may fail to start"
-  sudo zypper -n install wtype \
-    || echo "⚠ Could not install wtype; Handy will fall back to its built-in input"
+  install_linux_typing
+  install_linux_desktop
+  install_linux_model
+  configure_linux_handy
+}
 
-  # Handy can't register global shortcuts on Wayland, so bind one in KDE.
-  local kde_dir="$HOME/.local/share/kglobalaccel"
-  mkdir -p "$kde_dir"
-  cp -f "$SCRIPT_DIR/kde/handy-toggle.desktop" "$kde_dir/handy-toggle.desktop"
-  echo "  ✔ Handy $VERSION installed (KDE shortcut: Meta+Shift+V)"
+# Handy pastes by sending a key combination. wtype cannot on KDE (KWin has no
+# virtual-keyboard protocol), so KDE needs ydotool, whose daemon writes to
+# /dev/uinput. The login session's ACL already grants the user that device.
+install_linux_typing() {
+  if ! command -v ydotool >/dev/null 2>&1; then
+    sudo zypper -n install ydotool
+  fi
+  systemctl --user daemon-reload
+  systemctl --user enable --now ydotool.service
+  echo "  ✔ ydotool daemon running (Handy pastes through it)"
+}
+
+# Launcher, start at login (hidden), and the KDE shortcut. Wayland apps cannot
+# grab global shortcuts, so KDE runs `handy --toggle-transcription` instead.
+install_linux_desktop() {
+  local apps="$HOME/.local/share/applications" accel="$HOME/.local/share/kglobalaccel"
+  mkdir -p "$apps" "$accel" "$HOME/.config/autostart"
+  sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy.desktop" > "$apps/handy.desktop"
+  sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy-autostart.desktop" > "$HOME/.config/autostart/handy.desktop"
+  sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/kde/handy-toggle.desktop" > "$accel/handy-toggle.desktop"
+
+  # The voice-record entries that Handy replaced hold Meta+Shift+V; set them aside.
+  local old retired="$HOME/.local/share/kglobalaccel.retired"
+  for old in voice-record-start voice-record-stop; do
+    [[ -f "$accel/$old.desktop" ]] || continue
+    mkdir -p "$retired"
+    mv "$accel/$old.desktop" "$retired/"
+    kglobalaccel_set "['$old.desktop','InvokeAction','','']" "[]"
+  done
+
+  # kglobalaccel reads $accel at login; register now as well, so the shortcut
+  # works without logging out. Flag 2 arms it, 4 sets this key.
+  local meta_shift_v=$(( 0x10000000 | 0x02000000 | 0x56 ))
+  kglobalaccel_call doRegister "['handy-toggle.desktop','InvokeAction','Handy: Toggle Transcription','Toggle transcription']" >/dev/null \
+    && kglobalaccel_set "['handy-toggle.desktop','InvokeAction','Handy: Toggle Transcription','Toggle transcription']" "[$meta_shift_v]" \
+    && echo "  ✔ KDE shortcut: Meta+Shift+V toggles recording" \
+    || echo "  ⚠ KDE shortcut not registered now; it takes effect at the next login"
+}
+
+kglobalaccel_call() {
+  command -v gdbus >/dev/null 2>&1 || return 1
+  gdbus call --session --dest org.kde.kglobalaccel --object-path /kglobalaccel \
+    --method "org.kde.KGlobalAccel.$1" "${@:2}"
+}
+
+kglobalaccel_set() { kglobalaccel_call setShortcut "$1" "$2" 6 >/dev/null; }
+
+# The recommended English model, from the Hugging Face cache Handy reads. Its
+# revision, file and SHA-256 come from the catalog shipped with this release.
+HANDY_MODEL_ID="parakeet-tdt-0.6b-v2"
+
+install_linux_model() {
+  local catalog="$TMP/catalog.json" repo rev file sha dir
+  curl -fsSL "https://raw.githubusercontent.com/$REPO/v$VERSION/src-tauri/src/catalog/catalog.json" -o "$catalog"
+  read -r repo rev file sha < <(yq -p json -o tsv \
+    ".models[] | select(.id == \"$HANDY_MODEL_ID\") | [.repository, .revision, .files[.quant].filename, .files[.quant].sha256]" "$catalog")
+  [[ -n "$sha" ]] || { echo "✖ $HANDY_MODEL_ID is not in Handy $VERSION's catalog" >&2; exit 1; }
+  dir="${HF_HOME:-$HOME/.cache/huggingface}/hub/models--${repo//\//--}/snapshots/$rev"
+  HANDY_MODEL="$repo/$file"
+  if [[ -f "$dir/$file" ]]; then
+    echo "  ✔ Model $HANDY_MODEL_ID already downloaded"
+    return
+  fi
+  mkdir -p "$dir"
+  curl -fL --progress-bar "https://huggingface.co/$repo/resolve/$rev/$file" -o "$dir/$file.part"
+  [[ "$(sha256sum "$dir/$file.part" | cut -d' ' -f1)" == "$sha" ]] \
+    || { rm -f "$dir/$file.part"; echo "✖ Checksum mismatch for $file" >&2; exit 1; }
+  mv "$dir/$file.part" "$dir/$file"
+  echo "  ✔ Model $HANDY_MODEL_ID downloaded"
+}
+
+# Every running Handy: the installer's own unit, the one the login autostart
+# entry runs (app-handy@autostart), and one opened from the launcher. Handy
+# holds its settings in memory, so it must stop before they are edited.
+stop_handy() {
+  systemctl --user stop app-handy.service 'app-handy@*.service' >/dev/null 2>&1 || true
+}
+
+# Skip onboarding, select the model, and turn the overlay off: on Wayland it can
+# take focus and send the paste to the wrong window. Handy writes its settings
+# on first start, so start it once if they do not exist yet.
+configure_linux_handy() {
+  local settings="$HOME/.local/share/com.pais.handy/settings_store.json"
+  stop_handy
+  if [[ ! -f "$settings" ]]; then
+    systemd-run --user --quiet --collect --unit=app-handy --slice=app.slice "$HOME/.local/bin/handy" --start-hidden
+    for _ in $(seq 1 30); do [[ -f "$settings" ]] && break; sleep 1; done
+    stop_handy
+  fi
+  [[ -f "$settings" ]] || { echo "⚠ Handy wrote no settings; pick the model in its window"; return; }
+  python3 - "$settings" "$HANDY_MODEL" <<'PY'
+import json, pathlib, sys
+path, model = pathlib.Path(sys.argv[1]), sys.argv[2]
+doc = json.loads(path.read_text())
+settings = doc.get("settings", doc)
+settings["onboarding_completed"] = True
+settings["selected_model"] = settings.get("selected_model") or model
+settings["overlay_position"] = "none"
+settings["start_hidden"] = True
+path.write_text(json.dumps(doc, indent=2))
+PY
+  systemd-run --user --quiet --collect --unit=app-handy --slice=app.slice "$HOME/.local/bin/handy" --start-hidden
+  echo "  ✔ Handy configured and running"
 }
 
 case "$OS" in
@@ -122,18 +230,11 @@ case "$OS" in
   *) echo "✖ Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
-cat <<'EOF'
-  → First launch: pick "Parakeet TDT 0.6B v2" (English) or
-    "Parakeet TDT 0.6B v3" (multilingual) when Handy asks.
-EOF
 if [[ "$OS" == "Darwin" ]]; then
   cat <<'EOF'
+  → First launch: pick "Parakeet TDT 0.6B v2" (English) or
+    "Parakeet TDT 0.6B v3" (multilingual) when Handy asks.
   → Grant Microphone and Accessibility access when prompted
     (System Settings → Privacy & Security). Default shortcut: Option+Space.
-EOF
-else
-  cat <<'EOF'
-  → In Handy's settings, set the paste shortcut to Ctrl+Shift+V so it
-    works in terminals, and set the overlay position to None on Wayland.
 EOF
 fi

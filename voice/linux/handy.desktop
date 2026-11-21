@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Handy
+Comment=Speech to text, transcribed on this machine
+Exec=@BIN@/handy
+Icon=audio-input-microphone
+StartupWMClass=handy
+Categories=Utility;Accessibility;
+Terminal=false

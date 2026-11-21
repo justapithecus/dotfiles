@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Handy
+Comment=Start Handy hidden at login
+Exec=@BIN@/handy --start-hidden
+Icon=audio-input-microphone
+Terminal=false
