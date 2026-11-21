@@ -54,7 +54,7 @@ The script does the first run itself, so there is nothing to pick:
   `ydotool` package needs `sudo`, and only when it is missing.
 - **Model**: Parakeet TDT 0.6B v2 downloads into the Hugging Face cache,
   checked against the SHA-256 in the release's model catalog, and is
-  selected. Onboarding is marked done and the overlay is set to **None**,
+  selected. Onboarding is marked done, start and stop sounds are on, and the overlay is set to **None**,
   since on Wayland it can take focus and send the paste to the wrong window.
   Handy runs it on the GPU through Vulkan.
 - **Shortcut**: Meta+Shift+V toggles recording (tap to start, tap to stop),

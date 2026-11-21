@@ -139,6 +139,8 @@ install_linux_desktop() {
   sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy.desktop" > "$apps/handy.desktop"
   sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy-autostart.desktop" > "$HOME/.config/autostart/handy.desktop"
   sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/kde/handy-toggle.desktop" > "$accel/handy-toggle.desktop"
+  # Rebuild the service cache so Handy appears in the launcher without a logout.
+  command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 >/dev/null 2>&1 || true
 
   # The voice-record entries that Handy replaced hold Meta+Shift+V; set them aside.
   local old retired="$HOME/.local/share/kglobalaccel.retired"
@@ -197,7 +199,7 @@ stop_handy() {
   systemctl --user stop app-handy.service 'app-handy@*.service' >/dev/null 2>&1 || true
 }
 
-# Skip onboarding, select the model, and turn the overlay off: on Wayland it can
+# Skip onboarding, select the model, turn on start and stop sounds, and turn the overlay off: on Wayland it can
 # take focus and send the paste to the wrong window. Handy writes its settings
 # on first start, so start it once if they do not exist yet.
 configure_linux_handy() {
@@ -217,7 +219,10 @@ settings = doc.get("settings", doc)
 settings["onboarding_completed"] = True
 settings["selected_model"] = settings.get("selected_model") or model
 settings["overlay_position"] = "none"
-settings["start_hidden"] = True
+# The login entry passes --start-hidden; the setting would hide the launcher too.
+settings["start_hidden"] = False
+# With the overlay off, a sound is the only sign that recording started or stopped.
+settings["audio_feedback"] = True
 path.write_text(json.dumps(doc, indent=2))
 PY
   systemd-run --user --quiet --collect --unit=app-handy --slice=app.slice "$HOME/.local/bin/handy" --start-hidden
