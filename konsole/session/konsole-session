@@ -653,6 +653,7 @@ def finish_window(index, window, unit):
     active = min(window["activeTab"], len(session_ids) - 1)
     for sid in reversed(session_ids[active:] + session_ids[:active]):
         qdbus(svc, "/Windows/1", "setCurrentSession", sid, check=False)
+        time.sleep(0.4)  # Konsole records the focus change asynchronously; at 0.15 s a step was dropped
     return pid
 
 
