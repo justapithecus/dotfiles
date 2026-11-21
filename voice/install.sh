@@ -93,7 +93,7 @@ install_macos() {
 
 install_linux() {
   local bin="$HOME/.local/bin" stamp="$HOME/.local/share/handy-appimage-version" current=""
-  mkdir -p "$bin"
+  mkdir -p "$bin" "$(dirname "$stamp")"
   [[ -f "$stamp" && -x "$bin/handy" ]] && current="$(cat "$stamp")"
 
   # The AppImage bundles gtk-layer-shell and runs from the home directory, so
@@ -107,7 +107,7 @@ install_linux() {
       aarch64) appimage="$(fetch_asset '_aarch64\.AppImage$')" ;;
       *) echo "✖ Unsupported Linux arch: $ARCH" >&2; exit 1 ;;
     esac
-    systemctl --user stop app-handy.service >/dev/null 2>&1 || true
+    stop_handy
     install -m 0755 "$appimage" "$bin/handy"
     echo "$VERSION" > "$stamp"
     echo "  ✔ Handy $VERSION installed to $bin/handy"
@@ -138,7 +138,7 @@ install_linux_desktop() {
   mkdir -p "$apps" "$accel" "$HOME/.config/autostart"
   sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy.desktop" > "$apps/handy.desktop"
   sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/linux/handy-autostart.desktop" > "$HOME/.config/autostart/handy.desktop"
-  cp -f "$SCRIPT_DIR/kde/handy-toggle.desktop" "$accel/handy-toggle.desktop"
+  sed "s|@BIN@|$HOME/.local/bin|" "$SCRIPT_DIR/kde/handy-toggle.desktop" > "$accel/handy-toggle.desktop"
 
   # The voice-record entries that Handy replaced hold Meta+Shift+V; set them aside.
   local old retired="$HOME/.local/share/kglobalaccel.retired"
@@ -190,16 +190,23 @@ install_linux_model() {
   echo "  ✔ Model $HANDY_MODEL_ID downloaded"
 }
 
+# Every running Handy: the installer's own unit, the one the login autostart
+# entry runs (app-handy@autostart), and one opened from the launcher. Handy
+# holds its settings in memory, so it must stop before they are edited.
+stop_handy() {
+  systemctl --user stop app-handy.service 'app-handy@*.service' >/dev/null 2>&1 || true
+}
+
 # Skip onboarding, select the model, and turn the overlay off: on Wayland it can
 # take focus and send the paste to the wrong window. Handy writes its settings
 # on first start, so start it once if they do not exist yet.
 configure_linux_handy() {
   local settings="$HOME/.local/share/com.pais.handy/settings_store.json"
-  systemctl --user stop app-handy.service >/dev/null 2>&1 || true
+  stop_handy
   if [[ ! -f "$settings" ]]; then
     systemd-run --user --quiet --collect --unit=app-handy --slice=app.slice "$HOME/.local/bin/handy" --start-hidden
     for _ in $(seq 1 30); do [[ -f "$settings" ]] && break; sleep 1; done
-    systemctl --user stop app-handy.service >/dev/null 2>&1 || true
+    stop_handy
   fi
   [[ -f "$settings" ]] || { echo "⚠ Handy wrote no settings; pick the model in its window"; return; }
   python3 - "$settings" "$HANDY_MODEL" <<'PY'

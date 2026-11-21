@@ -2,7 +2,7 @@
 Type=Application
 Name=Handy: Toggle Transcription
 Comment=Start or stop Handy speech-to-text
-Exec=handy --toggle-transcription
+Exec=@BIN@/handy --toggle-transcription
 Icon=audio-input-microphone
 Terminal=false
 Categories=Utility;
@@ -11,5 +11,5 @@ Actions=InvokeAction
 
 [Desktop Action InvokeAction]
 Name=Toggle transcription
-Exec=handy --toggle-transcription
+Exec=@BIN@/handy --toggle-transcription
 X-KDE-Shortcuts=Meta+Shift+V
