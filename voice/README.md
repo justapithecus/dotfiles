@@ -21,7 +21,7 @@ when a newer release exists.
 
 ## First run
 
-1. Pick a model when Handy asks:
+1. Pick a model when Handy asks (macOS; the Linux install picks TDT v2 itself):
 
    | Model | Use it for |
    |---|---|
@@ -44,8 +44,22 @@ when a newer release exists.
 
 ### Linux (KDE / Wayland)
 
-- Set Handy's paste shortcut to **Ctrl+Shift+V** so it works in terminals.
-- Set the overlay position to **None**; the overlay can steal focus and
-  break pasting.
-- The KDE shortcut toggles recording (tap to start, tap to stop) rather than
-  hold-to-talk.
+The script does the first run itself, so there is nothing to pick:
+
+- **Handy** installs as its AppImage, copied to `~/.local/bin/handy`. It
+  bundles gtk-layer-shell and needs no root.
+- **Pasting** goes through `ydotool`, whose daemon runs as a user service.
+  `wtype` cannot type on KDE (KWin has no virtual-keyboard protocol). The
+  login session already grants the user `/dev/uinput`; only installing the
+  `ydotool` package needs `sudo`, and only when it is missing.
+- **Model**: Parakeet TDT 0.6B v2 downloads into the Hugging Face cache,
+  checked against the SHA-256 in the release's model catalog, and is
+  selected. Onboarding is marked done and the overlay is set to **None**,
+  since on Wayland it can take focus and send the paste to the wrong window.
+  Handy runs it on the GPU through Vulkan.
+- **Shortcut**: Meta+Shift+V toggles recording (tap to start, tap to stop),
+  registered at once, so no logout is needed. The old `voice-record`
+  shortcut entries are moved to `~/.local/share/kglobalaccel.retired/`,
+  since the start entry also held Meta+Shift+V.
+- Handy starts hidden at login. It pastes with Shift+Insert, which works in
+  both GUI apps and terminals.
